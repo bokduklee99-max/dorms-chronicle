@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+outputs/
+previews/
+metro/
+index.html
+dist/
+.vercel/
+.env*
+*.log

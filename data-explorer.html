@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ed">
+  <title>연표 시트 구조 · Dorms' Chronicle</title>
+  <link rel="stylesheet" href="./data-explorer.css?v=structure">
+  <script defer src="./sheet-config.js"></script>
+  <script defer src="./sheet-snapshot.js?v=20261118-leaders"></script>
+  <script defer src="./sheets.js?v=data-explorer"></script>
+  <script type="module" src="./metro/assets/data-explorer.js?v=structure"></script>
+  <link rel="stylesheet" href="/assets/chronicle-theme.css">
+</head>
+<body class="chronicle-data">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+  <header class="guide-nav">
+    <div class="guide-nav-inner">
+      <a class="wordmark" href="/">Dorms' Chronicle</a>
+      <nav aria-label="연표 데이터">
+        <a id="guide-link" href="#structure" aria-current="page">시트 구조</a>
+        <a id="records-link" href="#overview">데이터 조회</a>
+      </nav>
+      <div class="actions">
+        <a id="open-sheet" class="primary" target="_blank" rel="noopener noreferrer">구글 시트 <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  <main id="main-content" tabindex="-1">
+    <section id="structure" aria-labelledby="structure-title">
+      <header class="guide-heading">
+        <h1 id="structure-title">연표 시트 구조</h1>
+        <p>사건은 한 번 등록하고, 관련 카테고리와 국가는 ID로 연결합니다.</p>
+      </header>
+
+      <div class="guide-layout">
+        <section class="panel schema-panel" aria-labelledby="schema-title">
+          <h2 id="schema-title">연결 구조</h2>
+          <div class="schema" role="group" aria-label="사건에서 연결표를 거쳐 카테고리와 국가로">
+            <button class="schema-node schema-root" data-table="events" type="button"><strong>사건</strong><span>사건ID</span></button>
+            <button class="schema-node schema-link" data-table="event_categories" type="button"><strong>사건_카테고리</strong><span>사건ID · 카테고리ID</span></button>
+            <button class="schema-node schema-end" data-table="categories" type="button"><strong>카테고리</strong><span>카테고리ID</span></button>
+            <button class="schema-node schema-link" data-table="event_countries" type="button"><strong>사건_국가</strong><span>사건ID · 국가ID · 역할</span></button>
+            <button class="schema-node schema-end" data-table="countries" type="button"><strong>국가</strong><span>국가ID</span></button>
+          </div>
+          <button class="text-action" id="open-example" type="button" hidden>서베를린 봉쇄 예시 보기 <span aria-hidden="true">↗</span></button>
+        </section>
+
+        <section id="editing" class="panel editing-panel" aria-labelledby="editing-title">
+          <h2 id="editing-title">사건 추가 순서</h2>
+          <ol>
+            <li><strong>사건 탭에 한 행 추가</strong><span>새 사건ID와 사건명, 날짜를 입력합니다.</span></li>
+            <li><strong>숨겨진 연결표에 한 행씩 추가</strong><span>관련 국가나 카테고리마다 사건ID를 연결합니다.</span></li>
+            <li><strong>데이터 조회에서 확인</strong><span>시트 새로고침 후 사건과 연결을 확인합니다.</span></li>
+          </ol>
+        </section>
+      </div>
+
+      <section class="sheet-reference" aria-labelledby="sheet-tabs-title">
+        <h2 id="sheet-tabs-title">시트 탭별 입력 내용</h2>
+        <dl class="schema-guide">
+          <div><dt>사건</dt><dd>날짜는 <code>1948</code>, <code>1948-06</code>, <code>1948-06-24</code>처럼 아는 범위까지 입력합니다. 사진 주소는 이미지 셀에 한 줄에 하나씩 넣습니다.</dd></div>
+          <div><dt>국가</dt><dd>국가·지역·조직마다 한 행을 등록합니다. 사건과 재임기간에서 같은 국가ID를 참조합니다.</dd></div>
+          <div><dt>재임기간</dt><dd>한 인물의 한 직위 기간이 한 행입니다. 겸직과 재취임은 별도 행으로 기록합니다.</dd></div>
+          <div><dt>카테고리</dt><dd>분류마다 한 행을 등록합니다. 하위 분류는 상위카테고리ID로 연결합니다.</dd></div>
+          <div><dt><a id="package-sheet" target="_blank" rel="noopener noreferrer">패키지 ↗</a></dt><dd>수업용 패키지 정보 등록에 쓰입니다. 조회 화면의 냉전 사건은 이 시트, 한국 근현대사 사건은 앱에 포함된 데이터에서 읽습니다.</dd></div>
+          <div><dt>숨겨진 탭</dt><dd><strong>사건_국가</strong>와 <strong>사건_카테고리</strong>에서 연결을 수정합니다. 사건 탭의 국가·카테고리 표시 열과 <code>web_feed</code>는 수식으로 채워집니다.</dd></div>
+        </dl>
+        <p class="schema-rule">이름을 바꿔도 기존 ID는 유지하세요. 다른 탭의 연결이 그 ID를 참조합니다.</p>
+      </section>
+    </section>
+
+    <section id="overview" class="data-overview" aria-labelledby="overview-title" hidden>
+      <div class="page-heading">
+        <div>
+          <h1 id="overview-title">데이터 조회</h1>
+          <p id="source-status" role="status">데이터를 불러오는 중입니다.</p>
+        </div>
+        <div class="actions" id="sheet-actions">
+          <button id="reload" type="button" aria-disabled="true">시트 새로고침</button>
+        </div>
+      </div>
+
+      <div id="package-scope" class="actions package-scope" role="group" aria-label="패키지 범위"></div>
+
+      <section id="records" class="panel records" aria-labelledby="table-title">
+        <div class="actions table-types" role="group" aria-label="데이터 표">
+          <button data-table="events" type="button" aria-pressed="true">사건</button>
+          <button data-table="categories" type="button" aria-pressed="false">카테고리</button>
+          <button data-table="countries" type="button" aria-pressed="false">국가·지역·조직</button>
+          <button data-table="tenure_periods" type="button" aria-pressed="false">재임기간</button>
+          <button data-table="packages" type="button" aria-pressed="false">패키지</button>
+          <button data-table="event_categories" type="button" aria-pressed="false">사건_카테고리</button>
+          <button data-table="event_countries" type="button" aria-pressed="false">사건_국가</button>
+        </div>
+        <div class="records-heading">
+          <div>
+            <h2 id="table-title" tabindex="-1">사건</h2>
+            <p id="table-description"></p>
+          </div>
+          <div class="search">
+            <label for="search">표 검색</label>
+            <input id="search" type="search" placeholder="사건명, 날짜, 국가, ID" autocomplete="off">
+          </div>
+        </div>
+        <div class="record-status">
+          <p id="result-count" role="status"></p>
+          <button id="clear-filter" type="button" hidden></button>
+        </div>
+        <div class="table-scroll" role="region" aria-labelledby="table-title" tabindex="0">
+          <table aria-labelledby="table-title">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <noscript><p>데이터를 보려면 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
+      </section>
+      <div class="charts">
+        <section class="panel decade-panel" aria-labelledby="decade-title">
+          <div class="panel-heading"><h2 id="decade-title">연대별 사건</h2><p>시작일 기준</p></div>
+          <div id="decade-chart" class="decade-chart" role="group" aria-label="사건을 연대로 필터링"></div>
+        </section>
+        <section class="panel review-panel" aria-labelledby="review-title">
+          <div class="panel-heading"><h2 id="review-title">사건 검토 상태</h2><p id="review-rate"></p></div>
+          <div id="review-list" class="review-list" role="group" aria-label="사건을 검토 상태로 필터링"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <header class="detail-header">
+      <button id="detail-back" type="button" hidden>← 이전 기록</button>
+      <form method="dialog"><button type="submit" autofocus>닫기</button></form>
+    </header>
+    <div class="detail-content">
+      <h2 id="detail-title" tabindex="-1"></h2>
+      <dl id="detail-fields"></dl>
+      <div id="detail-links"></div>
+    </div>
+  </dialog>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clearBrowserPackages,studioDraftDirectory} from '../assets/studio-library.js';
+import {clearBrowserPackages,readPersonalDrafts,writePersonalDraft,studioDraftDirectory} from '../assets/studio-library.js';
 import {lessonSwimlane} from '../swimlane-data.js';
 
 test('the studio lists new working packages, excluding legacy editions, published packages and revisions',()=>{
@@ -27,4 +27,24 @@ test('a studio lesson keeps links between included actors and their detail recor
  const result=lessonSwimlane({events:[],topics:[],actors:[]},new Map(),sheet,new Set(['a','b']));
  assert.deepEqual(result.relations.map(r=>r.id),['ab']);
  assert.deepEqual(result.detailActors.map(a=>a.id),['a','b']);
+});
+
+test('personal drafts survive legacy cleanup and stale tabs cannot replace or remove newer edits',()=>{
+ const storage={
+  getItem(key){return this[key]??null;},
+  setItem(key,value){this[key]=value;},
+  removeItem(key){delete this[key];}
+ };
+ const draft={id:'first',name:'개인 초안',events:[{id:'event',title:'3·1 운동'}],categories:[],relations:[]};
+ const initial=JSON.stringify(draft);
+ const edited=JSON.stringify({...draft,name:'수정한 초안'});
+ assert.equal(writePersonalDraft(draft.id,null,initial,storage),true);
+ clearBrowserPackages(storage);
+ assert.deepEqual(readPersonalDrafts(storage).get(draft.id),draft);
+ assert.equal(writePersonalDraft(draft.id,initial,edited,storage),true);
+ assert.equal(writePersonalDraft(draft.id,initial,initial,storage),false);
+ assert.equal(writePersonalDraft(draft.id,initial,null,storage),false);
+ assert.equal(readPersonalDrafts(storage).get(draft.id).name,'수정한 초안');
+ assert.equal(writePersonalDraft(draft.id,edited,null,storage),true);
+ assert.equal(readPersonalDrafts(storage).size,0);
 });

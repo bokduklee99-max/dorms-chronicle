@@ -3,7 +3,7 @@ import {mountStudioGrid} from './studio-grid.js';
 import {fetchStudioCatalog,studioCatalog} from './studio-catalog.js';
 import {loadGoogleIdentity,authorizeRelationSheet,restoreDraftToken,rememberDraftAccount,rememberedAccount,forgetDraftAccount} from './google-sheet-auth.js';
 import {sharedContent,same,mergeChanges,readLegacyDraft,googleSheet} from './studio-cloud.js';
-import {studioDraftDirectory} from './studio-library.js';
+import {personalDraftPrefix,personalDraftNotice,readPersonalDrafts,writePersonalDraft,studioDraftDirectory} from './studio-library.js';
 import {publishDraft,readDraft,createDraft,writeDraft} from './studio-publish.js';
 import {googleClientId} from '../metro/assets/studio-client.js';
 
@@ -17,8 +17,20 @@ const directory={group:'shared',lastId:''};
 function fresh(){return {id:uid(),name:'',school:'',subject:'',description:'',events:[],categories:[],relations:[],actors:[]};}
 let draft=fresh();
 const requestedBook=new URL(location.href).searchParams.get('draft');
-let pendingBook=requestedBook,token='',syncing=null,saveTimer,sharedMessage='',busy=false,conflict=false,composing=false;
-const catalog={actor:{},event:{},place:{}},opened=new Map();
+const localRoute=requestedBook?.startsWith('local:');
+let personalDrafts=new Map(),personalBaseline=null,personalIssue='',personalConflict=false,libraryIssue='';
+function loadPersonalLibrary(){
+ try{personalDrafts=readPersonalDrafts();libraryIssue='';}
+ catch{libraryIssue='이 브라우저의 저장소를 열 수 없습니다. 브라우저의 사이트 데이터 설정을 확인해 주세요.';}
+}
+loadPersonalLibrary();
+if(localRoute||personalDrafts.size)directory.group='local';
+if(localRoute){
+ const saved=personalDrafts.get(requestedBook.slice(6));
+ if(saved){draft=structuredClone(saved);personalBaseline=JSON.stringify(saved);directory.lastId=saved.id;}
+}
+let pendingBook=localRoute?null:requestedBook,token='',syncing=null,saveTimer,sharedMessage='',busy=false,conflict=false,composing=false;
+const catalog={actor:{},event:{},place:{}};
 function studioAuth(choose=false){
  const subject=rememberedAccount(googleClientId,pendingBook||draft.cloud?.book);
  return authorizeRelationSheet(googleClientId,{studio:true,subject,choose});
@@ -35,7 +47,7 @@ const notes=mountStudioComments(studio,{
 function content(){return sharedContent(draft,draft.actors||[]);}
 function packageList(){
  const entries=new Map(libraryItems);
- for(const p of [...opened.values(),draft])if(p.name&&!p.cloud)entries.set(p.id,{id:p.id,name:p.name,school:p.school,course:p.subject,local:true});
+ for(const p of [...personalDrafts.values(),draft])if(p.name&&!p.cloud)entries.set(p.id,{id:p.id,name:p.name,school:p.school,course:p.subject,local:true});
  return [...entries.values()].filter(p=>!publishedIds.has(p.id));
 }
 function installCatalog(source){
@@ -49,7 +61,7 @@ function updateDirectoryView(){
  if(pendingBook&&!busy)draw();else grid?.refreshLibrary();
 }
 function leavePublished(id,message='게시가 끝난 패키지입니다.'){
- publishedIds.add(id);libraryItems.delete(id);opened.delete(id);pendingBook=null;
+ publishedIds.add(id);libraryItems.delete(id);pendingBook=null;
  if(draft.id===id&&draft.cloud&&!same(content(),draft.cloud.base)){
   draft.closed=true;clearTimeout(saveTimer);draw();return;
  }
@@ -61,11 +73,11 @@ async function switchGrid(id,create){
  if(syncing){await syncing;if(current!==draft||draft.closed||busy)return;}
  if(draft.cloud&&!same(content(),draft.cloud.base)&&!await runSync()){if(!draft.closed)say('현재 초안을 저장한 뒤 다시 선택해 주세요.');return;}
  if(current!==draft||draft.closed)return;
- if(draft.name&&!draft.cloud)opened.set(draft.id,draft);
- if(create){begin({...fresh(),name:create.name,subject:create.course,school:create.school,description:create.description});return;}
+ if(personalIssue&&!savePersonal())return;
+ if(create){begin({...fresh(),name:create.name,subject:create.course,school:create.school,description:create.description});savePersonal();return;}
  if(!id){begin(fresh());void refreshLibrary();return;}
  if(publishedIds.has(id)){leavePublished(id);return;}
- if(opened.has(id)){begin(opened.get(id));return;}
+ if(personalDrafts.has(id)){begin(structuredClone(personalDrafts.get(id)));return;}
  directory.group='shared';pendingBook=id;draw();
  await connectCloud({restore:true});
 }
@@ -74,12 +86,25 @@ function connectUrl(book){
  url.hash='package-studio'+(book?'?'+new URLSearchParams({draft:book}):'');
  return url;
 }
+function savePersonal(){
+ const previousIssue=personalIssue;
+ try{
+  const next=JSON.stringify(draft);
+  personalConflict=!writePersonalDraft(draft.id,personalBaseline,next);
+  if(personalConflict)personalIssue='다른 탭에서 이 초안이 바뀌었습니다. 현재 수정 내용은 사본으로 저장해 주세요.';
+  else{
+   personalBaseline=next;personalDrafts.set(draft.id,draft);personalIssue='';
+  }
+ }catch{personalIssue='개인 초안을 저장하지 못했습니다. 탭을 열어 둔 채 브라우저의 저장 공간과 사이트 데이터 설정을 확인해 주세요.';}
+ if(personalIssue!==previousIssue)refreshCloudBar();
+ return !personalIssue;
+}
 function cloudBar(){
  const c=draft.cloud;
- const status=sharedMessage||(c?'Google 시트에 연결됨':'이 탭에서만 작성 중');
- return `<div class="studio-sharing"><p role="status" id="cloud-status">${esc(status)}</p><div>${c?
+ const status=personalIssue||sharedMessage||(c?'Google 시트에 연결됨':personalDraftNotice);
+ return `<div class="studio-sharing${c?'':' personal-storage'}"><p role="status" id="cloud-status">${esc(status)}</p><div>${c?
   `<a href="https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_CONFIG.id)}/edit#gid=${SHEET_CONFIG.packageSheetId}" target="_blank" rel="noreferrer">원본 시트 ↗</a>${button('공동 작업 링크 복사','cloud-link')}${button(token?'동기화':'Google 다시 연결','cloud-connect')}${button('이 초안 연결 해제','cloud-disconnect')}`:
-  button('공동 초안으로 등록','cloud-connect')}${conflict?button('충돌한 항목에 내 수정 적용','cloud-keep')+button('충돌한 항목에 시트 수정 적용','cloud-remote'):''}</div></div>`;
+  personalConflict?button('사본으로 저장','local-copy'):(personalIssue?button('저장 다시 시도','local-retry'):'')+button('공동 초안으로 등록','cloud-connect')}${conflict?button('충돌한 항목에 내 수정 적용','cloud-keep')+button('충돌한 항목에 시트 수정 적용','cloud-remote'):''}</div></div>`;
 }
 function refreshCloudBar(){
  const bar=studio.querySelector('.studio-sharing');
@@ -143,7 +168,12 @@ async function runSync(choice){
  return syncing;
 }
 async function connectCloud({restore=false,choose=false}={}){
- if(busy)return;busy=true;studio.inert=true;
+ if(busy)return;
+ if(!pendingBook&&!draft.cloud){
+  savePersonal();
+  if(personalConflict)return;
+ }
+ busy=true;studio.inert=true;
  try{
   const source=pendingBook||draft.cloud?.book;
   const nextToken=restore?await restoreDraftToken(googleClientId,source):await studioAuth(choose);
@@ -164,7 +194,11 @@ async function connectCloud({restore=false,choose=false}={}){
    cloud:{book:remote.book,base:remote.content,version:remote.version}};
   rememberDraftAccount(googleClientId,item.id,token);
   if(source&&source!==item.id)rememberDraftAccount(googleClientId,source,token);
-  pendingBook=null;opened.delete(item.id);libraryItems.set(item.id,{id:item.id,name:item.name,school:item.school,course:item.subject});begin(item);
+  if(!source){
+   try{writePersonalDraft(item.id,personalBaseline,null);}catch{/* Keep the local copy if storage is unavailable. */}
+   loadPersonalLibrary();
+  }
+  pendingBook=null;libraryItems.set(item.id,{id:item.id,name:item.name,school:item.school,course:item.subject});begin(item);
   await runSync();
  }catch(e){
   if(e.status===401)token='';
@@ -177,10 +211,13 @@ function say(message){document.querySelector('#notice').textContent=message;}
 function begin(item){
  const switching=item.id!==draft.id||Boolean(pendingBook);
  clearTimeout(saveTimer);conflict=false;sharedMessage='';draft=item;
+ personalIssue='';personalConflict=false;
+ personalBaseline=!item.cloud&&personalDrafts.has(item.id)?JSON.stringify(personalDrafts.get(item.id)):null;
  if(item.name){directory.group=item.cloud?'shared':'local';directory.lastId=item.id;}
  if(window.frameElement){
-  const link=connectUrl(item.cloud?.book);
-  window.frameElement.dataset.draft=item.cloud?.book||'';
+  const route=item.cloud?.book||(item.name?'local:'+item.id:'');
+  const link=connectUrl(route);
+  window.frameElement.dataset.draft=route;
   parent.document.getElementById('studio-link').href=link.hash;
   if(parent.location.hash.startsWith('#package-studio'))parent.history.replaceState(null,'',link);
  }
@@ -241,9 +278,9 @@ function draw(sheetView){
  }
  studio.innerHTML='<div id="studio-grid-host"></div>';
  grid=mountStudioGrid(studio.querySelector('#studio-grid-host'),{
-  draft,catalog,sheetView,directory,library:packageList,libraryState:()=>libraryState,refresh:refreshLibrary,empty:()=>!draft.name&&!draft.cloud,
+  draft,catalog,sheetView,directory,library:packageList,personalLibraryIssue:()=>libraryIssue,libraryState:()=>libraryState,refresh:refreshLibrary,empty:()=>!draft.name&&!draft.cloud,
   packageNames:()=>[...packageList(),...(publicCatalog?.editions||[])],
-  change:changes=>{Object.assign(draft,changes);scheduleSync();},
+  change:changes=>{Object.assign(draft,changes);if(draft.cloud)scheduleSync();else savePersonal();},
   open:id=>void switchGrid(id),create:values=>void switchGrid(null,values),normalizeDate:eventDate,publish:finish
  });
  if(draft.name)studio.querySelector('#gs-sharing').innerHTML=cloudBar();
@@ -252,6 +289,7 @@ function draw(sheetView){
 async function finish(){
  if(busy||!grid.validateForPublish())return;
  if(!draft.cloud){
+  if(personalConflict)return;
   await connectCloud();
   if(!draft.cloud||conflict)return;
  }
@@ -293,6 +331,11 @@ studio.addEventListener('click',ev=>{
   begin(fresh());void refreshLibrary();return;
  }
  if(act==='cancel-pending'){pendingBook=null;begin(draft);if(draft.name)void switchGrid(null);return;}
+ if(act==='local-retry'){savePersonal();return;}
+ if(act==='local-copy'){
+  const copy={...draft,id:uid(),name:draft.name+' (사본)'};
+  loadPersonalLibrary();begin(copy);savePersonal();return;
+ }
  if(act==='cloud-disconnect'){void disconnectDraft();return;}
  if(act==='cloud-connect'||act==='cloud-choose'){connectCloud({choose:act==='cloud-choose'});return;}
  if(act==='cloud-keep'||act==='cloud-remote'){runSync(act==='cloud-keep'?'local':'remote');return;}
@@ -307,8 +350,13 @@ studio.addEventListener('compositionend',()=>{composing=false;scheduleSync();});
 setInterval(()=>{if(!busy&&!document.hidden)runSync();},7000);
 setInterval(()=>{if(!document.hidden&&!draft.name&&!pendingBook&&libraryState==='ready')void refreshLibrary();},30000);
 window.addEventListener('online',()=>{if(!busy)runSync();});
+window.addEventListener('storage',event=>{
+ if(event.key===null||event.key.startsWith(personalDraftPrefix)){
+  loadPersonalLibrary();grid?.refreshLibrary();
+ }
+});
 window.addEventListener('beforeunload',e=>{
- if(opened.size||(draft.cloud&&!same(content(),draft.cloud.base))||(!draft.cloud&&draft.name)){e.preventDefault();e.returnValue='';}
+ if(personalIssue||(draft.cloud&&!same(content(),draft.cloud.base))){e.preventDefault();e.returnValue='';}
 });
 void refreshLibrary();
 try{

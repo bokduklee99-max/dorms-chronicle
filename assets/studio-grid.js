@@ -1,3 +1,4 @@
+import {personalDraftNotice} from './studio-library.js';
 import {gridState,gridContent} from './studio-grid-model.js';
 import {removeDraftItem} from './studio-cloud.js';
 import {mountRelationWires} from './studio-relation-wires.js';
@@ -215,7 +216,8 @@ export function mountStudioGrid(container,host){
     const message=state==='error'?'공동 초안 목록을 불러오지 못했습니다.':state==='loading'?'공동 초안을 불러오는 중입니다.':'함께 작성 중인 초안이 없습니다.';
     const nextStep=state==='ready'?'<p>새 패키지를 만든 뒤 ‘공동 초안으로 등록’을 누르면 여기에 표시됩니다.</p>':'';
     const sharedHtml=rows(shared)+(!shared.length||state==='error'?'<div class="gs-library-note" role="status"><div><strong>'+message+'</strong>'+nextStep+'</div>'+(state==='error'?btn('Google로 목록 열기','authenticate-list'):'')+'</div>':'');
-    const localHtml=rows(local)||'<p class="gs-library-note">이 탭에서 시작한 개인 초안이 없습니다.</p>';
+    const localHtml='<p class="personal-storage">'+esc(host.personalLibraryIssue()||personalDraftNotice)+'</p>'+
+      (rows(local)||'<p class="gs-library-note">저장된 개인 초안이 없습니다.</p>');
     if(sharedHtml!==renderedShared){get('library').innerHTML=sharedHtml;renderedShared=sharedHtml;}
     if(localHtml!==renderedLocal){get('local-library').innerHTML=localHtml;renderedLocal=localHtml;}
     get('library').hidden=isLocal;get('local-library').hidden=!isLocal;

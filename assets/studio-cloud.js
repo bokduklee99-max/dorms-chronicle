@@ -27,7 +27,31 @@ export function sharedContent(draft,actors){
   relations:relations.map(r=>({id:r.id,fromId:r.fromId,toId:r.toId,fromType:r.fromType,toType:r.toType,kind:r.kind,label:r.label||'',source:r.source||''})).sort(byId),
   actors:actors.map(a=>({id:a.id,title:a.title,kind:a.kind,body:a.body||'',originalName:a.originalName||'',start:a.start||'',end:a.end||'',source:a.source||'',spaceIds:[...(a.spaceIds||[])].sort(),local:!!a.local})).sort(byId)};
 }
+function clearDeletedLinks(draft,removed){
+ const result={...draft,
+  categories:draft.categories.map(c=>({...c,members:c.members.filter(id=>!removed('event',id))})),
+  relations:draft.relations.filter(r=>!removed(r.fromType,r.fromId)&&!removed(r.toType,r.toId))};
+ if(draft.queue)result.queue=draft.queue.filter(item=>!removed(item.kind,item.id)).map(item=>
+  removed(item.originKind,item.origin)?{...item,originKind:'package',origin:draft.id}:item);
+ return result;
+}
+export function removeDraftItem(draft,kind,id){
+ const field=kind==='category'?'categories':'events';
+ return clearDeletedLinks({...draft,[field]:draft[field].filter(row=>row.id!==id)},(type,key)=>type===kind&&key===id);
+}
 export function mergeChanges(base,local,remote,path='패키지',choice){
+ const merged=mergeFields(base,local,remote,path,choice);
+ if(merged===local||merged===remote)return merged;
+ // A collaborator may have connected another item while this item was being deleted.
+ const removed=new Map();
+ for(const [kind,field] of [['category','categories'],['event','events']]){
+  const kept=new Set(merged[field].map(row=>row.id));
+  const ids=new Set(base[field].map(row=>row.id).filter(id=>!kept.has(id)));
+  if(ids.size)removed.set(kind,ids);
+ }
+ return removed.size?clearDeletedLinks(merged,(kind,id)=>removed.get(kind)?.has(id)):merged;
+}
+function mergeFields(base,local,remote,path,choice){
  if(same(base,local)||same(local,remote))return remote;
  if(same(base,remote))return local;
  if([base,local,remote].every(Array.isArray)){
@@ -37,13 +61,13 @@ export function mergeChanges(base,local,remote,path='패키지',choice){
   }
   if(all.every(v=>v&&typeof v.id==='string')){
    const [b,l,r]=[base,local,remote].map(list=>new Map(list.map(v=>[v.id,v])));
-   return [...new Set([...r.keys(),...l.keys()])].map(id=>mergeChanges(b.get(id),l.get(id),r.get(id),path+' / '+(l.get(id)?.title||r.get(id)?.name||id),choice)).filter(Boolean);
+   return [...new Set([...r.keys(),...l.keys()])].map(id=>mergeFields(b.get(id),l.get(id),r.get(id),path+' / '+(l.get(id)?.title||r.get(id)?.name||id),choice)).filter(Boolean);
   }
  }
  if([base,local,remote].every(v=>v&&typeof v==='object'&&!Array.isArray(v))){
   const result={};
   for(const key of new Set([...Object.keys(remote),...Object.keys(local)])){
-   const value=mergeChanges(base[key],local[key],remote[key],path+' / '+key,choice);
+   const value=mergeFields(base[key],local[key],remote[key],path+' / '+key,choice);
    if(value!==undefined)Object.defineProperty(result,key,{value,enumerable:true,configurable:true,writable:true});
   }
   return result;

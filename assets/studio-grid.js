@@ -1,7 +1,9 @@
 import {gridState,gridContent} from './studio-grid-model.js';
+import {removeDraftItem} from './studio-cloud.js';
 import {mountRelationWires} from './studio-relation-wires.js';
 const paths={'link-2':'M10 13a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-2 2 M14 11a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l2-2','unlink-2':'M8 16l-2 2a3 3 0 0 1-4-4l3-3 M16 8l2-2a3 3 0 0 1 4 4l-3 3 M9 3v3 M3 9h3 M16 21v-3 M22 15h-3','clipboard-paste':'M8 5H5v16h14v-6 M9 3h6v4H9z M13 11h9l-3-3 M22 11l-3 3','map-pin':'M18 9c0 5-6 11-6 11S6 14 6 9a6 6 0 1 1 12 0z','users':'M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M1 21v-2a7 7 0 0 1 14 0v2 M16 5a4 4 0 0 1 0 7 M17 15a6 6 0 0 1 5 6','folder':'M3 6h7l2 2h9v12H3z','calendar-days':'M3 5h18v16H3z M3 10h18 M8 2v5 M16 2v5'};
 paths.book='M4 4h13a2 2 0 0 1 2 2v14H6a3 3 0 0 1-3-3V6a2 2 0 0 1 1-2Z M7 4v12 M3 17c0-1 1-2 3-2h13';
+paths.trash='M3 6h18 M9 6V3h6v3 M6 6l1 15h10l1-15 M10 10v7 M14 10v7';
 function makeIcon(name){
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(svg.namespaceURI,'path');
  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');path.setAttribute('d',paths[name]||'');
@@ -42,7 +44,7 @@ export function mountStudioGrid(container,host){
       <button id="gs-wire-bin" type="button" aria-disabled="true"><i data-lucide="unlink-2" aria-hidden="true"></i> 연결 해제</button>
     </div>
     <div class="gs-grid" id="gs-board">
-      <section class="gs-categories" data-note-key="categories" data-note-label="카테고리" aria-label="카테고리"><header class="gs-head"><h2>카테고리 <span id="gs-c-count"></span></h2><button id="gs-edit-selected" data-act="edit-cat" hidden>편집</button></header><div id="gs-cats"></div></section>
+      <section class="gs-categories" data-note-key="categories" data-note-label="카테고리" aria-label="카테고리"><header class="gs-head"><h2>카테고리 <span id="gs-c-count"></span></h2><div id="gs-cat-actions" class="gs-buttons" hidden><button id="gs-edit-selected" data-act="edit-cat">편집</button><button id="gs-delete-selected" data-act="delete-item" data-kind="category">삭제</button></div></header><div id="gs-cats"></div></section>
       <div id="gs-wires" aria-label="카테고리와 사건 연결점" role="group">
         <svg class="gs-wire-svg" aria-hidden="true"><g id="gs-edges"></g><path id="gs-rubber" visibility="hidden" fill="none"></path></svg>
         <div id="gs-ports"></div>
@@ -154,8 +156,8 @@ export function mountStudioGrid(container,host){
   function error(t){get('err').textContent=t;}
   const noteAt=(parts,label)=>' data-note-key="'+esc(parts.map(encodeURIComponent).join('|'))+'" data-note-label="'+esc(label)+'"';
   const cols=[
-    ['title','사건명',172],['date','날짜',110],['body','내용',215],['importance','중요도',123],['type','유형',119],
-    ['end','종료일',110],['image','이미지 주소',165],['actor','행위주체',153],['place','공간',133],['category','카테고리',145],['event','관련 사건',143],['remove','행 작업',78]
+    ['title','사건명',200],['date','날짜',110],['body','내용',215],['importance','중요도',123],['type','유형',119],
+    ['end','종료일',110],['image','이미지 주소',165],['actor','행위주체',153],['place','공간',133],['category','카테고리',145],['event','관련 사건',143]
   ];
   function linkList(kind,owner,ownerKind='event',write=false){
     if(ownerKind==='package')return P().ids;
@@ -170,7 +172,6 @@ export function mountStudioGrid(container,host){
   }
   function tableCell(e,k){
     const val=esc(e[k]),attrs=' data-field="'+k+'" aria-label="'+esc((e.title||'새 사건')+' '+cols.find(c=>c[0]===k)[1])+'"';
-    if(k==='remove')return btn('행 제외','remove-event',e.id,'aria-label="'+esc((e.title||'새 사건')+' 행 제외')+'"');
     if(linkLabels[k]){
       const ids=linkList(k,e.id).map(idOf),labels=ids.map(id=>title(k,id));
       const chips=ids.map((id,i)=>{
@@ -183,7 +184,9 @@ export function mountStudioGrid(container,host){
     if(k!=='body'&&k!=='title')return '<input'+attrs+' value="'+val+'">';
     const field='<div class="gs-wrap-field" data-text="'+val+'"><textarea rows="1"'+attrs+(k==='title'?' placeholder="사건명"':'')+'>\n'+val+'</textarea></div>';
     if(k==='body')return field;
-    return '<div class="gs-name-cell">'+field+btn(icon('link-2'),'links',e.id,'data-kind="actor" aria-label="'+esc((e.title||'새 사건')+' 연결 편집')+'"')+'</div>';
+    const name=e.title||'새 사건';
+    const remove=btn(icon('trash'),'delete-item',e.id,'data-kind="event" title="사건 삭제" aria-label="'+esc(name+' 사건 삭제')+'"'+noteAt(['cell',e.id,'remove'],name+' · 사건 삭제'));
+    return '<div class="gs-name-cell">'+field+btn(icon('link-2'),'links',e.id,'data-kind="actor" aria-label="'+esc(name+' 연결 편집')+'"')+remove+'</div>';
   }
   function table(){
     const ids=visibleIds();
@@ -233,8 +236,10 @@ export function mountStudioGrid(container,host){
     get('c-count').textContent=p.categories.length;get('e-count').textContent=visibleIds().length;
     get('event-heading').textContent=category?category.name+' · 사건':'사건';
     get('clear-category').hidden=!category;
-    const edit=get('edit-selected');edit.hidden=!category;edit.dataset.id=categoryId;
-    if(category)edit.setAttribute('aria-label',category.name+' 카테고리 편집');
+    get('cat-actions').hidden=!category;
+    if(category)for(const b of get('cat-actions').children){
+      b.dataset.id=categoryId;b.setAttribute('aria-label',category.name+' 카테고리 '+b.textContent);
+    }
     get('cats').innerHTML=Object.entries(cats).map(([k,n])=>'<div class="gs-cat-group" data-wire-type="'+k+'"><div class="gs-cat-head"><h3>'+n+'</h3>'+btn('＋','new-cat',k,'aria-label="'+n+' 추가"')+'</div>'+p.categories.filter(c=>c.kind===k).map(c=>btn('<span>'+esc(c.name)+'</span><small>'+p.ids.filter(id=>linkList('category',id).includes(c.id)).length+'건</small>','filter-category',c.id,noteAt(['category',c.id],c.name)+' class="gs-cat-item" aria-pressed="'+(c.id===categoryId)+'"')).join('')+'</div>').join('');
     table();relationRows();reviewRows();icons();jumpState(tab);resetWires();
   }
@@ -253,6 +258,33 @@ export function mountStudioGrid(container,host){
     includeInSheet(id);return id;
   }
   function afterChange(note){draw();persist();if(note)status(note);}
+  function askDelete(kind,id){
+    const p=P(),category=kind==='category',item=by(kind,id);
+    if(!item||(!category&&!p.ids.includes(id)))return;
+    const label=names[kind],name=item.name||item.title||'이름 없는 '+label;
+    const links=category?p.ids.filter(e=>linkList('category',e).includes(id)).length:linkList('category',id).length;
+    const relations=p.relations.filter(r=>r.fromType===kind&&r.fromId===id||r.toType===kind&&r.toId===id).length;
+    const details=[links&&(category?'사건':'카테고리')+' '+links+'건',relations&&'관계 '+relations+'건',
+      item.place?.length&&'공간 '+item.place.length+'건',item.actor?.length&&'행위주체 '+item.actor.length+'건'].filter(Boolean);
+    const impact=details.length?'<p>'+details.join(' · ')+' 연결이 해제됩니다.</p>':'';
+    const note=category&&links?'연결된 사건은 사건 시트에 남습니다.':!category&&base.event[id]?'기존 사건 찾기에서 원본을 다시 가져올 수 있습니다.':'';
+    show({mode:'delete-item',kind,id},label+' 삭제','<div class="gs-delete-summary"><p>이 초안에서 <strong>‘'+esc(name)+'’</strong> 항목을 삭제할까요?</p>'+impact+(note?'<p>'+note+'</p>':'')+'</div>'+
+      actions(btn('취소','close','','data-autofocus')+btn(label+' 삭제','confirm-delete','','class="gs-danger"')));
+  }
+  function confirmDelete(){
+    if(view?.mode!=='delete-item')return;
+    const {kind,id}=view,category=kind==='category',name=title(kind,id);
+    const ids=visibleIds(),index=ids.indexOf(id),categoryKind=category&&by(kind,id).kind;
+    const content=removeDraftItem(gridContent(s,base),kind,id);
+    s=gridState(content);
+    for(const side of ['from','to'])if(pinned[side]?.type===kind&&pinned[side].id===id)pinned[side]=null;
+    trigger=null;close();afterChange('‘'+name+'’ '+names[kind]+' 삭제를 완료했습니다.');
+    if(category)get('cats').querySelector('[data-act=new-cat][data-id="'+CSS.escape(categoryKind)+'"]')?.focus({preventScroll:true});
+    else{
+      const next=ids[index+1]||ids[index-1];
+      if(next)focusRow(next);else root.querySelector('[data-act=add-event]').focus({preventScroll:true});
+    }
+  }
   function setCategory(id){
     categoryId=id;get('scroll').scrollTop=0;get('mobile-rows').scrollTop=0;draw();
   }
@@ -631,13 +663,8 @@ export function mountStudioGrid(container,host){
       case 'cat-kind':view.kind=id;get('dia-body').querySelectorAll('[data-act="cat-kind"]').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));break;
       case 'save-cat':case 'save-cat-place':saveCat(act==='save-cat-place');break;
       case 'add-event':{const k=newEvent();afterChange();scrollColumn('title');focusRow(k);break;}
-      case 'remove-event':{
-        if(!confirm((title('event',id)||'이 사건')+'을 이 패키지에서 제외할까요?'))break;
-        const p=P();p.ids=p.ids.filter(key=>key!==id);delete p.links[id];
-        p.relations=p.relations.filter(r=>!(r.fromType==='event'&&r.fromId===id||r.toType==='event'&&r.toId===id));
-        s.queue=s.queue.filter(r=>!(r.kind==='event'&&r.id===id));
-        afterChange('패키지에서 사건을 제외했습니다.');break;
-      }
+      case 'delete-item':askDelete(kind,id);break;
+      case 'confirm-delete':confirmDelete();break;
       case 'reuse-event':finder(P().id,'package','event');break;
       case 'links':finder(id,'event',kind);break;
       case 'link-tab':finder(view.owner,view.ownerKind,id);break;
@@ -678,7 +705,8 @@ export function mountStudioGrid(container,host){
       if(t.dataset.field==='title'){
         const row=t.closest('tr'), name=t.value.trim()||'새 사건';
         row.querySelectorAll('[data-field]').forEach(input=>input.setAttribute('aria-label',name+' '+cols.find(c=>c[0]===input.dataset.field)[1]));
-        row.querySelector('.gs-name-cell button').setAttribute('aria-label',name+' 연결 편집');
+        row.querySelector('.gs-name-cell [data-act=links]').setAttribute('aria-label',name+' 연결 편집');
+        const remove=row.querySelector('[data-act=delete-item]');remove.setAttribute('aria-label',name+' 사건 삭제');remove.dataset.noteLabel=name+' · 사건 삭제';
         row.querySelectorAll('.gs-cell-link').forEach(b=>b.setAttribute('aria-label',name+' '+linkLabels[b.dataset.kind]+' 연결'));
         resetWires();
         relationRows();reviewRows();icons();
@@ -692,7 +720,7 @@ export function mountStudioGrid(container,host){
     const ids=visibleIds(),r0=ids.indexOf(t.closest('tr').dataset.row),c0=cols.findIndex(c=>c[0]===t.dataset.field);
     const rows=text.replace(/\r\n?/g,'\n').replace(/\n$/,'').split('\n').map(r=>r.split('\t'));
     const changes=[];for(let i=0;i<rows.length;i++){for(let j=0;j<rows[i].length;j++){
-      const k=cols[c0+j]?.[0];let val=rows[i][j].trim();if(!k||linkLabels[k]||k==='remove'){status('연결 열은 이름 검색으로 입력하세요. 붙여넣을 범위를 확인해 주세요.');return;}
+      const k=cols[c0+j]?.[0];let val=rows[i][j].trim();if(!k||linkLabels[k]){status('연결 열은 이름 검색으로 입력하세요. 붙여넣을 범위를 확인해 주세요.');return;}
       const options=k==='importance'?importance:k==='type'?types:null;
       if(val&&options){const code=Object.keys(options).find(c=>c===val||options[c]===val);if(!code){status('붙여넣은 '+cols[c0+j][1]+' 값을 확인해 주세요.');return;}val=code;}
       changes.push([i,k,val]);

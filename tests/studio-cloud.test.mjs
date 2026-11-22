@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {sharedContent,mergeChanges} from '../assets/studio-cloud.js';
+import {sharedContent,mergeChanges,removeDraftItem} from '../assets/studio-cloud.js';
 import {readFileSync} from 'node:fs';
 import {gridState,gridContent} from '../assets/studio-grid-model.js';
 import {studioCatalog} from '../assets/studio-catalog.js';
@@ -55,6 +55,41 @@ function mockSource(t,config,initial){
  });
  return ()=>tables;
 }
+test('deleting a category or event clears its draft links and preserves the reusable source and other review items',async t=>{
+ const tables=blankTables();tables.패키지[0].push('제작실 보완정보');
+ tables.사건.push(['e','1919','','원본 사건']);tables.사건_패키지.push(['e','other']);
+ const snapshot=mockSource(t,config,tables);
+ const original=sharedContent({...base,
+  categories:[...base.categories,{id:'keep',name:'남는 주제',kind:'theme',members:['e']}],
+  relations:[...base.relations,{id:'cr',fromType:'category',fromId:'c',toType:'event',toId:'e',kind:'action'}],
+  queue:[{id:'c',kind:'category',pkg:id,origin:'e',originKind:'event',done:true},{id:'a',kind:'actor',pkg:id,origin:'e',originKind:'event',done:false}]},base.actors);
+ await createDraft('token',config,original);
+ let draft=await readDraft('token',config,id);
+ const categoryRemoved=removeDraftItem(draft.content,'category','c');
+ assert.deepEqual(categoryRemoved.events,original.events);
+ assert.deepEqual(categoryRemoved.relations.map(r=>r.id),['r']);
+ assert.deepEqual(categoryRemoved.queue.map(r=>r.id),['a']);
+ await writeDraft('token',config,draft,categoryRemoved);
+ draft=await readDraft('token',config,id);
+ assert.deepEqual(draft.content,categoryRemoved);
+ const eventRemoved=removeDraftItem(draft.content,'event','e');
+ assert.deepEqual(eventRemoved.categories[0].members,[]);
+ assert.deepEqual(eventRemoved.relations,[]);assert.deepEqual(eventRemoved.queue,[{...original.queue[1],origin:id,originKind:'package'}]);
+ await writeDraft('token',config,draft,eventRemoved);
+ assert.deepEqual((await readDraft('token',config,id)).content,eventRemoved);
+ assert.deepEqual(snapshot().사건[1],tables.사건[1]);
+ assert.deepEqual(snapshot().사건_패키지[1],['e','other']);
+});
+test('a concurrent link to a deleted event cannot survive the three-way merge',()=>{
+ const local=removeDraftItem(base,'event','e'),remote=structuredClone(base);
+ remote.categories.push({id:'new',name:'새 주제',kind:'theme',members:['e']});
+ remote.relations.push({id:'new-edge',fromType:'event',fromId:'e',toType:'category',toId:'new',kind:'cause'});
+ for(const [first,second] of [[local,remote],[remote,local]]){
+  const merged=mergeChanges(base,first,second);
+  assert.deepEqual(merged.events,[]);assert.deepEqual(merged.relations,[]);
+  assert.deepEqual(merged.categories.map(c=>[c.id,c.members]),[['c',[]],['new',[]]]);
+ }
+});
 test('the source sheet stages all records, publishes in place, and closes the draft after publication',async t=>{
  const snapshot=mockSource(t,config,blankTables());
  const original=sharedContent(base,base.actors);

@@ -277,7 +277,14 @@ body{margin:0}
 #chronicle-grid-studio #gs-queue{max-height:200px;overflow-y:auto}
 #chronicle-grid-studio .gs-event-heading{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
 #chronicle-grid-studio #gs-event-heading{font-weight:inherit}
-#chronicle-grid-studio #gs-edit-selected,#chronicle-grid-studio #gs-clear-category{font-size:13px;min-height:28px;padding:4px 8px}
+#chronicle-grid-studio #gs-cat-actions button,#chronicle-grid-studio #gs-clear-category{font-size:13px;min-height:28px;padding:4px 8px}
+#chronicle-grid-studio [data-act=delete-item]{color:var(--rust)}
+#chronicle-grid-studio .gs-name-cell [data-act=delete-item]{color:var(--sub)}
+#chronicle-grid-studio .gs-name-cell [data-act=delete-item]:is(:hover,:focus-visible){color:var(--rust);background:var(--head)}
+#chronicle-grid-studio .gs-delete-summary{display:grid;gap:5px;padding-block:2px 8px;overflow-wrap:anywhere}
+#chronicle-grid-studio .gs-delete-summary p+p{color:var(--sub);font-size:14px}
+#chronicle-grid-studio button.gs-danger{border-color:var(--rust);background:var(--rust);color:var(--on)}
+@media(pointer:coarse){#chronicle-grid-studio .gs-name-cell button{width:32px;min-height:40px}}
 #chronicle-grid-studio .gs-cat-item[aria-pressed=true] small{color:inherit}
 #chronicle-grid-studio :is(.gs-scroll,#gs-mobile-rows,#gs-cats){max-height:var(--sheet-height);overflow-y:auto;scrollbar-width:thin}
 #chronicle-grid-studio .gs-scroll{scroll-padding-top:34px}

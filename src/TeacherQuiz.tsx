@@ -513,7 +513,7 @@ function SharedQuiz({plan,records}:{plan:QuizPlan;records:QuizRecord[]}){
  </section>{playing&&ready&&<PlanPlayer plan={plan} records={records} close={()=>setPlaying(false)}/>}</>;
 }
 
-export function QuizIntroduction({kind,title,description,poster}:{kind:'blank'|'order'|'person'|'insertion';title:string;description:string;poster?:string}){
+function QuizIntroduction({kind,title,description,poster}:{kind:'blank'|'order'|'person'|'insertion';title:string;description:string;poster?:string}){
  const [open,setOpen]=useState(false);
  const descriptionId=useId();
  const label=title+' 소개 영상';
@@ -524,6 +524,15 @@ export function QuizIntroduction({kind,title,description,poster}:{kind:'blank'|'
   <video controls autoPlay playsInline aria-label={label} aria-describedby={descriptionId} src={'/assets/quiz-previews/'+kind+'.mp4'}/>
   <p id={descriptionId} className="sr-only">{description}</p>
  </QuizDialog>}</>;
+}
+
+export function QuizTypeCard({kind,title,description,introduction=description,poster,children}:{
+ kind:'blank'|'order'|'person'|'insertion';title:string;description:string;introduction?:string;poster?:string;children:ReactNode;
+}){
+ return <article className="quiz-type">
+  <QuizIntroduction kind={kind} title={title} description={introduction} poster={poster}/>
+  <div className="quiz-type-content"><h2>{title}</h2><p>{description}</p>{children}</div>
+ </article>;
 }
 
 function QuizLibrary({records,workspace,packageId}:{records:QuizRecord[];workspace:string;packageId:string}){
@@ -555,38 +564,22 @@ function QuizLibrary({records,workspace,packageId}:{records:QuizRecord[];workspa
  }
  return <>
   <section className="quiz-workbench" aria-label="새 퀴즈">
-   <article className="quiz-type">
-    <QuizIntroduction kind="blank" title="빈칸 퀴즈" description="교사가 봉오동 전투를 고르고 사건명을 가립니다. 학생은 날짜와 기록을 읽고 빈칸에 봉오동 전투를 입력해 정답을 확인합니다."/>
-    <div className="quiz-type-content">
-     <h2>빈칸 퀴즈</h2>
-     <p>{records.length?'사건명, 날짜, 본문의 빈칸에 답을 입력합니다.':'수업 설정에서 출제할 사건을 선택하세요.'}</p>
-     <button className="button primary" disabled={!records.length} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0})}>빈칸 퀴즈 만들기</button>
-    </div>
-   </article>
-   <article className="quiz-type">
-    <QuizIntroduction kind="order" title="사건 순서 퀴즈" description="교사가 세 사건을 한 문항에 넣습니다. 학생은 대한 광복회, 봉오동 전투, 광주 학생 항일 운동을 차례로 시간선에 놓고 채점합니다."/>
-    <div className="quiz-type-content">
-     <h2>사건 순서 퀴즈</h2>
-     <p>{canOrder?'사건 카드를 칠판 시간선에 일어난 순서대로 놓습니다.':'시작일이 확인된 사건이 두 개 이상 필요합니다.'}</p>
-     <button className="button primary" disabled={!canOrder} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'order',questions:[{items:[]}]}})}>사건 순서 퀴즈 만들기</button>
-    </div>
-   </article>
-   <article className="quiz-type">
-    <QuizIntroduction kind="person" title="관련 인물 퀴즈" description="교사가 의열단 결성의 정답 인물로 김원봉을 지정합니다. 학생은 사건 기록을 읽고 보기에서 김원봉을 선택한 뒤 채점합니다."/>
-    <div className="quiz-type-content">
-     <h2>관련 인물 퀴즈</h2>
-     <p>{canPerson?'사건을 읽고 보기에서 관련 인물이나 당시 지도자를 고릅니다.':'정답과 구분되는 인물 보기를 만들 자료가 필요합니다.'}</p>
-     <button className="button primary" disabled={!canPerson} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'person',title:'관련 인물 퀴즈',items:[]}})}>관련 인물 퀴즈 만들기</button>
-    </div>
-   </article>
-   <article className="quiz-type">
-    <QuizIntroduction kind="insertion" title={insertionTitle} description="교사가 한 라운드에 두 문제를 내도록 정하고 사건 세 개를 선택합니다. 학생은 대한 광복회와 광주 학생 항일 운동 사이에 봉오동 전투를 넣고 결과를 확인합니다."/>
-    <div className="quiz-type-content">
-     <h2>{insertionTitle}</h2>
-     <p>{canOrder?'새 사건이 들어갈 틈을 고르며 시간선을 완성합니다.':'시작일이 확인된 사건이 두 개 이상 필요합니다.'}</p>
-     <button type="button" className="button primary" disabled={!canOrder} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'insertion',title:insertionTitle,items:[],roundCount:2,questionsPerRound:2}})}>{insertionTitle} 만들기</button>
-    </div>
-   </article>
+   <QuizTypeCard kind="blank" title="빈칸 퀴즈" introduction="교사가 봉오동 전투를 고르고 사건명을 가립니다. 학생은 날짜와 기록을 읽고 빈칸에 봉오동 전투를 입력해 정답을 확인합니다."
+    description={records.length?'사건명, 날짜, 본문의 빈칸에 답을 입력합니다.':'수업 설정에서 출제할 사건을 선택하세요.'}>
+    <button className="button primary" disabled={!records.length} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0})}>빈칸 퀴즈 만들기</button>
+   </QuizTypeCard>
+   <QuizTypeCard kind="order" title="사건 순서 퀴즈" introduction="교사가 세 사건을 한 문항에 넣습니다. 학생은 대한 광복회, 봉오동 전투, 광주 학생 항일 운동을 차례로 시간선에 놓고 채점합니다."
+    description={canOrder?'사건 카드를 칠판 시간선에 일어난 순서대로 놓습니다.':'시작일이 확인된 사건이 두 개 이상 필요합니다.'}>
+    <button className="button primary" disabled={!canOrder} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'order',questions:[{items:[]}]}})}>사건 순서 퀴즈 만들기</button>
+   </QuizTypeCard>
+   <QuizTypeCard kind="person" title="관련 인물 퀴즈" introduction="교사가 의열단 결성의 정답 인물로 김원봉을 지정합니다. 학생은 사건 기록을 읽고 보기에서 김원봉을 선택한 뒤 채점합니다."
+    description={canPerson?'사건을 읽고 보기에서 관련 인물이나 당시 지도자를 고릅니다.':'정답과 구분되는 인물 보기를 만들 자료가 필요합니다.'}>
+    <button className="button primary" disabled={!canPerson} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'person',title:'관련 인물 퀴즈',items:[]}})}>관련 인물 퀴즈 만들기</button>
+   </QuizTypeCard>
+   <QuizTypeCard kind="insertion" title={insertionTitle} introduction="교사가 한 라운드에 두 문제를 내도록 정하고 사건 세 개를 선택합니다. 학생은 대한 광복회와 광주 학생 항일 운동 사이에 봉오동 전투를 넣고 결과를 확인합니다."
+    description={canOrder?'새 사건이 들어갈 틈을 고르며 시간선을 완성합니다.':'시작일이 확인된 사건이 두 개 이상 필요합니다.'}>
+    <button type="button" className="button primary" disabled={!canOrder} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'insertion',title:insertionTitle,items:[],roundCount:2,questionsPerRound:2}})}>{insertionTitle} 만들기</button>
+   </QuizTypeCard>
   </section>
   <section className="quiz-library" aria-labelledby="quiz-library-heading">
    <h2 id="quiz-library-heading">내 퀴즈</h2>

@@ -1,6 +1,4 @@
 .quiz-intro,.record-quiz{font-family:var(--font-sans);color:var(--chronicle-ink);background:var(--chronicle-surface);border:1px solid var(--chronicle-line);word-break:keep-all;overflow-wrap:anywhere}
-.lesson-nav-links{display:flex;align-items:center;gap:clamp(10px,2vw,24px)}
-.lesson-nav-links a+a{border-inline-start:1px solid var(--chronicle-line);padding-inline-start:clamp(10px,2vw,24px)}
 .lesson-classroom .app-shell{max-width:1160px}
 .lesson-classroom .page-heading{display:block;margin-bottom:clamp(20px,3vw,36px)}
 .lesson-classroom .page-heading h1{font:650 clamp(32px,4.5vw,50px)/1.18 var(--font-sans);letter-spacing:-.045em;margin:0}

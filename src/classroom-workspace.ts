@@ -9,10 +9,11 @@ import {koreanHistory} from './korean-history';
 import {exploreHref,filterLessonEvents,loadWorkspaces,setupHref,workspaceDraft,type WorkspaceDraft} from './workspace-model';
 import actorDirectory from '../assets/package-studio-actors.json';
 import type {QuizPerson,QuizRecord} from './record-quiz';
+export {mountExampleActivities} from './ExampleActivities';
 export {mountRecordQuiz} from './RecordQuiz';
 export {parsePlan,quizEventIds} from './authored-quiz';
 
-export async function japanSnapshot(item:WorkspaceDraft,dateRange:SheetParser['dateRange']):Promise<QuizRecord[]>{
+async function japanSnapshot(item:WorkspaceDraft,dateRange:SheetParser['dateRange']):Promise<QuizRecord[]>{
  type Row=ImportanceRow&{end?:string;body:string;period?:string;periodNames?:string[];arcs:string[];themes:string[];actors:{name:string}[];place:string;media:string;approximate?:boolean};
  const sheet=await swimlaneSnapshot<Row>('japan');
  if(!sheet)throw Error('저장된 수업 자료를 읽지 못했습니다.');
@@ -100,3 +101,5 @@ export function classroomWorkspace(id:string,sharedPackage?:string,includedEvent
   },
  };
 }
+
+export const exampleJapanRecords=(parser:SheetParser)=>japanSnapshot(workspaceDraft('','japan'),parser.dateRange);

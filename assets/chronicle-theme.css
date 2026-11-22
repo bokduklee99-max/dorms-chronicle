@@ -20,6 +20,8 @@ body{background:var(--chronicle-paper);color:var(--chronicle-ink);font-family:va
 :is(.setup-page,.metro-app,.chronicle-lens main,.chronicle-ideas main) h1{font-weight:600;letter-spacing:-.055em}
 :is(.landing-nav,.topbar){background:var(--chronicle-paper);border-color:var(--chronicle-line)}
 .topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--chronicle-line);height:88px;max-width:none;padding-inline:5%;font-size:15px}
+.lesson-nav-links{display:flex;align-items:center;gap:clamp(10px,2vw,24px)}
+.lesson-nav-links a+a{border-inline-start:1px solid var(--chronicle-line);padding-inline-start:clamp(10px,2vw,24px)}
 .topbar>a[href='/']{font-family:Georgia,serif;font-size:24px;font-weight:600;letter-spacing:-1px}
 .setup-nav{height:88px}
 .setup-page{padding-top:40px}.metro-app{padding-top:40px}

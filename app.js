@@ -308,14 +308,15 @@ async function startClassroom(){
   const query=new URLSearchParams(location.search);
   const typingPackage=query.get('typing');
   const sharedPackage=typingPackage||query.get('quiz');
-  if(!query.has('workspace')&&!sharedPackage){initialize();return;}
+  const example=!sharedPackage&&!query.has('workspace')&&query.get('sample')==='japan';
+  if(!query.has('workspace')&&!sharedPackage&&!example){initialize();return;}
   $('#panel-timeline').hidden=true;$('.main-tabs').hidden=true;
   $('.data-actions').hidden=true;
   $('.site-header').hidden=true;
   $('#lesson-nav').hidden=false;
   $('.lesson-nav-links').hidden=Boolean(sharedPackage);
   document.body.classList.add('lesson-classroom');
-  const heading=sharedPackage?'학습 콘텐츠':'퀴즈 출제실';
+  const heading=sharedPackage||example?'학습 콘텐츠':'퀴즈 출제실';
   $('.page-heading h1').textContent=heading;
   const context=$('.page-heading .breadcrumb');
   function showContext(school,subject){
@@ -342,6 +343,16 @@ async function startClassroom(){
   let workspace, mountRecordQuiz, sharedPlan, sharedRoute;
   try{
     const entry=await import('/metro/assets/classroom-workspace.js?v=event-importance-1');
+    if(example){
+      showContext('', '일제강점기와 독립운동');
+      const timeline=$('#lesson-timeline-link');
+      timeline.href='/metro/?sample=japan';
+      timeline.hidden=false;
+      const records=await entry.exampleJapanRecords(SheetData);
+      entry.mountExampleActivities($('#lesson-activity'),records);
+      status.hidden=true;
+      return;
+    }
     const {classroomWorkspace}=entry;
     mountRecordQuiz=entry.mountRecordQuiz;
     if(sharedPackage){

@@ -263,7 +263,7 @@ export function WorkspaceSetup(){
     <div className="setup-section-heading"><h2 id="setup-saved-title">수업 목록</h2><span>{saved.length+1}개</span></div>
     <ul>
      <LessonCard title="일제강점기와 독립운동" view="수업 예시 · 기본 연표" count={145}
-      preview="/assets/view-previews/example-japan.jpg" timeline="/example/" activities="/example/#activities"/>
+      preview="/assets/view-previews/example-japan.jpg" timeline="/metro/?sample=japan" activities="/classroom.html?sample=japan"/>
      {saved.map(item=>{
       const packageLabel=packageName(packages,item.packageId);
       const itemData=packageData(item.packageId);

@@ -126,7 +126,9 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
   setRequested(null);
  },[requested,pending,lesson,data]);
 
- return <><nav className="topbar" hidden={showroom||sample}><a href={setupHref()}>← 수업 목록으로</a><a href="/">Dorms' Chronicle</a>{!workspace&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main data-showroom={showroom||sample||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom||sample}><h1>{timelineTitle}</h1></header>
+ return <><nav className="topbar" hidden={showroom}>
+  <div className="lesson-nav-links"><a href={setupHref()}>← 수업 목록으로</a>{sample&&<a href="/classroom.html?sample=japan">학습 콘텐츠 열기 ↗</a>}</div>
+  <a href="/">Dorms' Chronicle</a>{!workspace&&!sample&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
  <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{views.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=views[ev.key==='Home'?0:ev.key==='End'?views.length-1:(index+(ev.key==='ArrowRight'?1:-1)+views.length)%views.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
  {!data.events.length&&<p role="status">{pending?'시트에서 사건을 읽는 중이에요.':<>표시할 사건이 없어요. <a href={setupHref({workspace:workspace?.id})}>탐색 설정에서 구성을 확인해 주세요.</a></>}</p>}
  {view==='swimlane'&&data.events.length>0&&<SwimlaneTimeline lesson={pending?undefined:lesson} packageId={packageId} name={selectedPackageName}/>}
@@ -136,10 +138,10 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
   : <p role="status">기본 연표를 불러오는 중입니다.</p>)}
  {requested&&!lesson&&<p role="status">상세 정보를 불러오는 중입니다.</p>}
  {context&&createPortal(<EventCategoryTimeline event={context.event} data={data} titleId={view==='radar'?'radar-detail-title':'reader-title'} topicId={detailTopic} onTopicChange={setDetailTopic} onVisit={visit}/>,context.host)}
- <footer hidden={showroom||sample}>{localLesson&&globalThis.caches&&<>
+ <footer hidden={showroom}>{!sample&&localLesson&&globalThis.caches&&<>
   <button type="button" disabled={pending||!lesson||refreshState==='loading'} onClick={refreshLocalCopy}>{refreshState==='loading'?'시트 갱신 중…':'원본 시트에서 다시 받기'}</button>
   {refreshState==='failed'&&<span role="status">시트를 갱신하지 못했습니다. 다시 시도해 주세요.</span>}
- </>}Metro Map Gallery · <a href="https://21st.dev/@dhxwhy/components/metro-map-gallery" target="_blank" rel="noreferrer">DHxWhy / 21st.dev</a>{!workspace&&<>
+ </>}Metro Map Gallery · <a href="https://21st.dev/@dhxwhy/components/metro-map-gallery" target="_blank" rel="noreferrer">DHxWhy / 21st.dev</a>{!workspace&&!sample&&<>
   <a href="/classroom.html">연표·활동 ↗</a><CreatorCredit/>
  </>}</footer></main></>;
 }

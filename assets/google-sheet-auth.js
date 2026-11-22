@@ -8,9 +8,14 @@ export function loadGoogleIdentity() {
   document.head.append(script);
 }
 
-export function authorizeRelationSheet(clientId, loginHint='noamchomsky1571@gmail.com') {
+export function currentSheetToken() {
+  return credentials?.expiresAt > Date.now() ? credentials.token : '';
+}
+
+export function authorizeRelationSheet(clientId) {
   if (!clientId) throw new Error('Google 시트 저장을 사용하려면 앱의 OAuth 웹 클라이언트 ID를 연결해 주세요.');
-  if (credentials?.expiresAt > Date.now()) return Promise.resolve(credentials.token);
+  const token = currentSheetToken();
+  if (token) return Promise.resolve(token);
   const oauth = globalThis.google?.accounts?.oauth2;
   if (!oauth) throw new Error('Google 인증을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
   return new Promise((resolve,reject) => {
@@ -18,7 +23,6 @@ export function authorizeRelationSheet(clientId, loginHint='noamchomsky1571@gmai
       client_id:clientId,
       scope:sheetScope,
       include_granted_scopes:false,
-      ...(loginHint ? {login_hint:loginHint} : {}),
       error_callback:() => reject(new Error('Google 인증 창이 열리지 않았거나 닫혔어요. 팝업을 허용한 뒤 다시 시도해 주세요.')),
       callback:response => {
         if (!response.access_token || !oauth.hasGrantedAllScopes(response,sheetScope)) {
@@ -29,7 +33,7 @@ export function authorizeRelationSheet(clientId, loginHint='noamchomsky1571@gmai
         resolve(credentials.token);
       }
     });
-    client.requestAccessToken({prompt:''});
+    client.requestAccessToken({prompt:'select_account'});
   });
 }
 

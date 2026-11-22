@@ -24,37 +24,38 @@ export function mountStudioGrid(container,host){
     <div id="gs-library" role="region" aria-label="공동 초안 목록"></div>
     <div id="gs-local-library" role="region" aria-label="개인 초안 목록" hidden></div>
   </section>
-  <div class="gs-main" id="gs-main">
+  <div class="gs-main" id="gs-main" data-note-key="package" data-note-label="패키지">
     <div id="gs-location-slot"><nav id="gs-location" aria-label="현재 패키지 위치">
       <button type="button" data-act="packages"><span aria-hidden="true">←</span> <span id="gs-origin"></span></button><span class="gs-location-leaf" hidden><span aria-hidden="true">/</span><strong id="gs-location-name" aria-current="page"></strong></span>
+      <div class="gs-note-tools" hidden><button type="button" data-note-act="pick" aria-pressed="false" aria-keyshortcuts="Control+Alt+M Meta+Alt+M" title="원하는 위치에 댓글 달기 (Ctrl 또는 ⌘ + Alt + M)">＋ 댓글 달기</button><button type="button" data-note-act="list" aria-label="댓글 목록">댓글 <span data-note-count></span></button></div>
     </nav></div>
-    <header class="gs-current-package">
+    <header class="gs-current-package" data-note-key="package-info" data-note-label="패키지 정보">
       <div class="gs-package-info"><h1 id="gs-name" tabindex="-1"></h1><p id="gs-course"></p></div>
       <div class="gs-buttons"><button type="button" data-act="edit-package">정보 수정</button><button type="button" data-act="preview">최종 미리보기</button></div>
     </header>
     <div id="gs-sharing"></div>
-    <section id="gs-review" aria-label="입력 중 추가된 데이터"><header class="gs-head"><h2>입력 중 추가된 데이터</h2><div class="gs-filters" id="gs-filters"></div></header><div id="gs-queue"></div></section>
-    <section id="gs-records" aria-labelledby="gs-records-title">
+    <section id="gs-review" data-note-key="review" data-note-label="입력 중 추가된 데이터" aria-label="입력 중 추가된 데이터"><header class="gs-head"><h2>입력 중 추가된 데이터</h2><div class="gs-filters" id="gs-filters"></div></header><div id="gs-queue"></div></section>
+    <section id="gs-records" data-note-key="records" data-note-label="카테고리와 사건 입력" aria-labelledby="gs-records-title">
     <h2 class="gs-work-title" id="gs-records-title">카테고리와 사건 입력</h2>
     <div class="gs-wire-tools">
       <span id="gs-wire-hint">양쪽 점을 이어 연결하고, 선을 끌어 옮기세요.</span>
       <button id="gs-wire-bin" type="button" aria-disabled="true"><i data-lucide="unlink-2" aria-hidden="true"></i> 연결 해제</button>
     </div>
     <div class="gs-grid" id="gs-board">
-      <section class="gs-categories" aria-label="카테고리"><header class="gs-head"><h2>카테고리 <span id="gs-c-count"></span></h2><button id="gs-edit-selected" data-act="edit-cat" hidden>편집</button></header><div id="gs-cats"></div></section>
+      <section class="gs-categories" data-note-key="categories" data-note-label="카테고리" aria-label="카테고리"><header class="gs-head"><h2>카테고리 <span id="gs-c-count"></span></h2><button id="gs-edit-selected" data-act="edit-cat" hidden>편집</button></header><div id="gs-cats"></div></section>
       <div id="gs-wires" aria-label="카테고리와 사건 연결점" role="group">
         <svg class="gs-wire-svg" aria-hidden="true"><g id="gs-edges"></g><path id="gs-rubber" visibility="hidden" fill="none"></path></svg>
         <div id="gs-ports"></div>
       </div>
       <section id="gs-mobile-events" aria-label="연결할 사건"><header class="gs-head"><h2>사건</h2></header><div id="gs-mobile-rows"></div></section>
-      <section class="gs-events" aria-label="사건 시트"><header class="gs-head"><div class="gs-event-heading"><h2><b id="gs-event-heading">사건</b> <span id="gs-e-count"></span></h2><button id="gs-clear-category" data-act="clear-category" hidden>전체 사건 보기</button></div><div class="gs-buttons"><button data-act="reuse-event">기존 사건 찾기</button><button class="gs-primary" data-act="add-event">＋ 사건 행</button></div></header>
+      <section class="gs-events" data-note-key="events" data-note-label="사건 시트" aria-label="사건 시트"><header class="gs-head"><div class="gs-event-heading"><h2><b id="gs-event-heading">사건</b> <span id="gs-e-count"></span></h2><button id="gs-clear-category" data-act="clear-category" hidden>전체 사건 보기</button></div><div class="gs-buttons"><button data-act="reuse-event">기존 사건 찾기</button><button class="gs-primary" data-act="add-event">＋ 사건 행</button></div></header>
         <div class="gs-tools"><span>열 이동</span><div class="gs-jumps"><button data-jump="title">기본 정보</button><button data-jump="end">기간·자료</button><button data-jump="actor">연결 항목</button></div></div>
         <div class="gs-scroll" id="gs-scroll" role="region" tabindex="0" aria-label="사건 입력 표"><table id="gs-sheet"><caption class="gs-sr">사건을 행별로 입력하는 표</caption></table></div>
         <div class="gs-sheet-foot"><span><i data-lucide="clipboard-paste" aria-hidden="true"></i> 엑셀 여러 셀 붙여넣기</span><button data-act="add-event">＋ 행 추가</button></div>
       </section>
     </div>
     </section>
-    <section id="gs-relations" aria-labelledby="gs-rel-heading">
+    <section id="gs-relations" data-note-key="relations" data-note-label="관계 연결" aria-labelledby="gs-rel-heading">
       <header class="gs-work-head"><h2 class="gs-work-title" id="gs-rel-heading">관계 연결 <span id="gs-rel-count"></span></h2><div class="gs-buttons"><input type="search" id="gs-rel-filter" aria-label="패키지 관계 검색" placeholder="관계 검색"><button type="button" class="gs-primary" data-act="add-relation">＋ 관계 추가</button></div></header>
       <div class="gs-relation-board">
       <div class="gs-rel-tools"><span>양쪽 점을 이으세요. 선을 옮기거나 유형을 눌러 편집할 수 있습니다.</span><button type="button" id="gs-rel-bin" aria-label="끌어온 관계 연결 해제"><i data-lucide="unlink-2"></i> 연결 해제</button></div>
@@ -151,6 +152,7 @@ export function mountStudioGrid(container,host){
   }
   function close(){if(dlg.open)dlg.close();view=null;}
   function error(t){get('err').textContent=t;}
+  const noteAt=(parts,label)=>' data-note-key="'+esc(parts.map(encodeURIComponent).join('|'))+'" data-note-label="'+esc(label)+'"';
   const cols=[
     ['title','사건명',172],['date','날짜',110],['body','내용',215],['importance','중요도',123],['type','유형',119],
     ['end','종료일',110],['image','이미지 주소',165],['actor','행위주체',153],['place','공간',133],['category','카테고리',145],['event','관련 사건',143],['remove','행 작업',78]
@@ -186,7 +188,7 @@ export function mountStudioGrid(container,host){
   function table(){
     const ids=visibleIds();
     const t=get('sheet');t.innerHTML='<caption class="gs-sr">사건 입력 표</caption><colgroup>'+cols.map(c=>'<col style="width:'+c[2]+'px">').join('')+'</colgroup><thead><tr>'+cols.map(([key,label],i)=>'<th scope="col" data-col="'+key+'" class="'+(!i?'gs-sticky':'')+'">'+label+'</th>').join('')+'</tr></thead><tbody>'+ids.map(id=>{
-      const e=by('event',id);return '<tr data-row="'+esc(id)+'">'+cols.map(([k],i)=>'<td class="'+(!i?'gs-sticky':'')+'">'+tableCell(e,k)+'</td>').join('')+'</tr>';
+      const e=by('event',id);return '<tr data-row="'+esc(id)+'">'+cols.map(([k,label],i)=>'<td'+noteAt(['cell',id,k],(e.title||'새 사건')+' · '+label)+' class="'+(!i?'gs-sticky':'')+'">'+tableCell(e,k)+'</td>').join('')+'</tr>';
     }).join('')+'</tbody>';
     const empty=get('scroll').parentElement.querySelector('.gs-sheet-empty');empty?.remove();
     if(!ids.length)get('scroll').insertAdjacentHTML('afterend','<p class="gs-empty gs-sheet-empty">'+(categoryId?'이 카테고리에 연결된 사건이 없습니다.':'사건 행을 추가하거나 기존 사건을 가져오세요.')+'</p>');
@@ -195,7 +197,7 @@ export function mountStudioGrid(container,host){
     const all=s.queue.filter(r=>r.pkg===s.active),done=filter==='done',rows=all.filter(r=>r.done===done);
     get('filters').innerHTML=all.length?[['pending','검토 대기'],['done','검토 완료']].map(([k,n])=>btn(n+' '+all.filter(r=>r.done===(k==='done')).length,'filter',k,'aria-pressed="'+(filter===k)+'"')).join(''):'<span>검토할 항목 없음</span>';
     get('queue').hidden=!all.length;
-    get('queue').innerHTML=rows.length?rows.map(r=>'<div class="gs-qrow"><span class="gs-kind">'+icon(({actor:'users',place:'map-pin',category:'folder',event:'calendar-days'})[r.kind])+names[r.kind]+'</span><strong>'+esc(title(r.kind,r.id))+'</strong><small>'+esc((r.originKind==='package'?P().name:title(r.originKind,r.origin))+'에서 추가')+'</small>'+btn(done?'다시 열기':'정보 보완','review',r.id,'data-kind="'+esc(r.kind)+'"')+'</div>').join(''):'<p class="gs-empty">'+(done?'검토를 마친 항목이 없습니다.':'보완할 새 항목이 없습니다.')+'</p>';
+    get('queue').innerHTML=rows.length?rows.map(r=>'<div class="gs-qrow"'+noteAt(['review',r.kind,r.id],names[r.kind]+' · '+title(r.kind,r.id))+'><span class="gs-kind">'+icon(({actor:'users',place:'map-pin',category:'folder',event:'calendar-days'})[r.kind])+names[r.kind]+'</span><strong>'+esc(title(r.kind,r.id))+'</strong><small>'+esc((r.originKind==='package'?P().name:title(r.originKind,r.origin))+'에서 추가')+'</small>'+btn(done?'다시 열기':'정보 보완','review',r.id,'data-kind="'+esc(r.kind)+'"')+'</div>').join(''):'<p class="gs-empty">'+(done?'검토를 마친 항목이 없습니다.':'보완할 새 항목이 없습니다.')+'</p>';
   }
   let renderedShared='',renderedLocal='';
   function refreshLibrary(){
@@ -233,7 +235,7 @@ export function mountStudioGrid(container,host){
     get('clear-category').hidden=!category;
     const edit=get('edit-selected');edit.hidden=!category;edit.dataset.id=categoryId;
     if(category)edit.setAttribute('aria-label',category.name+' 카테고리 편집');
-    get('cats').innerHTML=Object.entries(cats).map(([k,n])=>'<div class="gs-cat-group" data-wire-type="'+k+'"><div class="gs-cat-head"><h3>'+n+'</h3>'+btn('＋','new-cat',k,'aria-label="'+n+' 추가"')+'</div>'+p.categories.filter(c=>c.kind===k).map(c=>btn('<span>'+esc(c.name)+'</span><small>'+p.ids.filter(id=>linkList('category',id).includes(c.id)).length+'건</small>','filter-category',c.id,'class="gs-cat-item" aria-pressed="'+(c.id===categoryId)+'"')).join('')+'</div>').join('');
+    get('cats').innerHTML=Object.entries(cats).map(([k,n])=>'<div class="gs-cat-group" data-wire-type="'+k+'"><div class="gs-cat-head"><h3>'+n+'</h3>'+btn('＋','new-cat',k,'aria-label="'+n+' 추가"')+'</div>'+p.categories.filter(c=>c.kind===k).map(c=>btn('<span>'+esc(c.name)+'</span><small>'+p.ids.filter(id=>linkList('category',id).includes(c.id)).length+'건</small>','filter-category',c.id,noteAt(['category',c.id],c.name)+' class="gs-cat-item" aria-pressed="'+(c.id===categoryId)+'"')).join('')+'</div>').join('');
     table();relationRows();reviewRows();icons();jumpState(tab);resetWires();
   }
   function jumpState(k){tab=k;root.querySelectorAll('[data-jump]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.jump===k)));}
@@ -281,7 +283,7 @@ export function mountStudioGrid(container,host){
     const all=P().relations,query=norm(get('rel-filter').value),groups=new Map();
     get('rel-count').textContent=all.length;
     const node=(side,type,id,span=1)=>btn('<small>'+endpointTypes[endpointType(type)]+'</small><span>'+esc(title(endpointType(type),id))+'</span><i aria-hidden="true"></i>',
-      'wire-node',id,'class="gs-rel-node" data-rel-side="'+side+'" data-type="'+esc(type)+'" style="grid-row:span '+span+'" aria-label="'+esc(sideLabels[side]+' · '+title(endpointType(type),id))+'" aria-pressed="false"');
+      'wire-node',id,noteAt(['node',side,type,id],sideLabels[side]+' · '+title(endpointType(type),id))+' class="gs-rel-node" data-rel-side="'+side+'" data-type="'+esc(type)+'" style="grid-row:span '+span+'" aria-label="'+esc(sideLabels[side]+' · '+title(endpointType(type),id))+'" aria-pressed="false"');
     for(const r of all){
       if(query&&![endpointName(r,'from'),endpointName(r,'to'),rels[r.kind]||r.kind,r.label].some(v=>norm(v).includes(query)))continue;
       const key=JSON.stringify([endpointType(r.fromType),r.fromId]);
@@ -305,7 +307,7 @@ export function mountStudioGrid(container,host){
       html+='<div class="gs-rel-group">'+node('from',first.fromType,first.fromId,rows.length)+rows.map(r=>{
         const kind=rels[r.kind]||r.kind||'유형 선택',desc=endpointName(r,'from')+' → '+endpointName(r,'to')+' · '+kind;
         return '<div class="gs-rel-link">'+btn('<strong>'+esc(kind)+'</strong>'+(r.label?'<small>'+esc(r.label)+'</small>':''),'edit-relation',r.id,
-          'class="gs-rel-tag" data-tone="'+esc(r.kind)+'" aria-label="'+esc(desc+' 관계 편집')+'"')+node('to',r.toType,r.toId)+'</div>';
+          noteAt(['relation',r.id],desc)+' class="gs-rel-tag" data-tone="'+esc(r.kind)+'" aria-label="'+esc(desc+' 관계 편집')+'"')+node('to',r.toType,r.toId)+'</div>';
       }).join('')+'</div>';
     }
     if(!groups.size&&(query||!html))html+='<p class="gs-empty">'+(query?'검색 결과가 없습니다.':'양쪽에서 대상을 찾아 첫 관계를 연결하세요.')+'</p>';
@@ -759,7 +761,7 @@ export function mountStudioGrid(container,host){
       for(const cat of linkList('category',ev)){
         const from=points.category.get(cat);if(!from)continue;
         const d=curve(from,to);from.port.classList.add('gs-linked');to.port.classList.add('gs-linked');
-        paths.push('<g class="gs-wire-edge" data-cat="'+esc(cat)+'" data-ev="'+esc(ev)+'" data-wire-type="'+esc(by('category',cat).kind)+'"><path class="gs-wire-path" d="'+d+'"/><path class="gs-wire-hit" d="'+d+'"/></g>');
+        paths.push('<g'+noteAt(['link',cat,ev],title('category',cat)+' → '+title('event',ev))+' class="gs-wire-edge" data-cat="'+esc(cat)+'" data-ev="'+esc(ev)+'" data-wire-type="'+esc(by('category',cat).kind)+'"><path class="gs-wire-path" d="'+d+'"/><path class="gs-wire-hit" d="'+d+'"/></g>');
       }
     }
     edgeLayer.innerHTML=paths.join('');paintState();
@@ -912,6 +914,11 @@ export function mountStudioGrid(container,host){
   return {
     sheetView:()=>({categoryId,top:get('scroll').scrollTop,left:get('scroll').scrollLeft,cats:get('cats').scrollTop,mobile:get('mobile-rows').scrollTop,tab}),
     refreshLibrary,focusCell,validateForPublish,preview,
+    revealNote(key){
+      const [kind,id]=key.split('|');
+      if(kind==='cell'){try{showRow(decodeURIComponent(id));}catch{return;}}
+      if(kind==='relation'&&get('rel-filter').value){get('rel-filter').value='';relationRows();}
+    },
     refreshSearch(){if(view?.mode==='finder')results();else if(get('rel-options')&&dlg.open)relationOptions();},
     previewState:()=>view?.mode==='preview'?view:null,
     isEditingDialogOpen:()=>dlg.open&&view?.mode!=='preview',

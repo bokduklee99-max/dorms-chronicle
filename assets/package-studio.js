@@ -1,6 +1,7 @@
+import {mountStudioComments} from './studio-comments.js';
 import {mountStudioGrid} from './studio-grid.js';
 import {fetchStudioCatalog,studioCatalog} from './studio-catalog.js';
-import {loadGoogleIdentity,authorizeRelationSheet} from './google-sheet-auth.js';
+import {loadGoogleIdentity,authorizeRelationSheet,currentSheetToken} from './google-sheet-auth.js';
 import {sharedContent,same,mergeChanges,readLegacyDraft,googleSheet} from './studio-cloud.js';
 import {studioDraftDirectory} from './studio-library.js';
 import {publishDraft,readDraft,createDraft,writeDraft} from './studio-publish.js';
@@ -18,6 +19,15 @@ let draft=fresh();
 const requestedBook=new URL(location.href).searchParams.get('draft');
 let pendingBook=requestedBook,token='',syncing=null,saveTimer,sharedMessage='',busy=false,conflict=false,composing=false;
 const catalog={actor:{},event:{},place:{}},opened=new Map();
+const notes=mountStudioComments(studio,{
+ config:SHEET_CONFIG,token:()=>token,
+ authenticate:async()=>token=await authorizeRelationSheet(googleClientId),
+ reveal:key=>grid?.revealNote(key),
+ showRegistration(){
+  cloudStatus('댓글을 함께 보려면 이 패키지를 공동 초안으로 등록해 주세요.');
+  studio.querySelector('.studio-sharing [data-act=cloud-connect]')?.focus();
+ }
+});
 function content(){return sharedContent(draft,draft.actors||[]);}
 function packageList(){
  const entries=new Map(libraryItems);
@@ -52,7 +62,9 @@ async function switchGrid(id,create){
  if(!id){begin(fresh());void refreshLibrary();return;}
  if(publishedIds.has(id)){leavePublished(id);return;}
  if(opened.has(id)){begin(opened.get(id));return;}
- directory.group='shared';pendingBook=id;draw();await connectCloud();
+ directory.group='shared';pendingBook=id;draw();
+ const activeToken=currentSheetToken();
+ if(activeToken)await connectCloud(activeToken);
 }
 function connectUrl(book){
  const url=new URL('./data-explorer.html',location.href);
@@ -127,10 +139,10 @@ async function runSync(choice){
  })().finally(()=>{syncing=null;});
  return syncing;
 }
-async function connectCloud(){
+async function connectCloud(activeToken){
  if(busy)return;busy=true;studio.inert=true;
  try{
-  token=await authorizeRelationSheet(googleClientId);
+  token=activeToken||await authorizeRelationSheet(googleClientId);
   const source=pendingBook||draft.cloud?.book;
   let remote;
   if(source){
@@ -208,6 +220,7 @@ async function refreshLibrary(authenticate=false){
 }
 function draw(sheetView){
  grid?.dispose();grid=null;
+ if(pendingBook||draft.closed||!draft.cloud)notes.bind(null);
  if(draft.closed){
   studio.innerHTML='<section class="shared-entry"><h1>공동 초안 게시 완료</h1><p>다른 작성자가 게시했습니다. 이 탭에 남은 수정 내용을 파일로 보관하세요.</p><div>'+button('수정 사본 내려받고 목록으로','download-changes')+'</div></section>';return;
  }
@@ -223,6 +236,7 @@ function draw(sheetView){
   open:id=>void switchGrid(id),create:values=>void switchGrid(null,values),normalizeDate:eventDate,publish:finish
  });
  if(draft.name)studio.querySelector('#gs-sharing').innerHTML=cloudBar();
+ notes.bind(draft.cloud?.book||null);
 }
 async function finish(){
  if(busy||!grid.validateForPublish())return;

@@ -30,6 +30,7 @@ if(localRoute){
  if(saved){draft=structuredClone(saved);personalBaseline=JSON.stringify(saved);directory.lastId=saved.id;}
 }
 let pendingBook=localRoute?null:requestedBook,token='',syncing=null,saveTimer,sharedMessage='',busy=false,conflict=false,composing=false;
+let restoring=Boolean(pendingBook);
 const catalog={actor:{},event:{},place:{}};
 function studioAuth(choose=false){
  const subject=rememberedAccount(googleClientId,pendingBook||draft.cloud?.book);
@@ -78,7 +79,7 @@ async function switchGrid(id,create){
  if(!id){begin(fresh());void refreshLibrary();return;}
  if(publishedIds.has(id)){leavePublished(id);return;}
  if(personalDrafts.has(id)){begin(structuredClone(personalDrafts.get(id)));return;}
- directory.group='shared';pendingBook=id;draw();
+ directory.group='shared';pendingBook=id;
  await connectCloud({restore:true});
 }
 function connectUrl(book){
@@ -173,7 +174,7 @@ async function connectCloud({restore=false,choose=false}={}){
   savePersonal();
   if(personalConflict)return;
  }
- busy=true;studio.inert=true;
+ busy=true;restoring=restore;if(pendingBook)draw();studio.inert=true;
  try{
   const source=pendingBook||draft.cloud?.book;
   const nextToken=restore?await restoreDraftToken(googleClientId,source):await studioAuth(choose);
@@ -205,7 +206,7 @@ async function connectCloud({restore=false,choose=false}={}){
   if(e.published){leavePublished(pendingBook||draft.id);return;}
   cloudStatus(e.message);say(e.message);
  }
- finally{busy=false;studio.inert=false;if(pendingBook)draw();else refreshCloudBar();}
+ finally{busy=false;restoring=false;studio.inert=false;if(pendingBook)draw();else refreshCloudBar();}
 }
 function say(message){document.querySelector('#notice').textContent=message;}
 function begin(item){
@@ -271,6 +272,9 @@ function draw(sheetView){
  }
  if(pendingBook){
   const entry=libraryItems.get(pendingBook);
+  if(restoring){
+   studio.innerHTML='<section class="shared-entry"><h1>'+esc(entry?.name||'공동 초안')+'</h1><p role="status">공동 초안을 여는 중입니다.</p></section>';return;
+  }
   const remembered=rememberedAccount(googleClientId,pendingBook);
   const actions=button(remembered?'이전 계정으로 열기':'Google로 공동 초안 열기','cloud-connect')+
    (remembered||sharedMessage?button('다른 계정으로 열기','cloud-choose'):'');

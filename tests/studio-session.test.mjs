@@ -1,6 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import handler from '../api/studio-session.js';
+import {createServer} from 'node:http';
+import {localStudioSession} from '../scripts/local-studio-session.mjs';
+
+test('local preview remembers and restores a Google connection across HTTP requests on loopback',async t=>{
+ let middleware;
+ localStudioSession.configurePreviewServer({middlewares:{use(fn){middleware=fn;}}});
+ const server=createServer((req,res)=>middleware(req,res,()=>res.writeHead(404).end()));
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const origin='http://127.0.0.1:'+server.address().port;
+ const request=globalThis.fetch;
+ t.mock.method(globalThis,'fetch',async(url,{headers})=>{
+  assert.equal(url,'https://openidconnect.googleapis.com/v1/userinfo');
+  assert.equal(headers.Authorization,'Bearer test-token');
+  return Response.json({sub:'teacher'});
+ });
+ const post=(body,headers={})=>request(origin+'/api/studio-session',{method:'POST',
+  headers:{origin,'Content-Type':'application/json',...headers},body:JSON.stringify(body)});
+ const remember={action:'remember',expiresAt:Date.now()+300000},restore={action:'restore',subject:'teacher'};
+ const login=await post(remember,{Authorization:'Bearer test-token'});
+ assert.deepEqual(await login.json(),{subject:'teacher'});
+ const setCookie=login.headers.get('set-cookie'),cookie=setCookie.split(';')[0];
+ assert.match(setCookie,/HttpOnly; SameSite=Strict/);assert.ok(!setCookie.includes('test-token'));
+ assert.equal((await post(restore)).status,204);
+ assert.equal((await post(restore,{cookie,origin:'http://another.test'})).status,403);
+ assert.equal((await post({...restore,subject:'another'},{cookie})).status,204);
+ const restored=await post(restore,{cookie});assert.equal((await restored.json()).token,'test-token');
+ await post({action:'forget'},{cookie,Authorization:'Bearer test-token'});
+ assert.equal((await post(restore,{cookie})).status,204);
+});
 
 test('a studio cookie restores only the verified account until expiry, and can be cleared',async t=>{
  const now=Date.now();

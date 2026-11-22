@@ -2885,8 +2885,7 @@ async function refreshSource() {
     if (!state.editing) {
       renderAll();
       const section = firstLoad && structureSectionId(location.hash);
-      if (view === '#examples' && !exhibit.hidden) document.getElementById('exhibit-title').focus();
-  else if (section) jumpToStructureSection(section);
+      if (section) jumpToStructureSection(section);
     }
   } catch (error) {
     banner.hidden = false;

@@ -3,7 +3,7 @@ node_modules/
 outputs/
 previews/
 metro/
-index.html
+/index.html
 dist/
 .vercel/
 .env*

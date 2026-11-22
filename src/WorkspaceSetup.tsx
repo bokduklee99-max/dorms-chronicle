@@ -238,6 +238,10 @@ export function WorkspaceSetup(){
   <header className="landing-nav setup-nav"><a className="wordmark" href="/">Dorms' Chronicle<span aria-hidden="true">✳</span></a><nav aria-label="주요 메뉴"><a className="setup-back" href="/">← 처음으로</a></nav></header>
   <main className="setup-page">
    <div className="setup-intro"><h1>나의 <em>역사 탐색.</em></h1><button ref={newButton} className="setup-action" type="button" onClick={()=>location.assign(setupHref()+'&lesson=new')}>새 수업 만들기 <span aria-hidden="true">＋</span></button></div>
+   <section className="setup-example" aria-labelledby="setup-example-title">
+    <div><p>수업 예시</p><h2 id="setup-example-title">일제강점기와 독립운동</h2></div>
+    <div className="setup-saved-links"><a href="/example/">연표 열기 ↗</a><a href="/example/#activities">학습 콘텐츠 열기 ↗</a></div>
+   </section>
    <section className="setup-saved" aria-labelledby="setup-saved-title">
     <div className="setup-section-heading"><h2 id="setup-saved-title">저장한 수업</h2><span>{saved.length}개</span></div>
     <ul>{saved.map(item=>{

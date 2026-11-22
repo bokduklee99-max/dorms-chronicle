@@ -496,7 +496,7 @@ function OrderPlayer({title,questions,close}:{title:string;questions:QuizRecord[
   next={index+1<questions.length?()=>setIndex(index+1):undefined}/>;
 }
 
-function PlanPlayer({plan,records,close}:{plan:QuizPlan;records:QuizRecord[];close:()=>void}){
+export function PlanPlayer({plan,records,close}:{plan:QuizPlan;records:QuizRecord[];close:()=>void}){
  const title=quizTitle(plan);
  if(plan.kind==='person')return <QuizPlayer title={title} items={personQuestions(plan,records)} close={close} person/>;
  if(plan.kind==='insertion')return <InsertionPlayer title={title} records={insertionRecords(plan,records)} roundCount={plan.roundCount} questionsPerRound={plan.questionsPerRound} close={close}/>;
@@ -513,12 +513,12 @@ function SharedQuiz({plan,records}:{plan:QuizPlan;records:QuizRecord[]}){
  </section>{playing&&ready&&<PlanPlayer plan={plan} records={records} close={()=>setPlaying(false)}/>}</>;
 }
 
-function QuizIntroduction({kind,title,description}:{kind:'blank'|'order'|'person'|'insertion';title:string;description:string}){
+export function QuizIntroduction({kind,title,description,poster}:{kind:'blank'|'order'|'person'|'insertion';title:string;description:string;poster?:string}){
  const [open,setOpen]=useState(false);
  const descriptionId=useId();
  const label=title+' 소개 영상';
  return <><button className="quiz-type-preview" type="button" aria-label={label+' 보기'} aria-haspopup="dialog" onClick={()=>setOpen(true)}>
-  <img src={'/assets/quiz-previews/'+kind+'.png'} width="1080" height="824" alt=""/>
+  <img src={poster??'/assets/quiz-previews/'+kind+'.png'} width="1080" height="824" alt=""/>
   <span className="quiz-intro-play"><span aria-hidden="true">▶</span> 소개 영상</span>
  </button>{open&&<QuizDialog title={label} close={()=>setOpen(false)} className="quiz-video-dialog">
   <video controls autoPlay playsInline aria-label={label} aria-describedby={descriptionId} src={'/assets/quiz-previews/'+kind+'.mp4'}/>

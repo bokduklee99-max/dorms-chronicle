@@ -12,7 +12,7 @@ import type {QuizPerson,QuizRecord} from './record-quiz';
 export {mountRecordQuiz} from './RecordQuiz';
 export {parsePlan,quizEventIds} from './authored-quiz';
 
-async function japanSnapshot(item:WorkspaceDraft,dateRange:SheetParser['dateRange']):Promise<QuizRecord[]>{
+export async function japanSnapshot(item:WorkspaceDraft,dateRange:SheetParser['dateRange']):Promise<QuizRecord[]>{
  type Row=ImportanceRow&{end?:string;body:string;period?:string;periodNames?:string[];arcs:string[];themes:string[];actors:{name:string}[];place:string;media:string;approximate?:boolean};
  const sheet=await swimlaneSnapshot<Row>('japan');
  if(!sheet)throw Error('저장된 수업 자료를 읽지 못했습니다.');

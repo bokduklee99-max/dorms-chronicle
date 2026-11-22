@@ -161,3 +161,7 @@ html:has(.setup-dialog[open]){overflow:hidden}
  .setup-editor-footer .setup-action{padding:10px 16px}
 }
 @media(prefers-reduced-motion:reduce){.setup-saved-cover img{transition:none}}
+
+.setup-example{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px 28px;margin:24px 0 32px;padding:20px 24px;border:1px solid var(--chronicle-line);border-left:4px solid var(--chronicle-green);border-radius:6px;background:var(--chronicle-surface)}
+.setup-example p{margin:0 0 5px;color:var(--chronicle-muted);font-size:15px}
+.setup-example h2{margin:0;font-size:clamp(20px,2.5vw,26px)}

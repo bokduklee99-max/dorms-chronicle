@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>패키지 제작실 · Dorms' Chronicle</title>
+<link rel="stylesheet" href="./assets/chronicle-theme.css">
+<link rel="stylesheet" href="./assets/studio-grid.css">
+<script>
+if(window.top===window.self){
+ const url=new URL('./data-explorer.html',location.href);
+ const draft=new URLSearchParams(location.search).get('draft');
+ url.hash='package-studio'+(draft?'?'+new URLSearchParams({draft}):'');
+ location.replace(url);
+}
+</script>
+<script defer src="./sheet-config.js"></script><script defer src="./sheets.js"></script>
+<script type="module" src="./assets/package-studio.js"></script>
+</head>
+<body>
+
+<main id="studio" tabindex="-1"><p role="status">제작실을 여는 중입니다.</p></main>
+<p class="notice" id="notice" role="status"></p>
+</body></html>

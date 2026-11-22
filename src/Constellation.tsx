@@ -2,12 +2,8 @@ import {useLayoutEffect,useMemo,useRef,useState} from 'react';
 import type {CSSProperties} from 'react';
 import {buildStarTimeline,dateAtProgress,placeCategoryRanges,placeCategoryStars} from './constellation-model';
 import type {EventRecord,HistoryData} from './metro-model';
+import {categoryColors} from './topic-colors';
 import './constellation.css';
-
-const categoryColors = [
- '#536477','#3a72ad','#b94f3e','#9455a0','#a57621','#3d7453',
- '#278384','#b6597e','#4e55a2','#a35431','#738131','#217f9f',
-];
 
 function gaugePoint(angle: number,radius: number){
  const radians = angle*Math.PI/180;

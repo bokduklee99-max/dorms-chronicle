@@ -1,0 +1,21 @@
+.atlas-story{--ocean:#aac7c4;--land:#e0d8bd;--coast:#80978a;--origin:#795b43;--west:#176761;--north:#ad4f34;--map-ink:#243c36;--map-paper:#fbf5e2;--map-mute:#48665d}
+.atlas-story[data-story="diplomacy"]{--ocean:#183541;--land:#496269;--coast:#8ba2a3;--origin:#f3c979;--west:#ffd37c;--north:#91dbd2;--map-ink:#f6f2de;--map-paper:#183541;--map-mute:#b7d3d4}
+.atlas-story .map{background:var(--ocean)}
+.atlas-story .locator{color:var(--map-ink)}
+#land{fill:var(--land);stroke:var(--coast);stroke-width:.8;vector-effect:non-scaling-stroke;fill-rule:evenodd}
+#rivers path{fill:none;stroke:#719da6;stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
+#rivers path+path{stroke:#b69c6c;stroke-width:1.7}
+.atlas-story .origin{color:var(--origin)}
+.atlas-story .west{color:var(--west)}
+.atlas-story .north-pin{color:var(--north)}
+#routes path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:1;animation:connect 1.45s ease-out both}
+#routes .muted{stroke-dasharray:5 6;opacity:.72;animation:none}
+#story-pins .dot{fill:currentColor;stroke:var(--map-paper);stroke-width:2}
+#story-pins .halo{stroke:currentColor;stroke-opacity:.68;stroke-width:1;fill:currentColor;fill-opacity:.1}
+#story-pins .region{fill:var(--north);fill-opacity:.13;stroke:var(--north);stroke-opacity:.6;stroke-width:1.3;stroke-dasharray:3 4}
+#story-pins text{fill:var(--map-ink);paint-order:stroke;stroke:var(--map-paper);stroke-width:3.8px;stroke-linejoin:round;text-anchor:middle;font-weight:750;font-size:16px}
+#story-pins .detail{font-size:13px;fill:currentColor;stroke-width:3.5px;font-weight:650}
+#story-pins .context{font-size:13px;fill:var(--map-mute);font-weight:500;letter-spacing:.08em;stroke-width:2}
+#map-credit{position:absolute;left:12px;bottom:10px;background:var(--map-paper);color:var(--map-ink);padding:4px 8px;border-radius:3px;font-size:12px}
+.atlas-story[data-story="diplomacy"] .player{background:#142b37}
+@media(max-width:600px){#story-pins text{font-size:14px}#story-pins .detail,#story-pins .context{font-size:12px}.atlas-story .map{height:clamp(275px,70vw,360px)}}

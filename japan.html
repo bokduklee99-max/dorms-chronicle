@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일제 강점기 전체판 (교사용)</title>
+<link rel="stylesheet" href="./japan-board.css">
+<style>
+:root{
+  --bg:#FFFFFF; --text:#2E2B26; --sub:#6E6A62; --line:#D9D5CD;
+  --gov:#B5483B;  --gov-t:#FBEEEB;
+  --eco:#B07A1E;  --eco-t:#FCF4E4;
+  --dom:#2F6FA3;  --dom-t:#EBF3FA;
+  --man:#3A7C50;  --man-t:#EAF4ED;
+  --chn:#6A4FA0;  --chn-t:#F2EEF9;
+  --hot:#D0453C;
+  --W:1920px; --H:1080px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#E9E7E2;height:100%;overflow:hidden}
+body{font-family:"Pretendard","Spoqa Han Sans Neo","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--text)}
+#stage{position:absolute;left:0;top:0;width:var(--W);height:var(--H);background:var(--bg);transform-origin:0 0;overflow:hidden}
+
+/* 머리 */
+.head{position:absolute;left:0;top:0;width:var(--W);height:54px;display:flex;align-items:center;padding:0 24px;gap:18px;border-bottom:2px solid var(--text)}
+.head h1{font-size:28px;font-weight:800;letter-spacing:-.5px;white-space:nowrap}
+.head .subt{font-size:15px;color:var(--sub);white-space:nowrap}
+.legend{margin-left:auto;display:flex;gap:16px;align-items:center;font-size:13px;color:var(--sub);white-space:nowrap}
+.legend i{display:inline-block;vertical-align:middle;margin-right:5px}
+.lg-band{width:34px;height:12px;border-radius:3px;background:rgba(46,43,38,.28)}
+.lg-box{width:18px;height:14px;border:1.5px solid var(--text);border-radius:3px;background:#fff}
+.lg-hot{width:18px;height:14px;border-radius:3px;background:var(--hot)}
+.mode{font-size:13px;font-weight:700;padding:4px 10px;border-radius:12px;border:1.5px solid var(--text);cursor:pointer;background:#fff;user-select:none}
+
+/* 시간축 */
+.axis{position:absolute;left:0;top:54px;width:var(--W);height:64px}
+.axis .rail{position:absolute;top:18px;height:4px;background:var(--text);border-radius:2px}
+.tick{position:absolute;top:12px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#fff;border:3px solid var(--text)}
+.tyear{position:absolute;top:30px;transform:translateX(-50%);font-size:17px;font-weight:800}
+.wev{position:absolute;top:0px;transform:translateX(-50%);font-size:11.5px;color:var(--sub);white-space:nowrap}
+.wev.end{transform:translateX(-88%)}
+.wev.major{top:49px;font-size:12.5px;font-weight:700;color:var(--hot)}
+.wdot{position:absolute;top:17px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--sub)}
+.guide{position:absolute;top:118px;bottom:0;border-left:1.5px dashed rgba(46,43,38,.16)}
+
+/* 행 */
+.row{position:absolute;left:0;width:var(--W)}
+.row .lab{position:absolute;left:8px;top:4px;bottom:4px;width:88px;border-radius:8px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:19px;line-height:1.25;text-align:center}
+.row .lab small{font-size:12px;font-weight:600;opacity:.85;margin-top:4px}
+.row .bg{position:absolute;left:100px;right:6px;top:2px;bottom:2px;border-radius:8px}
+.sep{position:absolute;left:100px;right:6px;height:0;border-top:2.5px solid var(--text)}
+.sep span{position:absolute;left:0;top:-11px;background:var(--bg);padding:0 8px 0 0;font-size:13px;font-weight:800}
+
+.r-gov .lab{background:var(--gov)} .r-gov .bg{background:var(--gov-t)}
+.r-eco .lab{background:var(--eco)} .r-eco .bg{background:var(--eco-t)}
+.r-dom .lab{background:var(--dom)} .r-dom .bg{background:var(--dom-t)}
+.r-man .lab{background:var(--man)} .r-man .bg{background:var(--man-t)}
+.r-chn .lab{background:var(--chn)} .r-chn .bg{background:var(--chn-t)}
+
+/* 긴 하이라이트 */
+.band{position:absolute;height:19px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden}
+.band .fill{flex:1;overflow:hidden;text-overflow:clip}
+.band .yr{margin-left:6px;font-size:11px;font-weight:700;opacity:.85}
+.band.period{height:26px;font-size:15.5px;font-weight:800;color:#fff;justify-content:center}
+.band.period .fill{flex:none}
+.band.period .yr{color:#fff}
+.r-gov .band{background:rgba(181,72,59,.26);color:#6E241C}
+.r-eco .band{background:rgba(176,122,30,.30);color:#5E3F0B}
+.r-chn .band{background:rgba(106,79,160,.24);color:#3B2A63}
+.r-gov .band.period,.r-chn .band.period{color:#fff}
+.r-gov .band.p1{background:#7C3128}.r-gov .band.p2{background:#C0665A}.r-gov .band.p3{background:#4A1E19}
+.r-chn .band.k1{background:#6A4FA0;color:#fff}.r-chn .band.k2{background:#9A86C4;color:#fff}.r-chn .band.k3{background:#4B3576;color:#fff}
+.r-chn .band.k1 .yr,.r-chn .band.k2 .yr,.r-chn .band.k3 .yr{color:#fff}
+
+/* 박스 */
+.box{position:absolute;background:#fff;border:1.5px solid var(--c);border-radius:6px;padding:4px 7px 5px;font-size:12.5px;line-height:16.5px}
+.r-gov .box{--c:var(--gov);--t:var(--gov-t)} .r-eco .box{--c:var(--eco);--t:var(--eco-t)}
+.r-dom .box{--c:var(--dom);--t:var(--dom-t)} .r-man .box{--c:var(--man);--t:var(--man-t)}
+.r-chn .box{--c:var(--chn);--t:var(--chn-t)}
+.box .hd{display:flex;align-items:baseline;gap:6px;font-size:14px;line-height:19px;font-weight:800;color:var(--c);white-space:nowrap}
+.box .hd .fill{flex:1}
+.box .li{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.box .li .fill{flex:1}
+.box .ln{white-space:nowrap;color:var(--text)}
+.yr{font-size:11px;font-weight:700;color:var(--c);background:var(--t);border-radius:3px;padding:0 4px;line-height:15px;flex:none}
+.box.list .hd{border-bottom:1px solid var(--line);margin-bottom:2px;padding-bottom:1px}
+.box.key{border-width:2.5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.box.key .hd{font-size:15.5px}
+.box.hot{background:var(--hot);border-color:var(--hot)}
+.box.hot .hd,.box.hot .ln{color:#fff}
+.box.hot .yr{background:rgba(255,255,255,.25);color:#fff}
+.box.chip .hd{font-size:13.5px}
+
+/* 계열 칸 (민족주의·사회주의·연대·기타) */
+.zone{position:absolute;border:2px dashed var(--zc);border-radius:10px;background:var(--zt)}
+.zone .ztag{position:absolute;left:8px;top:-1px;transform:translateY(-50%);background:var(--zc);color:#fff;font-size:12.5px;font-weight:800;padding:1px 9px;border-radius:10px;white-space:nowrap}
+.zone.nat{--zc:#3D6CB9;--zt:rgba(61,108,185,.07)}
+.zone.soc{--zc:#D0731F;--zt:rgba(208,115,31,.08)}
+.zone.uni{--zc:#A88414;--zt:rgba(233,196,70,.16)}
+.zone.etc{--zc:#8A857B;--zt:rgba(138,133,123,.07)}
+.box.nat{--c:#3D6CB9;--t:#E6EEF9}
+.box.soc{--c:#D0731F;--t:#FCEBD9}
+.box.uni{--c:#8A6D0B;--t:#FBF1CF}
+
+/* 교사용 여백 메모(○) */
+.note{position:absolute;font-size:11.5px;line-height:15px;color:var(--sub);font-style:italic;white-space:nowrap}
+.note::before{content:"○ ";font-style:normal}
+
+/* 화살표 */
+#arrows{position:absolute;left:0;top:0;width:var(--W);height:var(--H);pointer-events:none;overflow:visible}
+#arrows>path{fill:none;stroke:#57534B;stroke-width:1.6}
+#arrows path.dash{stroke-dasharray:5 4}
+#arrows text{font-size:11.5px;fill:#57534B;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:3px}
+
+/* 학생용: 내용 비우기 (자리·크기 유지) */
+.student .fill,.student .ln,.student .wev{color:transparent!important}
+.student .box .fill,.student .box .ln{border-bottom:1px dashed #C9C4BA}
+.student .box.hot .fill,.student .box.hot .ln{border-bottom-color:rgba(255,255,255,.6)}
+.student .band:not(.period) .fill{border-bottom:1px dashed rgba(0,0,0,.25);height:13px}
+.student .band.period .fill{min-width:120px;border-bottom:1.5px dashed rgba(255,255,255,.7);height:18px}
+.student .note,.student #arrows text{display:none}
+.student .wev.major{color:var(--hot)!important}
+
+@media print{
+  html,body{background:#fff;overflow:visible}
+  #stage{transform:none!important}
+  .mode{display:none}
+}
+@media print{@page{size:1920px 1080px;margin:0}}
+</style>
+</head>
+<body class="teacher">
+<nav class="board-bar" aria-label="한판 연표 보기">
+  <a href="./metro/?package=japan">← 사건 연표</a>
+  <div role="group" aria-label="수업용 보기">
+    <button type="button" data-mode="teacher" aria-pressed="true">교사용</button>
+    <button type="button" data-mode="student" aria-pressed="false">학생용</button>
+  </div>
+  <div role="group" aria-label="크기">
+    <button type="button" data-zoom="fit" aria-pressed="true">전체 맞춤</button>
+    <button type="button" data-zoom="zoom" aria-pressed="false">크게 보기</button>
+  </div>
+  <button type="button" id="view-relations" hidden>관계 보기</button>
+  <div id="board-filters" hidden>
+    <div id="board-leans" role="group" aria-label="성향 필터"></div>
+    <select id="board-subject" aria-label="관련 주체"><option value="">관련 주체</option></select>
+  </div>
+  <p id="board-status" role="status"></p>
+</nav>
+<div id="board-scroll" tabindex="0" role="region" aria-label="일제 강점기 한판 연표">
+<div id="board-size">
+<div id="stage">
+  <div class="head">
+    <h1 id="title"></h1>
+    <span class="subt" id="subt"></span>
+    <div class="legend">
+      <span><i class="lg-band"></i>지속된 정책·기간</span>
+      <span><i class="lg-box"></i>사건·단체</span>
+      <span><i class="lg-hot"></i>탄압·참변</span>
+    </div>
+  </div>
+  <div class="axis" id="axis"><div class="rail"></div></div>
+  <svg id="arrows"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57534B" stroke="none"/></marker></defs></svg>
+</div></div></div>
+<dialog id="board-detail" aria-labelledby="board-detail-title">
+  <header><h2 id="board-detail-title" tabindex="-1"></h2><form method="dialog"><button type="submit" aria-label="닫기">닫기</button></form></header>
+  <div id="board-detail-content"></div>
+</dialog>
+<script>
+/* 전체판: 통치·경제·국내·만주·관내 (1920×1080) */
+const W=1920,H=1080;
+const TITLE='일제 강점기 한판 정리';
+const SUBT='통치·경제 정책과 국내·만주·중국 관내의 민족 독립운동 (1910–1945)';
+const SEP_ROW='dom';
+/* 연도 → x 좌표 (비균등 시간축: 1919–1932 구간을 넓게) */
+const STOPS=[[1910,110],[1919,410],[1925,810],[1931,1190],[1937,1490],[1941,1700],[1945,1900]];
+
+const ROWS=[
+  {id:'gov',cls:'r-gov',top:120,h:200,lab:'통치<br>정책'},
+  {id:'eco',cls:'r-eco',top:324,h:166,lab:'경제<br>정책'},
+  {id:'dom',cls:'r-dom',top:502,h:208,lab:'국내'},
+  {id:'man',cls:'r-man',top:714,h:172,lab:'만주<small>+연해주</small>'},
+  {id:'chn',cls:'r-chn',top:890,h:186,lab:'중국<br>관내'},
+];
+
+const TICKS=[1910,1919,1925,1931,1937,1941,1945];
+const WORLD=[
+  [1914,'제1차 세계 대전'],[1918,'민족 자결주의'],[1929,'대공황'],[1943,'카이로 회담'],
+];
+const WORLD_MAJOR=[[1919,'3·1 운동'],[1931,'만주사변'],[1937,'중일 전쟁'],[1941,'태평양 전쟁'],[1945,'8·15 광복']];
+
+const DATA={
+gov:[
+  {b:[1910,1919.2],y:6,label:'무단 통치 (헌병 경찰 통치)',yr:'1910–1919',cls:'period p1'},
+  {b:[1919.2,1931.7],y:6,label:'‘문화 통치’ (민족 분열 통치)',yr:'1919–1931',cls:'period p2'},
+  {b:[1931.7,1945.6],y:6,label:'민족 말살 통치 (황국 신민화)',yr:'1931–1945',cls:'period p3'},
+  {b:[1910.6,1919.6],y:36,label:'헌병 경찰제',yr:'1910–1919'},
+  {b:[1919.6,1945.6],y:36,label:'보통 경찰제 — 경찰 수·관서는 오히려 증가',yr:'1919–1945'},
+  {b:[1912.2,1920.3],y:57,label:'조선 태형령 (한국인만)',yr:'1912–1920'},
+  {b:[1925.3,1945.6],y:57,label:'치안 유지법 — 사회주의·독립운동 탄압, 1928 개정(최고형 사형)',yr:'1925–1945'},
+  {id:'g1',t:'list',x:114,y:82,w:292,hd:'식민 통치 기구와 법령',li:[
+    ['조선 총독부(무관 총독)·중추원','1910'],['범죄 즉결례 — 재판 없이 처벌','1910'],['제1차 조선 교육령 — 보통학교 4년','1911'],['언론·출판·집회·결사 자유 박탈',''],
+  ]},
+  {id:'g2',t:'list',x:418,y:82,w:330,hd:'‘문화 통치’의 실상',li:[
+    ['문관 총독 임명 가능 → 실제 임명 없음','1919'],['동아·조선일보 창간 → 검열·삭제·정간','1920'],['제2차 조선 교육령 — 3면 1교, 6년제','1922'],['도 평의회·부면 협의회 — 자문 기구뿐','1920'],
+  ]},
+  {id:'g3',t:'list',x:1204,y:82,w:326,hd:'황국 신민화 정책 (내선일체)',li:[
+    ['황국 신민 서사·신사 참배·궁성 요배','1937'],['제3차 조선 교육령 — 조선어 사실상 폐지','1938'],['창씨개명 / 동아·조선일보 폐간','1940'],['국민학교','1941'],
+  ]},
+  {id:'th1',t:'box',x:1010,y:92,w:176,hd:'사상범 보호 관찰령',yr:'1936',ln:['출소 독립운동가 감시'],cls:'chip'},
+  {id:'th2',t:'box',x:1010,y:146,w:176,hd:'사상범 예방 구금령',yr:'1941',ln:['형 마친 사상범도 재구금'],cls:'chip hot'},
+  {id:'g4',t:'list',x:1540,y:82,w:356,hd:'인적 수탈 (전시 동원 체제)',li:[
+    ['국민정신 총동원 조선 연맹 — 애국반','1938'],['육군 특별 지원병제','1938'],['국민 징용령','1939'],['학도 지원병제 / 징병제','1943·44'],['여자 근로 정신대 / 일본군 ‘위안부’',''],
+  ]},
+  {n:'무단기 관리·교사 제복·칼 착용',x:762,y:96},
+  {n:'1930년대 도회·부회·읍회(일부 의결권)',x:762,y:114},
+  {n:'제4차 조선 교육령(1943, 교과서 외)',x:762,y:132},
+],
+eco:[
+  {b:[1910.6,1918.9],y:6,label:'토지 조사 사업',yr:'1910–1918'},
+  {b:[1920,1934.3],y:6,label:'산미 증식 계획 — 증산보다 수탈 ↑, 1934 중단',yr:'1920–1934'},
+  {b:[1938,1945.6],y:6,label:'전시 통제 경제 (국가 총동원법)',yr:'1938–1945'},
+  {b:[1910.9,1920.3],y:29,label:'회사령 (허가제)',yr:'1910–1920'},
+  {b:[1931.7,1945.6],y:29,label:'병참 기지화 — 북부 중화학 공업 (발전소·군수 공장)',yr:'1931–1945'},
+  {b:[1932.5,1940],y:52,label:'농촌 진흥 운동',yr:'1932–1940'},
+  {b:[1934,1945.6],y:75,label:'남면북양 정책 (남부 면화·북부 양)',yr:'1934–'},
+  {id:'e1',t:'list',x:114,y:54,w:292,hd:'자원 약탈과 금융 장악',li:[
+    ['토지 조사: 기한부 신고제 → 경작권 부정',''],['삼림령·어업령','1911'],['광업령','1915'],['조선 식산 은행','1918'],
+  ]},
+  {id:'e2',t:'list',x:418,y:54,w:330,hd:'일본 자본의 진출',li:[
+    ['회사령 폐지 → 신고제','1920'],['관세 철폐 — 일본 상품 유입','1923'],['산미 증식 → 쌀 유출, 만주 잡곡 수입',''],['수리 조합비 부담 → 자작농 몰락, 소작농 ↑',''],
+  ]},
+  {id:'e3',t:'list',x:1540,y:100,w:356,hd:'물적 수탈',li:[
+    ['국가 총동원법','1938'],['미곡 공출·식량 배급 / 금속 회수',''],
+  ]},
+  {id:'e4',t:'box',x:1060,y:100,w:128,hd:'조선 농지령',yr:'1934',ln:['소작 조건 개선 선전'],cls:'chip'},
+  {n:'임야 조사 사업(1917~24)',x:762,y:62},
+  {n:'대공황(1929) → 농촌 경제 파탄',x:762,y:80},
+],
+dom:[
+  {id:'d1',t:'list',x:114,y:8,w:216,hd:'1910년대 비밀 결사',li:[
+    ['독립 의군부 — 임병찬, 복벽주의','1912'],['대한 광복회 — 박상진, 공화주의','1915'],
+  ]},
+  {id:'sam1',t:'box',x:340,y:8,w:140,hd:'3·1 운동',yr:'1919',ln:['거족적·비폭력 만세','→ 임시 정부 수립','→ ‘문화 통치’로 전환'],cls:'key hot'},
+  {id:'d2',t:'list',x:492,y:8,w:298,hd:'실력 양성 운동',li:[
+    ['물산 장려 운동 — 조만식, 평양','1920'],['민립 대학 설립 운동 — 이상재','1922'],['자치론·민족적 경륜 → 타협적 민족주의','1924'],
+  ]},
+  {id:'d3',t:'list',x:800,y:8,w:152,hd:'사회주의 운동',li:[
+    ['조선 공산당','1925'],['6·10 만세 운동','1926'],['정우회 선언','1926'],
+  ]},
+  {id:'sin',t:'box',x:962,y:8,w:222,hd:'신간회·근우회',yr:'1927–31',ln:['비타협 민족주의 + 사회주의','민족 유일당, 전국 지회','1931 해소'],cls:'key'},
+  {id:'d4a',t:'box',x:492,y:106,w:128,hd:'소년 운동',yr:'1922',ln:['방정환, 천도교 소년회'],cls:'chip'},
+  {id:'d4b',t:'box',x:630,y:106,w:150,hd:'암태도 소작 쟁의',yr:'1923',ln:['소작료 인하 요구'],cls:'chip'},
+  {id:'d4c',t:'box',x:790,y:106,w:128,hd:'형평 운동',yr:'1923',ln:['백정 차별 철폐'],cls:'chip'},
+  {id:'d4d',t:'box',x:928,y:106,w:118,hd:'원산 총파업',yr:'1929',ln:['최대 규모 파업'],cls:'chip'},
+  {id:'gj',t:'box',x:1056,y:106,w:166,hd:'광주 학생 항일 운동',yr:'1929',ln:['3·1 운동 이후 최대'],cls:'key'},
+  {id:'d5a',t:'box',x:492,y:162,w:226,hd:'조선어 연구회',yr:'1921',ln:['가갸날 제정 → 조선어 학회(1931)'],cls:'chip'},
+  {id:'d5b',t:'box',x:928,y:162,w:136,hd:'문자 보급 운동',yr:'1929',ln:['조선일보'],cls:'chip'},
+  {id:'d5c',t:'box',x:1232,y:162,w:140,hd:'브나로드 운동',yr:'1931',ln:['동아일보'],cls:'chip'},
+  {id:'d6',t:'list',x:1232,y:8,w:278,hd:'국어 수호',li:[
+    ['조선어 학회','1931'],['한글 맞춤법 통일안','1933'],['조선말 큰사전 편찬 → 조선어 학회 사건','1942'],
+  ]},
+  {id:'d7',t:'list',x:1520,y:8,w:214,hd:'국사 연구',li:[
+    ['진단 학회 — 실증 사학','1934'],['조선학 운동 — 정인보·안재홍','1934'],
+  ]},
+  {id:'d8',t:'box',x:1744,y:8,w:152,hd:'조선 건국 동맹',yr:'1944',ln:['여운형, 국내 비밀 결사','→ 광복 후 건준'],cls:'key'},
+  {n:'송죽회·조선 국민회(교과서 외)',x:114,y:84},
+  {n:'조선 청년 총동맹·노농 총동맹(1924)',x:1520,y:80},
+  {n:'원산 총파업·광주 학생 → 신간회 지원',x:1520,y:98},
+],
+man:[
+  {id:'m1',t:'list',x:114,y:8,w:146,hd:'서간도',li:[
+    ['경학사 → 부민단 → 한족회',''],['신흥 강습소','1911'],['→ 신흥 무관 학교','1919'],
+  ]},
+  {id:'m2',t:'list',x:266,y:8,w:140,hd:'연해주',li:[
+    ['권업회','1911'],['대한 광복군 정부','1914'],['대한 국민 의회','1919'],
+  ]},
+  {id:'m3',t:'list',x:114,y:91,w:292,hd:'미주·일본',li:[
+    ['대한인 국민회 (미주)','1910'],['대조선 국민 군단 (하와이, 박용만)','1914'],['2·8 독립 선언 (도쿄 유학생)','1919'],
+  ]},
+  {id:'m4',t:'list',x:416,y:8,w:150,hd:'독립군 부대',li:[
+    ['대한 독립군 — 홍범도',''],['북로 군정서 — 김좌진',''],['서로 군정서',''],
+  ]},
+  {id:'bo',t:'box',x:574,y:8,w:112,hd:'봉오동 전투',yr:'1920',ln:['6월, 홍범도'],cls:'chip key'},
+  {id:'cs',t:'box',x:692,y:8,w:112,hd:'청산리 전투',yr:'1920',ln:['10월, 김좌진 등'],cls:'chip key'},
+  {id:'gd',t:'box',x:692,y:92,w:112,hd:'간도 참변',yr:'1920',ln:['한인 학살'],cls:'chip hot'},
+  {id:'ja',t:'box',x:574,y:92,w:112,hd:'자유시 참변',yr:'1921',ln:['대한 독립 군단'],cls:'chip hot'},
+  {id:'m5',t:'list',x:812,y:8,w:168,hd:'3부 성립',li:[
+    ['참의부 — 임정 직할','1923'],['정의부','1924'],['신민부','1925'],
+  ]},
+  {id:'mt',t:'box',x:812,y:106,w:168,hd:'미쓰야 협정',yr:'1925',ln:['일제·만주 군벌 독립군 탄압'],cls:'chip hot'},
+  {id:'m6',t:'list',x:990,y:8,w:188,hd:'3부 통합 (민족 유일당)',li:[
+    ['혁신 의회','1928'],['국민부','1929'],
+  ]},
+  {id:'hd',t:'box',x:1196,y:8,w:236,hd:'한국 독립군',yr:'1932–33',ln:['지청천, 중국 호로군과 연합','쌍성보·대전자령 전투'],cls:'key'},
+  {id:'jh',t:'box',x:1196,y:92,w:236,hd:'조선 혁명군',yr:'1932–33',ln:['양세봉, 중국 의용군과 연합','영릉가·흥경성 전투'],cls:'key'},
+  {n:'동북 항일 연군·보천보 전투(1937)',x:1450,y:120},
+  {n:'1933년 이후 만주 독립군 → 중국 관내로 이동',x:1450,y:138},
+],
+chn:[
+  {b:[1919.3,1932.4],y:6,label:'대한민국 임시 정부 — 상하이 (1919.9 통합: 대한 국민 의회 + 한성 정부)',yr:'1919–1932',cls:'k1'},
+  {b:[1932.4,1940.7],y:6,label:'이동 시기 (항저우→창사→광저우…)',yr:'1932–1940',cls:'k2'},
+  {b:[1940.7,1945.6],y:6,label:'충칭',yr:'1940–1945',cls:'k3'},
+  {id:'c0',t:'box',x:264,y:34,w:142,hd:'신한 청년당',yr:'1918',ln:['김규식 파리 강화 회의'],cls:'chip'},
+  {id:'c1',t:'list',x:416,y:34,w:250,hd:'임정 초기 활동',li:[
+    ['연통제·교통국 — 국내와 연락',''],['독립 공채 / 구미 위원부 — 외교',''],['독립신문 / 사료 편찬소',''],
+  ]},
+  {id:'c2',t:'box',x:676,y:34,w:140,hd:'국민 대표 회의',yr:'1923',ln:['창조파 vs 개조파','→ 결렬'],cls:'key'},
+  {id:'c3',t:'box',x:826,y:34,w:152,hd:'임정 개편',yr:'1925',ln:['이승만 탄핵·박은식','국무령 중심 내각제'],cls:'chip'},
+  {id:'c4',t:'box',x:1054,y:34,w:132,hd:'한국 독립당',yr:'1930',ln:['김구·조소앙'],cls:'chip'},
+  {id:'c5',t:'box',x:1196,y:34,w:236,hd:'한인 애국단',yr:'1931',ln:['김구 / 이봉창(1932.1) 일왕 저격','윤봉길(1932.4) 훙커우 → 중국 지원'],cls:'key'},
+  {id:'c6',t:'list',x:1520,y:34,w:176,hd:'충칭 임정',li:[
+    ['주석제 — 김구','1940'],['건국 강령 — 삼균주의','1941'],['대일 선전 포고','1941'],
+  ]},
+  {id:'kg',t:'box',x:1706,y:34,w:190,hd:'한국광복군',yr:'1940',ln:['총사령 지청천','인도·미얀마 전선(1943)','국내 진공 작전(1945, OSS)'],cls:'key'},
+  {id:'ey',t:'box',x:416,y:116,w:250,hd:'의열단',yr:'1919',ln:['김원봉 / 조선 혁명 선언(1923, 신채호)','김익상·김상옥·나석주 의거'],cls:'key'},
+  {id:'hp',t:'box',x:826,y:126,w:152,hd:'황푸 군관 학교',yr:'1926',ln:['의열단원 입교'],cls:'chip'},
+  {id:'gb',t:'box',x:1054,y:126,w:170,hd:'조선 혁명 간부 학교',yr:'1932',ln:['김원봉, 난징'],cls:'chip'},
+  {id:'mh',t:'box',x:1236,y:126,w:150,hd:'민족 혁명당',yr:'1935',ln:['좌우 연합 정당'],cls:'chip'},
+  {id:'uy',t:'box',x:1400,y:126,w:150,hd:'조선 의용대',yr:'1938',ln:['중국 관내 첫 한인 부대'],cls:'key'},
+  {id:'ug',t:'box',x:1706,y:126,w:190,hd:'조선 의용군',yr:'1942',ln:['조선 독립 동맹(화북, 김두봉)'],cls:'key'},
+  {n:'동제사(1912, 교과서 외)',x:114,y:40},
+  {n:'국무 위원제(1927)',x:826,y:102},
+  {n:'한국 국민당(1935)',x:1236,y:104},
+],
+};
+
+const ARROWS=[
+  ['th1','b','th2','t'],
+  ['m3','r','sam1','b',{dash:1}],
+  ['sin','b','gj','t',{label:'지원'}],
+  ['d3','r','sin','l'],
+  ['d5b','r','d5c','l'],
+  ['bo','r','cs','l'],
+  ['cs','b','gd','t'],
+  ['gd','l','ja','r'],
+  ['m5','b','mt','t'],
+  ['mt','r','m6','b'],
+  ['m6','r','hd','l'],
+  ['hd','r','kg','t',{dash:1,label:'관내 이동'}],
+  ['c2','r','c3','l'],
+  ['ey','r','hp','l'],
+  ['hp','r','gb','l'],
+  ['gb','r','mh','l'],
+  ['mh','r','uy','l'],
+  ['uy','r','ug','l',{label:'일부 화북',at:[1592,1063]}],
+  ['uy','tr','kg','b',{label:'광복군 합류(1942)',at:[1556,1031],k:14}],
+];
+
+/* 고정 한판 렌더러
+   data_*.js가 정의하는 W,H,TITLE,SUBT,SEP_ROW,STOPS,ROWS,TICKS,WORLD,WORLD_MAJOR,DATA,ARROWS를 쓴다.
+   band : 긴 하이라이트  {b:[from,to], y, label, yr, cls}
+   box  : 박스          {id, x, y, w, hd, yr, ln:[...], cls}
+   list : 목록 박스      {id, t:'list', x, y, w, hd, li:[[text, yr]], cls}
+   note : 교사용 ○ 메모  {x, y, n}
+   zone : 계열 칸       {z:[x,y,w,h], label, cls:'nat'|'soc'|'uni'|'etc', id}  — 박스보다 먼저 적는다
+   ARROWS: [fromId, side, toId, side, {dash, label, at:[x,y], k}]  side = r|l|t|b|tr */
+function X(y){
+  for(let i=0;i<STOPS.length-1;i++){
+    const [y0,x0]=STOPS[i],[y1,x1]=STOPS[i+1];
+    if(y<=y1||i===STOPS.length-2) return Math.round(x0+(y-y0)*(x1-x0)/(y1-y0));
+  }
+}
+const stage=document.getElementById('stage');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+document.documentElement.style.setProperty('--W',W+'px');
+document.documentElement.style.setProperty('--H',H+'px');
+document.title=TITLE;
+document.getElementById('title').textContent=TITLE;
+document.getElementById('subt').textContent=SUBT;
+
+/* 시간축 */
+const axis=document.getElementById('axis');
+const first=TICKS[0], last=TICKS[TICKS.length-1];
+axis.querySelector('.rail').style.cssText=`left:${X(first)}px;width:${X(last)-X(first)}px`;
+TICKS.forEach(y=>{
+  axis.insertAdjacentHTML('beforeend',`<div class="tick" style="left:${X(y)}px"></div><div class="tyear" style="left:${X(y)}px">${y}</div>`);
+  if(y>first) stage.insertAdjacentHTML('beforeend',`<div class="guide" style="left:${X(y)}px"></div>`);
+});
+WORLD.forEach(([y,t])=>axis.insertAdjacentHTML('beforeend',`<div class="wdot" style="left:${X(y)}px"></div><div class="wev" data-board-key="axis:${esc(t)}" style="left:${X(y)}px">${t} (${y})</div>`));
+WORLD_MAJOR.forEach(([y,t])=>axis.insertAdjacentHTML('beforeend',`<div class="wev major${y===last?' end':''}" data-board-key="axis:${esc(t)}" style="left:${X(y)}px">${t}</div>`));
+
+/* 행 */
+ROWS.forEach(r=>{
+  const el=document.createElement('div');
+  el.className='row '+r.cls; el.id='row-'+r.id;
+  el.style.top=r.top+'px'; el.style.height=r.h+'px';
+  el.innerHTML=`<div class="bg"></div><div class="lab">${r.lab}</div>`;
+  (DATA[r.id]||[]).forEach((it,index)=>{
+    const key=it.id||r.id+':'+index;
+    let h='';
+    if(it.z){
+      const [zx,zy,zw,zh]=it.z;
+      h=`<div class="zone ${it.cls||''}"${it.id?` id="${it.id}"`:''} style="left:${zx}px;top:${zy}px;width:${zw}px;height:${zh}px"><span class="ztag">${esc(it.label)}</span></div>`;
+    }else if(it.b){
+      const x0=X(it.b[0]),x1=X(it.b[1]);
+      h=`<div class="band ${it.cls||''}" data-board-key="${key}" style="left:${x0}px;top:${it.y}px;width:${x1-x0}px"><span class="fill">${esc(it.label)}</span>${it.yr?`<span class="yr">${it.yr}</span>`:''}</div>`;
+    }else if(it.n){
+      h=`<div class="note" data-board-key="${key}" style="left:${it.x}px;top:${it.y}px">${esc(it.n)}</div>`;
+    }else{
+      const cls=['box',it.t==='list'?'list':'',it.cls||''].join(' ');
+      h=`<div class="${cls}" id="${it.id}" style="left:${it.x}px;top:${it.y}px;width:${it.w}px">`
+        +`<div class="hd" data-board-key="${key}"><span class="fill">${esc(it.hd)}</span>${it.yr?`<span class="yr">${it.yr}</span>`:''}</div>`
+        +(it.ln||[]).map((l,i)=>`<div class="ln" data-board-key="${key}:${i}">${esc(l)}</div>`).join('')
+        +(it.li||[]).map(([t,y],i)=>`<div class="li" data-board-key="${key}:${i}"><span class="fill">${esc(t)}</span>${y?`<span class="yr">${y}</span>`:''}</div>`).join('')
+        +`</div>`;
+    }
+    el.insertAdjacentHTML('beforeend',h);
+  });
+  stage.insertBefore(el,document.getElementById('arrows'));
+});
+const sepRow=ROWS.find(r=>r.id===SEP_ROW);
+if(sepRow) stage.insertAdjacentHTML('beforeend',`<div class="sep" style="top:${sepRow.top-5}px"><span>민족 독립운동</span></div>`);
+
+/* 화살표 */
+function anchor(id,side){
+  const e=document.getElementById(id), row=e.parentElement;
+  const x=e.offsetLeft, y=e.offsetTop+row.offsetTop, w=e.offsetWidth, h=e.offsetHeight;
+  const [sd,f]=side.split(':'), q=f===undefined?0.5:+f;   /* 'l:0.3' = 왼쪽 변의 30% 지점 */
+  return {r:[x+w,y+h*q],l:[x,y+h*q],t:[x+w*q,y],b:[x+w*q,y+h],tr:[x+w-16,y]}[sd];
+}
+function drawArrows(){
+  const svg=document.getElementById('arrows');
+  svg.querySelectorAll('path:not(marker path),text').forEach(n=>n.remove());
+  ARROWS.forEach(([a,sa,b,sb,o={}])=>{
+    const [x1,y1]=anchor(a,sa),[x2,y2]=anchor(b,sb);
+    const k=o.k||Math.max(18,Math.min(80,Math.hypot(x2-x1,y2-y1)/3));
+    const d={r:[k,0],l:[-k,0],t:[0,-k],b:[0,k],tr:[0,-k]}, da=d[sa.split(':')[0]], db=d[sb.split(':')[0]];
+    const c1=[x1+da[0],y1+da[1]], c2=[x2+db[0],y2+db[1]];
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',`M${x1},${y1} C${c1} ${c2} ${x2},${y2}`);
+    p.setAttribute('marker-end','url(#ah)');
+    p.dataset.boardArrow=a+':'+b;
+    if(o.dash) p.setAttribute('class','dash');
+    svg.appendChild(p);
+    if(o.label){
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      const m=p.getPointAtLength(p.getTotalLength()/2);
+      const [tx,ty]=o.at||[m.x+5,m.y+4];
+      t.setAttribute('x',tx); t.setAttribute('y',ty); t.textContent=o.label;
+      svg.appendChild(t);
+    }
+  });
+}
+
+/* 화면 크기와 학생용 모드 */
+const scroll=document.getElementById('board-scroll');
+const layout=document.getElementById('board-size');
+let enlarged=false;
+function fit() {
+  const scale=Math.min(scroll.clientWidth/W,scroll.clientHeight/H);
+  const s=enlarged?Math.max(.65,scale):scale;
+  layout.style.width=W*s+'px';
+  layout.style.height=H*s+'px';
+  stage.style.transform='scale('+s+')';
+}
+function selectMode(mode) {
+  document.body.className=mode;
+  for(const button of document.querySelectorAll('[data-mode]'))button.setAttribute('aria-pressed',String(button.dataset.mode===mode));
+  document.dispatchEvent(new Event('board-mode-change'));
+}
+for(const button of document.querySelectorAll('[data-mode]'))button.onclick=()=>selectMode(button.dataset.mode);
+for(const button of document.querySelectorAll('[data-zoom]'))button.onclick=()=>{
+  enlarged=button.dataset.zoom==='zoom';
+  for(const option of document.querySelectorAll('[data-zoom]'))option.setAttribute('aria-pressed',String(option===button));
+  fit();
+};
+addEventListener('resize',fit);
+fit();
+(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{
+  drawArrows();
+  document.dispatchEvent(new Event('board-arrows-ready'));
+});
+</script>
+<script type="application/json" id="board-index">{"events":{"gov:0":["E203"],"gov:1":["E204"],"gov:2":["E205"],"gov:3":["E206"],"gov:4":["E207"],"gov:5":["E208"],"gov:6":["E209"],"g1:0":["E210"],"g1:1":["E211"],"g1:2":["E212"],"g2:0":["E213"],"g2:1":["E214","E215"],"g2:2":["E216"],"g2:3":["E217"],"g3:0":["E218"],"g3:1":["E219"],"g3:2":["E220","E221"],"g3:3":["E222"],"th1":["E223"],"th2":["E224"],"g4:0":["E225"],"g4:1":["E226"],"g4:2":["E227"],"g4:3":["E228","E229"],"gov:15":["E230"],"eco:0":["E231"],"eco:1":["E232"],"eco:2":["E233"],"eco:3":["E234"],"eco:4":["E235"],"eco:5":["E236"],"eco:6":["E237"],"e1:1":["E238"],"e1:2":["E239"],"e1:3":["E240"],"e2:0":["E241"],"e2:1":["E242"],"e3:0":["E243"],"e4":["E244"],"eco:11":["E245"],"d1:0":["E246"],"d1:1":["E247"],"sam1":["E248"],"d2:0":["E249"],"d2:1":["E250"],"d2:2":["E251"],"d3:0":["E252"],"d3:1":["E253"],"d3:2":["E254"],"sin":["E255"],"d4a":["E256"],"d4b":["E257"],"d4c":["E258"],"d4d":["E259"],"gj":["E260"],"d5a":["E261"],"d5b":["E262"],"d5c":["E263"],"d6:0":["E264"],"d6:1":["E265"],"d6:2":["E266"],"d7:0":["E267"],"d7:1":["E268"],"d8":["E269"],"m1:1":["E270"],"m1:2":["E271"],"m2:0":["E272"],"m2:1":["E273"],"m2:2":["E274"],"m3:0":["E275"],"m3:1":["E276"],"m3:2":["E277"],"bo":["E278"],"cs":["E279"],"gd":["E280"],"ja":["E281"],"m5:0":["E282"],"m5:1":["E283"],"m5:2":["E284"],"mt":["E285"],"m6:0":["E286"],"m6:1":["E287"],"hd":["E288"],"jh":["E289"],"chn:0":["E290","E306","E307"],"chn:1":["E291"],"chn:2":["E292"],"c0":["E293"],"c2":["E294"],"c3":["E295"],"c4":["E296"],"c5":["E297"],"c6:0":["E298"],"c6:1":["E299"],"c6:2":["E300"],"chn:17":["E301"],"chn:18":["E302"],"chn:19":["E303"],"c5:0":["E304"],"c5:1":["E305"],"provisional-founding":["E306"],"provisional-unification":["E307"],"axis:제1차 세계 대전":["E308"],"axis:민족 자결주의":["E309"],"axis:대공황":["E310"],"axis:카이로 회담":["E311"],"axis:만주사변":["E312"],"axis:중일 전쟁":["E313"],"axis:태평양 전쟁":["E314"],"axis:8·15 광복":["E315"],"ey":["E187","E189","E188","E190","E192"],"hp":["E191"],"gb":["E193"],"mh":["E194"],"uy":["E195","E197","E198"],"ug":["E200","E199"],"kg":["E196","E198","E201","E202"],"axis:3·1 운동":["E248"]},"actors":{"ey":"org_uiyeoldan","hp":"org_whampoa_military_academy","gb":"org_korean_revolutionary_cadre_school","mh":"org_minjok_revolution","uy":"org_korean_volunteer_corps","ug":"org_korean_volunteer_army","kg":"org_korean_liberation_army","c5":"org_korean_patriotic_group"},"arrows":{"ey:hp":"R003","mh:uy":"R006","uy:ug":"R007","uy:kg":"R008","sin:gj":"R012"}}</script>
+<script src="./sheet-config.js?v=normalized-schema"></script>
+<script src="./sheets.js?v=normalized-schema"></script>
+<script src="./japan-board.js?v=linked-actors"></script>
+</body>
+</html>

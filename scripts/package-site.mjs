@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {cpSync,existsSync,readFileSync,rmSync,mkdirSync,statSync} from 'node:fs';
 import {join} from 'node:path';
 
-const pages=['index.html','classroom.html','data-explorer.html','lens.html','visual-ideas.html'];
-const scripts=['app.js','constellation-layout.js','data.js','history.js','lens-layout.js','lens.js','sheet-config.js','sheet-snapshot.js','sheets.js','views.js','visual-ideas.js'];
-const styles=['style.css','design.css','views.css','data-explorer.css','lens.css'];
+const pages=['index.html','classroom.html','data-explorer.html','package-studio.html','lens.html','visual-ideas.html','japan.html','swimlane.html','swimlane-focus.html','event-map-demo.html','cuba-story.html','berlin-story.html','asia-stories.html'];
+const scripts=['app.js','constellation-layout.js','data.js','history.js','lens-layout.js','lens.js','sheet-config.js','sheet-snapshot.js','sheets.js','views.js','visual-ideas.js','japan-board.js','swimlane-data.js','event-map-links.js'];
+const styles=['style.css','design.css','views.css','data-explorer.css','lens.css','japan-board.css'];
 // Publish an explicit file list so working notes and source backups stay local.
 rmSync('dist',{recursive:true,force:true});
 mkdirSync('dist');

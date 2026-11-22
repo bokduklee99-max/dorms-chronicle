@@ -9,8 +9,8 @@ test('failed reads retain data and a content-only live feed updates and caches s
     if(!elements.has(selector))elements.set(selector,{innerHTML:'',textContent:'',value:'',hidden:false,dataset:{},classList:{toggle(){}},addEventListener(){},setAttribute(){},removeAttribute(){},getBoundingClientRect(){return {width:900,height:400};}});
     return elements.get(selector);
   };
-  let failure=new Error('offline');const calls=[];
-  const context=vm.createContext({URL,AbortSignal,console,document:{hidden:false,querySelector:element,querySelectorAll:()=>[],addEventListener(){},documentElement:{dataset:{theme:'light'}}},window:{WORLD:[],addEventListener(){}},localStorage:{getItem:key=>cache.get(key)||null,setItem:(key,value)=>cache.set(key,value)},setInterval(){},clearInterval(){},setTimeout(){},clearTimeout(){},fetch:async(url,options)=>{calls.push(options);if(failure instanceof Error)throw failure;return {ok:true,text:async()=>failure};}});
+  let failure=new Error('offline'), memberships='';const calls=[];
+  const context=vm.createContext({URL,URLSearchParams,location:{search:''},AbortSignal,console,document:{hidden:false,querySelector:element,querySelectorAll:()=>[],addEventListener(){},documentElement:{dataset:{theme:'light'}}},window:{addEventListener(){}},localStorage:{getItem:key=>cache.get(key)||null,setItem:(key,value)=>cache.set(key,value)},setInterval(){},clearInterval(){},setTimeout(){},clearTimeout(){},fetch:async(url,options)=>{calls.push(options);if(failure instanceof Error)throw failure;return {ok:true,text:async()=>url.searchParams.get('gid')==='1675177887'?memberships:failure};}});
   for(const name of ['sheet-config.js','sheet-snapshot.js','sheets.js','history.js','data.js','views.js','app.js'])vm.runInContext(readFileSync(new URL('../'+name,import.meta.url),'utf8'),context);
   await vm.runInContext('syncSheet()',context);
   const initial=vm.runInContext('JSON.stringify(EVENTS)',context);
@@ -24,6 +24,7 @@ test('failed reads retain data and a content-only live feed updates and caches s
   assert.ok(calls.every(options=>options.credentials==='omit'));
   assert.equal(cache.size,0);
   const raw=context.SHEET_SNAPSHOT.tables;
+  memberships=['사건ID,패키지ID',...raw.events.map(row=>row.event_id+',cold-war')].join('\n');
   const rows=Object.entries(raw).flatMap(([name,records])=>{
     const headers=Object.keys(records[0]);
     return [[name,...headers],...records.map(record=>[name,...headers.map(key=>typeof record[key]==='boolean'?String(record[key]).toUpperCase():record[key])])];

@@ -1,0 +1,73 @@
+.metro-app.radar-mode { padding-top:22px }
+.metro-app.radar-mode > .hero { margin-bottom:10px }
+.metro-app.radar-mode > .hero h1 { font-size:clamp(30px,5vw,42px) }
+.time-radar { color:var(--chronicle-ink); margin-top:16px }
+.time-radar-controls { margin-bottom:16px }
+.time-radar-controls h2 { font-size:clamp(23px,3vw,32px); line-height:1.12; letter-spacing:-.035em; font-weight:600; margin:0 0 6px }
+.time-radar p { margin:0; line-height:1.55 }
+.time-radar-controls p,.time-radar time,.time-radar-legend { color:var(--chronicle-muted) }
+.time-radar-scan { justify-self:stretch; display:grid; grid-template-columns:1fr auto; align-items:baseline; padding-top:10px; border-top:1px solid var(--chronicle-line) }
+.time-radar-scan label { font-size:14px; font-weight:600 }
+.time-radar-scan input { grid-column:1 / -1; width:100%; min-width:0; height:32px; margin:0; accent-color:var(--chronicle-accent); cursor:pointer }
+.time-radar-scan output { min-width:4em; color:var(--chronicle-accent-hover); font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; text-align:right }
+.time-radar-layout { display:grid; grid-template-columns:minmax(285px,2fr) minmax(0,3fr); align-items:stretch; gap:15px }
+.time-radar-plot,.time-radar-inspector { border:1px solid var(--chronicle-line); border-radius:12px; background:var(--chronicle-surface); min-width:0 }
+.time-radar-plot { display:grid; justify-items:center; align-content:start; gap:4px; padding:14px }
+.time-radar-line-controls,.time-radar-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center }
+.time-radar-line-controls { justify-self:start; font-size:13px }
+.time-radar-line-controls span { margin-right:3px; font-weight:600 }
+.time-radar :is(.time-radar-line-controls,.time-radar-actions) button {
+ border:1px solid var(--chronicle-line); border-radius:6px; padding:5px 9px; min-height:35px;
+ background:var(--chronicle-surface); color:var(--chronicle-ink); cursor:pointer; font-size:13px; font-weight:600;
+}
+.time-radar :is(.time-radar-line-controls,.time-radar-actions) button:hover { border-color:var(--chronicle-green) }
+.time-radar :is(.time-radar-line-controls,.time-radar-actions) :is(button[aria-pressed=true],.radar-primary) { background:var(--chronicle-green); color:var(--chronicle-surface); border-color:var(--chronicle-green) }
+.time-radar-chart { width:100%; max-width:clamp(420px,calc(100dvh - 270px),650px); height:auto; display:block }
+.radar-ring { fill:#fdfcf7; stroke:#d6d8cc }
+.radar-ring.shaded { fill:#f0f1e8 }
+.radar-divider { stroke:#b3bcac; stroke-dasharray:4 4 }
+.radar-scan-ring { fill:none; stroke:var(--chronicle-accent); stroke-width:2; stroke-dasharray:5 4 }
+.radar-link { cursor:pointer }
+.radar-edge-hit { fill:none; stroke:transparent; stroke-width:12; pointer-events:stroke }
+.radar-link:is(:hover,:focus-visible,[aria-pressed=true]) .radar-edge { opacity:1; stroke-width:3 }
+.radar-edge { pointer-events:none; fill:none; stroke-width:1.3; opacity:.22 }
+.radar-edge[data-active=true] { opacity:.9; stroke-width:1.7 }
+.radar-year-tick,.radar-sector-label { paint-order:stroke; stroke:var(--chronicle-surface); stroke-width:4px; stroke-linejoin:round; font-weight:600 }
+.radar-year-tick { font-size:13px; fill:var(--chronicle-muted) }
+.radar-sector-label { font-size:17px }
+.radar-point { cursor:pointer; outline:none }
+.radar-point-dot { stroke:var(--chronicle-surface); stroke-width:1.2; pointer-events:none }
+.radar-point[data-muted=true] .radar-point-dot { opacity:.55 }
+.radar-point:is(:hover,:focus-visible,[aria-pressed=true]) .radar-point-dot { opacity:1; stroke:var(--chronicle-ink); stroke-width:2 }
+.time-radar-legend { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; list-style:none; margin:0; padding:0; gap:6px 12px; font-size:13px }
+.time-radar-legend li { display:flex; gap:6px; align-items:center }
+.time-radar-legend i { display:inline-block; width:15px; height:2px }
+.time-radar-inspector { overflow:auto; max-height:clamp(480px,calc(100dvh - 200px),715px) }
+.time-radar-inspector > div > header { padding:15px 16px 12px; border-bottom:1px solid var(--chronicle-line) }
+.time-radar-inspector > div > header h3 { font-size:19px; font-weight:600; margin:3px 0 0; overflow-wrap:anywhere }
+.time-radar-inspector h3 span,.time-radar-inspector time { font-size:13px; font-weight:500 }
+.time-radar-inspector h3 span { margin-left:6px; color:var(--chronicle-muted) }
+.time-radar-summary,.time-radar-event-list { display:grid; gap:8px; padding:12px 16px }
+.time-radar-summary p { color:var(--chronicle-muted); font-size:14px; overflow-wrap:anywhere }
+.time-radar-summary .radar-description { color:var(--chronicle-ink); white-space:pre-line }
+.time-radar-event-list section { display:grid; gap:5px }
+.time-radar-event-list h4 { margin:3px 0 1px; color:var(--chronicle-green); font-size:14px; font-weight:600 }
+.time-radar-event-list button { display:grid; gap:3px; width:100%; padding:8px 9px; border:1px solid var(--chronicle-line); border-radius:6px; background:var(--chronicle-paper); text-align:left; color:inherit; cursor:pointer; overflow-wrap:anywhere }
+.time-radar-event-list button:hover { background:#e9eee4; border-color:#879988 }
+.time-radar-event-list button strong { font-size:14px; font-weight:600 }
+.time-radar-event-list button small { color:var(--chronicle-green); font-size:12px }
+.radar-reader:empty { display:none }
+.radar-reader { max-height:inherit; overflow:auto; scroll-margin-top:12px }
+.radar-reader .record { border:0; box-shadow:none }
+.radar-reader .record-head { padding:16px; align-items:start; flex-wrap:wrap }
+.radar-reader .record-head > div:first-child { flex:1 1 10rem }
+.radar-reader .record-head h2 { font-size:clamp(21px,2.4vw,30px); line-height:1.25 }
+.radar-reader .reader-tools { margin-left:auto }
+.radar-reader .inside,.radar-reader .record-foot { padding:16px }
+.radar-reader .prose { font-size:16px }
+.radar-reader .open { font-size:20px; line-height:1 }
+@media(max-width:639px){
+ .time-radar-layout { grid-template-columns:minmax(0,1fr) }
+ .time-radar-inspector { max-height:none }
+ .time-radar-plot { padding:10px }
+}

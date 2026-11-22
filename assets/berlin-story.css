@@ -1,0 +1,26 @@
+.berlin .map{background:#bcd2d4}
+.berlin .map-note{position:absolute;left:14px;bottom:12px;max-width:calc(100% - 28px);background:#fbf5e8ed;color:#324641;padding:5px 9px;border-radius:2px;font-size:13px;line-height:1.4}
+.berlin .locator{color:#213d43}
+#geography :is(#terrain,#states path,#city,#water,#wall path){vector-effect:non-scaling-stroke;stroke-linejoin:round;fill-rule:evenodd}
+#terrain{fill:#d9d2bb;stroke:#93a99e;stroke-width:1}
+#west-state{fill:#6d9d99;stroke:#285559;stroke-width:1.3}
+#east-state{fill:#c7876d;stroke:#804c40;stroke-width:1.3}
+#east-ink{fill:url(#east-hatch);stroke:none}
+#city{fill:#e9e4ce;stroke:#959d8e;stroke-width:1}
+#water{fill:#94b9c4;stroke:#87abb5;stroke-width:.7}
+#wall path{fill:none;stroke:#953d28;stroke-width:2.8;stroke-linecap:round}
+.berlin #labels text{fill:#273c39;stroke:#f8f2de;stroke-width:3.8;font-weight:700}
+.berlin #labels .minor{font-size:13px;fill:#535d50;font-weight:500}
+.berlin #labels .area{font-size:clamp(16px,2vw,24px);letter-spacing:.09em}
+.berlin #labels .sea{font-size:13px;fill:#3a686f;stroke:#c4dadd;font-weight:500}
+.berlin #labels .ring{stroke:#803e2c}
+.berlin #labels .point{fill:#fff6d9;stroke:#88492d}
+.archive{margin:18px 0 0;max-width:310px}
+.archive img{display:block;width:100%;height:auto;border-radius:2px}
+.archive figcaption{font-size:13px;line-height:1.45;color:#495b54;margin-top:6px}
+.archive a{text-decoration:none}
+.archive a:hover{text-decoration:underline}
+
+@media(prefers-reduced-motion:reduce){.cargo{display:none}}
+
+#zones path{fill-rule:evenodd;stroke:#605e52;stroke-width:.85;vector-effect:non-scaling-stroke}

@@ -42,7 +42,6 @@ test('separate event, country, tenure and category tables keep images on events 
     f=>f.tenure_periods[0].office_status='unknown',
     f=>f.tenure_periods[0].appointment_type='unknown',
     f=>f.tenure_periods.push(f.tenure_periods[0]),
-    f=>f.categories[0].parent_topic_id=f.categories[1].topic_id,
     f=>f.events.find(row=>row.images).images='javascript:alert(1)',
     f=>f.events[0].us_leader='unregistered person',
     f=>f.items=[]
@@ -72,6 +71,10 @@ test('country assignments respect historical states, treaty parties and the diff
   const gas=actors(byTitle('천연가스'));assert.ok(gas.has('actor_ussr'));assert.ok(!gas.has('actor_russia'));
   assert.ok(!actors(byTitle('체코슬로바키아 침공')).has('actor_romania'));
 });
+test('spreadsheet paste preserves empty cells, commas and quoted multiline notes',()=>{
+  const pasted=api.parseCSV('1919\t사건, 하나\t\t"첫 줄\n둘째 줄"\r\n1920\t다음 사건',true,'\t');
+  assert.equal(JSON.stringify(pasted),JSON.stringify([['1919','사건, 하나','','첫 줄\n둘째 줄'],['1920','다음 사건']]));
+});
 test('CSV preserves quotes, commas, Korean and paragraphs; rejects incomplete responses',()=>{
   const rows=[['사건','"인용", 쉼표\n다음 줄',''],['','끝','TRUE']];
   assert.equal(JSON.stringify(api.parseCSV('\uFEFF'+csv(rows))),JSON.stringify(rows));
@@ -87,11 +90,86 @@ test('published feed round trip preserves all events and excludes private archiv
   assert.equal(JSON.stringify(loaded.events),JSON.stringify(data.events));
   assert.ok(!Object.hasOwn(decoded,'source_archive'));assert.ok(!Object.hasOwn(decoded,'unresolved_relations'));
 });
-test('broken IDs, duplicate links, cycles, empty snapshots and unsafe URLs reject the entire update',()=>{
+test('flat category feeds retain only explicitly linked categories',()=>{
+  const flatFeed=feed.map(row=>row[0]==='categories'?row.slice(0,3):row);
+  const flat=api.build(api.decodeFeed(flatFeed));
+  const expected={...data,topics:data.topics.map(({sort_order,...topic})=>topic)};
+  assert.equal(JSON.stringify(flat),JSON.stringify(expected));
+  assert.ok(flat.topics.every(topic=>!Object.hasOwn(topic,'parent_topic_id')));
+  assert.ok(flat.events.every(event=>[...event.topicIds].sort().join()===raw.event_categories.filter(link=>link.event_id===event.id).map(link=>link.topic_id).sort().join()));
+});
+test('colonial feed keeps flat tags and filters by linked subjects or their leanings',()=>{
+  const input=JSON.parse(JSON.stringify(raw));
+  const seed=input.events[0];
+  const {us_leader,ussr_leader,...common}=seed;
+  input.events=[{...common,event_id:'E1',title:'선언',start_date:'1923',end_date:'',event_type:'publication',origin_label:'교사용.html#L5'},
+    {...common,event_id:'E2',title:'운동',start_date:'1926',end_date:''}];
+  input.tenure_periods=[];
+  input.countries=[{actor_id:'person_a',name:'인물',actor_type:'person',iso3:'',lean:'사회주의'},
+    {actor_id:'person_b',name:'미연결 인물',actor_type:'person',iso3:'',lean:'좌우합작'}];
+  input.categories=[{topic_id:'domestic',name:'국내 운동',package_id:'japan'},
+    {topic_id:'culture',name:'민족문화',package_id:'japan'}];
+  input.event_categories=[{event_id:'E1',topic_id:'culture'},{event_id:'E1',topic_id:'domestic'},{event_id:'E2',topic_id:'domestic'}];
+  input.event_countries=[{event_id:'E1',actor_id:'person_a',role:'participant',actor_role:'author'}];
+  const decoded=api.decodeFeed(Object.entries(input).flatMap(([name,rows])=>{
+    const keys=Object.keys(rows[0]??raw[name][0]);
+    return [[name,...keys],...rows.map(row=>[name,...keys.map(key=>row[key]??'')])];
+  }));
+  const built=api.build(decoded);
+  assert.equal(built.events[0].eventType,'publication');
+  assert.equal(built.events[0].topicIds.slice().sort().join(), 'culture,domestic');
+  assert.equal(built.events[0].topicIds.join(),built.events[0].directTopicIds.join());
+  assert.equal(decoded.event_actors[0].role,'author');
+  const filters=api.actorFilterOptions(built.events,built.actors);
+  assert.equal(filters.leans.join(),'사회주의');
+  assert.equal(filters.groups[0][1].map(actor=>actor.actor_id).join(),'person_a');
+  for(const choice of ['actor:person_a','lean:사회주의'])assert.equal(api.filterActorEvents(built.events,built.actors,choice).map(event=>event.id).join(),'E1');
+  assert.equal(api.filterActorEvents(built.events,built.actors,'').length,2);
+  const header=['관계ID','패키지ID','출발유형','출발ID','도착유형','도착ID','관계유형','라벨','설명','출처','검토상태'];
+  const edge=['R001','japan','actor','person_a','event','E1','action','발표','','https://example.com','draft'];
+  assert.equal(api.readRelations([header,edge],'japan',built)[0].to,'E1');
+  assert.throws(()=>api.readRelations([header,[...edge.slice(0,5),'missing',...edge.slice(6)]],'japan',built),/연결 대상/);
+});
+test('categories follow the first linked start date even when row order and display numbers disagree',()=>{
+  const categories=[
+    {topic_id:'missing',name:'미분류',sort_order:'0'},
+    {topic_id:'late',name:'가장 늦음',sort_order:'1'},
+    {topic_id:'early-b',name:'나',sort_order:'2'},
+    {topic_id:'early-a',name:'가',sort_order:'3'},
+  ];
+  const events=[
+    {event_id:'e3',start_date:'1950'},
+    {event_id:'e2',start_date:'1945-01-01'},
+    {event_id:'e1',start_date:'1945'},
+  ];
+  const links=[
+    {event_id:'e3',topic_id:'early-a'},
+    {event_id:'e3',topic_id:'late'},
+    {event_id:'e2',topic_id:'early-a'},
+    {event_id:'e1',topic_id:'early-b'},
+  ];
+  assert.deepEqual(Array.from(api.orderCategories(categories,events,links),row=>row.topic_id),['early-a','early-b','late','missing']);
+});
+test('direct lesson actors and separate board filter options use only linked actor IDs',()=>{
+  const actors=[
+    {actor_id:'g',name:'단체',actor_type:'organization',lean:' '},
+    {actor_id:'p',name:'인물',actor_type:'person',lean:' 성향 A '},
+    {actor_id:'q',name:'다른 인물',actor_type:'person',lean:'성향 B'}
+  ];
+  const events=[{id:'E282',actorIds:[]},{id:'e1',actorIds:['g','p']},{id:'e2',actorIds:['q']}];
+  const selected=events.slice(0,2);
+  assert.deepEqual(Array.from(api.linkedActors(selected,actors),actor=>actor.actor_id).sort(),['g','p']);
+  const options=api.actorFilterOptions(selected,actors);
+  assert.deepEqual(Object.keys(options).sort(),['groups','leans']);
+  assert.deepEqual(Array.from(options.groups.flatMap(([,list])=>list.map(a=>a.actor_id))).sort(),['g','p']);
+  assert.deepEqual(Array.from(options.leans),['성향 A']);
+  assert.equal(api.filterActorEvents(selected,actors,'lean:성향 A').map(e=>e.id).join(),'e1');
+  assert.equal(api.actorFilterOptions(events.slice(0,1),actors).groups.length,0);
+});
+test('broken IDs, duplicate links, empty snapshots and unsafe URLs reject the entire update',()=>{
   let b=copy();b.event_topics[0].event_id='missing';assert.throws(()=>api.build(b),/ID/);
   b=copy();b.events.push(b.events[0]);assert.throws(()=>api.build(b),/ID/);
   b=copy();b.event_topics.push(b.event_topics[0]);assert.throws(()=>api.build(b),/중복/);
-  b=copy();b.topics[0].parent_topic_id=b.topics[1].topic_id;assert.throws(()=>api.build(b),/순환/);
   b=copy();b.events[0].origin_ref='javascript:alert(1)';assert.throws(()=>api.build(b),/링크/);
   b=copy();b.events=[];assert.throws(()=>api.build(b),/빈 사건/);
 });
@@ -119,8 +197,4 @@ test('place relations resolve coordinates and reject multiple primary locations'
 test('all twenty bundled Notion files exist and map to their original media URLs',()=>{
   const media=vm.runInContext('SHEET_MEDIA',context);assert.equal(Object.keys(media).length,20);
   for(const asset of tables.media_assets){assert.ok(media[asset.url]);assert.ok(existsSync(new URL('../'+media[asset.url],import.meta.url)));}
-});
-test('example map handles background years and USSR dissolution',()=>{
-  const bloc=vm.runInContext('blocAt',context);
-  assert.equal(bloc('RUS',1923),'other');assert.equal(bloc('RUS',1990),'east');assert.equal(bloc('RUS',1991),'other');
 });

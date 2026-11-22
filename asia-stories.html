@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>역사 지도 재생</title>
+<link rel="stylesheet" href="./assets/cuba-story.css">
+<link rel="stylesheet" href="./assets/asia-stories.css">
+</head>
+<body class="atlas-story">
+<main>
+  <header>
+    <a class="back" href="./event-map-demo.html">← 사건 지도</a>
+    <div class="heading"><h1>역사 지도</h1><p></p></div>
+  </header>
+  <div class="layout">
+    <section class="player" aria-label="사건 지도 재생">
+      <div class="map">
+        <svg id="atlas" role="img" aria-label="역사 지도">
+          <g id="geography"><path id="land"/><use id="pacific-copy" href="#land" x="360"/><g id="rivers"></g></g>
+          <g id="routes"></g><g id="story-pins"></g>
+        </svg>
+        <div id="map-credit"></div>
+        <div class="locator" aria-hidden="true"><span>북</span>↑</div>
+      </div>
+      <div class="progress" aria-hidden="true"><i></i></div>
+      <div class="caption" aria-live="polite" aria-atomic="true">
+        <time id="date"></time><h2 id="scene-title">지도를 불러오는 중…</h2><p id="story-text"></p>
+      </div>
+      <div class="transport">
+        <button id="play" disabled>▶ 재생</button>
+        <button id="prev" aria-label="이전 장면" disabled>←</button>
+        <button id="next" aria-label="다음 장면" disabled>→</button>
+        <span id="counter"></span>
+      </div>
+    </section>
+    <nav aria-label="사건 순서"><h2>사건 순서</h2><ol id="chapters"></ol></nav>
+  </div>
+  <footer><a href="https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit#gid=201117001">원본 연표 ↗</a><a id="history-source">사건 해설 ↗</a><a id="base-source">배경지도 ↗</a></footer>
+  <noscript>사건 지도를 재생하려면 자바스크립트를 켜 주세요.</noscript>
+</main>
+<script src="./sheet-config.js?v=normalized-schema"></script><script src="./sheets.js?v=normalized-schema"></script>
+<script type="module" src="./assets/asia-stories.js"></script>
+</body>
+</html>

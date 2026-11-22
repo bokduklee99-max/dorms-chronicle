@@ -7,7 +7,7 @@ function smoothRoute(nodes:{x:number;y:number}[]){
 export function makeTransit(data:HistoryData){
  const events=[...data.events].sort((a,b)=>a.bounds.start-b.bounds.start||a.id.localeCompare(b.id));
  const eventYears=new Set(events.map(event=>event.year));
- const topics=data.topics.filter(t=>events.some(e=>e.directTopicIds.includes(t.topic_id))).sort((a,b)=>events.filter(e=>e.directTopicIds.includes(b.topic_id)).length-events.filter(e=>e.directTopicIds.includes(a.topic_id)).length||events.filter(e=>e.directTopicIds.includes(b.topic_id)&&e.directTopicIds.length>1).length-events.filter(e=>e.directTopicIds.includes(a.topic_id)&&e.directTopicIds.length>1).length);
+ const topics=data.topics.filter(t=>events.some(e=>e.directTopicIds.includes(t.topic_id)));
  const years=[] as {year:number;x:number;width:number}[];let cursor=185;
  for(const year of [...eventYears].sort((a,b)=>a-b)){const n=events.filter(e=>e.year===year).length,width=Math.max(270,n*230+180);years.push({year,x:cursor,width});cursor+=width;}
  const height=Math.max(460,topics.length*95+145),baselines=topics.map((_,i)=>90+i*95);

@@ -38,13 +38,13 @@ export function buildStarTimeline(events: EventRecord[], topics: Topic[]) {
 }
 
 export function placeCategoryRanges(ranges: ReturnType<typeof buildStarTimeline>['ranges'], width: number) {
- const ordered = ranges.map(range => {
+ const ordered = ranges.map((range,index) => {
   const start = range.first.along*width;
   const end = range.last.along*width;
   const label = range.category.name === '페레스트로이카와 냉전 종식' ? '냉전 종식' : range.category.name;
   const labelWidth = Math.min(width,[...label].reduce((size,char) => size+(char===' ' ? 5 : 16),16));
   const labelX = Math.max(0,Math.min(start,end-labelWidth));
-  return {...range,start,end,label,labelX,left:Math.min(start,labelX),right:Math.max(end,labelX+labelWidth)};
+  return {...range,index,start,end,label,labelX,left:Math.min(start,labelX),right:Math.max(end,labelX+labelWidth)};
  }).sort((a,b) => a.left-b.left || b.end-a.end);
  const laneEnds: number[] = [];
  return ordered.map(range => {
@@ -52,7 +52,7 @@ export function placeCategoryRanges(ranges: ReturnType<typeof buildStarTimeline>
   const row = available<0 ? laneEnds.length : available;
   laneEnds[row] = range.right;
   return {...range,row};
- });
+ }).sort((a,b)=>a.first.event.bounds.start-b.first.event.bounds.start||a.index-b.index);
 }
 
 const categoryLanes = [.43,.14,.66,.3,.82,.48,.91,.35,.71,.09,.56,.23,.78];

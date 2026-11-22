@@ -5,7 +5,7 @@ const caseIds={cuba:'evt_385434add32c42afba9da294a27b5b38',korea:'evt_64cecb9d36
 let focusId=caseIds.cuba;
 const colors=['#4979e8','#df6c46','#21a896','#9a71d2','#d9a532','#cf658b','#72a9b0','#6f8b49','#ac805c','#6682b4','#a65373','#63717b'];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const topics=ideaData.topics.filter(t=>t.parent_topic_id);
+const topics=ideaData.topics;
 const tc=id=>colors[Math.max(0,topics.findIndex(t=>t.topic_id===id))%colors.length];
 const label=event=>{
   const t=event.title;

@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일제강점기와 독립운동 · 스윔레인</title>
+<link rel="stylesheet" href="./assets/chronicle-theme.css">
+<style>
+:root{color-scheme:light;--ink:#25251f;--muted:#615d52;--line:#e1dbcf;--paper:#f6f3ec;--panel:#fdfbf6;--select:#a0392b;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);word-break:keep-all}
+main{max-width:1440px;margin:auto;padding:40px clamp(20px,4.2vw,60px) 26px}
+.embedded{--paper:#f5f3ed;overflow:hidden}
+.embedded main{max-width:none;padding:4px 4px 18px}
+.embedded h1{font-size:clamp(25px,4.3vw,42px)}
+.embedded header a.source{display:none}
+h1,h2,p{margin:0}
+main>header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+h1{font-size:clamp(27px,4.5vw,47px);font-weight:800;line-height:1.12;letter-spacing:-.06em}
+.range{margin-top:8px;color:var(--muted);font-size:17px;font-variant-numeric:tabular-nums}
+a{color:inherit;text-underline-offset:4px}
+.header-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}
+.source{border:1px solid #cec6b7;border-radius:8px;padding:9px 13px;background:transparent;color:inherit;font:inherit;font-size:14px;text-decoration:none;white-space:nowrap;cursor:pointer}
+.source:hover{background:#ede7da}
+select.source{background:var(--panel);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid #106271;outline-offset:3px}
+.scroll{overflow-x:auto;overflow-y:hidden;border:1px solid #d8d0c1;border-radius:13px;background:var(--panel)}
+.chart{position:relative;min-width:calc(var(--plot-width, 0px) + var(--rail) + var(--inset));--rail:168px;--inset:27px}
+.row{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);padding-right:var(--inset);min-height:54px;border-top:1px solid var(--line)}
+.rail{position:sticky;left:0;z-index:3;display:flex;align-items:center;padding-left:19px;border-right:1px solid var(--line);background:var(--panel);font-size:15px;font-weight:700;white-space:nowrap}
+.track{position:relative;z-index:2;pointer-events:none}
+.mark,.era{pointer-events:auto}
+.axis{position:sticky;top:0;z-index:4;min-height:43px;border:0;background:var(--panel);box-shadow:0 1px var(--line)}
+.axis .rail{color:var(--muted);font-size:13px}
+.year{position:absolute;top:14px;left:var(--x);padding-left:8px;color:#4d493f;font-size:14px;font-variant-numeric:tabular-nums;font-weight:700}
+.year:first-child{padding-left:9px}
+.grid{position:absolute;inset:43px var(--inset) 0 var(--rail);z-index:1;pointer-events:none}
+.grid i,.guide{position:absolute;top:0;bottom:0;left:var(--x);width:1px;background:#e9e3d7}
+.grid i.mid{background:#f0ece4}
+.guide{border-left:1px dashed #ac6250;background:none;opacity:.70}
+.relation-layer{position:absolute;inset:0 auto auto 0;z-index:1;width:100%;height:100%;pointer-events:none;overflow:visible}
+.relation-line{fill:none;stroke:#397571;stroke-width:1.6;pointer-events:none}
+.relation-line.draft{stroke:#a76a2e;stroke-dasharray:5 4}
+.relation-line.is-muted{opacity:.24}
+.relation-hit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:pointer}
+.relation-line:has(+ .relation-hit:is(:hover,:focus-visible)){stroke-width:2.8;opacity:1}
+.relation-hit:focus-visible{outline:none}
+.eras{background:#f8f4ea}
+.eras .rail{background:#f8f4ea;color:#524939}
+.era{position:absolute;left:var(--start);width:calc(var(--end) - var(--start));top:calc(10px + var(--index) * 29px);height:23px;display:flex;align-items:center;padding:0;white-space:nowrap;overflow:clip;border:1px solid #dac7a6;border-radius:5px;background:#efe0c4;color:#48361f;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.era-caption{position:sticky;left:var(--rail);display:inline-flex;gap:8px;padding-inline:9px}
+.era:hover{filter:brightness(.96)}
+.era:nth-child(3n+2){background:#eae8cf;border-color:#d8d2ac;color:#4e4930}
+.era:nth-child(3n){background:#e4ece9;border-color:#cfdcd7;color:#345b58}
+.era.is-active{box-shadow:inset 0 0 0 1px var(--select);border-color:var(--select)}
+.era .era-date{font-size:12px;font-variant-numeric:tabular-nums;color:inherit;opacity:.8;font-weight:500}
+.group{min-height:31px;background:#eeeee8}
+.group .rail{background:#eeeee8;border:0;color:#3b574f;font-size:13px}
+.group.theme,.group.theme .rail{background:#f2ece3;color:#795236}
+.lane .rail{font-weight:600;padding-left:24px}
+.lane .rail button{width:100%;border:0;background:none;padding:6px 7px 6px 0;text-align:left;white-space:normal;color:inherit;font:inherit;cursor:pointer}
+.lane .rail button:hover{text-decoration:underline;text-underline-offset:3px}
+.lane.arc{--point:#2b655b}
+.lane.theme{--point:#855735}
+.lane.actor{--point:#486550}
+.lane.actor .dot{border-radius:3px}
+.mark{position:absolute;top:var(--y,23px);left:var(--x);transform:translate(-6px,-50%);display:flex;align-items:center;gap:7px;width:max-content;max-width:220px;padding:4px 4px 4px 0;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:var(--ink);border-radius:5px}
+.mark.reverse{flex-direction:row-reverse;padding:4px 0 4px 4px;transform:translate(calc(-100% + 6px),-50%);text-align:right}
+.dot{width:12px;height:12px;flex:none;border-radius:50%;border:2px solid var(--point);background:var(--point)}
+.mark[data-precision="partial"] .dot{background:var(--panel)}
+.mark-title{min-width:0;border-radius:5px;background:var(--panel);font-size:14px;line-height:1.27;font-weight:650;padding:2px 3px;white-space:normal;overflow-wrap:anywhere}
+.duration-line{position:absolute;left:var(--x);width:max(3px,calc(var(--end) - var(--x)));height:4px;border-radius:2px;background:var(--point);pointer-events:auto;cursor:pointer}
+.mark:is(:hover,:focus-visible,[aria-pressed="true"]) + .duration-line{background:var(--select)}
+.mark[data-importance=core] .mark-title{box-shadow:inset 3px 0 currentColor;padding-left:8px;font-weight:800}
+.mark[data-importance=core] .mark-title::before{content:"★" / "";color:#805626;font-size:.85em;margin-inline-end:.25em}
+.mark[data-importance=major] .mark-title{font-weight:600}
+.mark[data-importance=detail] .mark-title{font-weight:400;background:#faf9f4}
+.mark:hover .mark-title{background:#eee7dc}
+.mark[aria-pressed="true"]{z-index:1;--point:var(--select)}
+.mark[aria-pressed="true"] .dot{box-shadow:0 0 0 3px #f0d9cf}
+.mark[aria-pressed="true"] .mark-title{background:#f4ded3;color:#7e2a1f}
+.chart-note{display:flex;align-items:center;gap:8px;margin:10px 2px 16px;color:var(--muted);font-size:13px;line-height:1.45}
+.detail{display:grid;grid-template-columns:minmax(170px,.7fr) minmax(240px,1.5fr) minmax(170px,.8fr);gap:clamp(15px,3vw,38px);align-items:start;padding:19px 22px;border:1px solid #d8d0c1;border-radius:11px;background:var(--panel)}
+.detail h2{font-size:22px;line-height:1.22;letter-spacing:-.035em}
+.detail-meta{margin-top:7px;color:var(--muted);font-size:14px;line-height:1.5}
+.detail-body{white-space:pre-wrap;font-size:15px;line-height:1.6}
+.detail-side{color:var(--muted);font-size:14px;line-height:1.55}
+.detail-side p + p{margin-top:3px}
+.detail-side a{display:inline-block;margin-top:6px;color:#594c38;font-weight:600}
+.relations{grid-column:1/-1;border-top:1px solid var(--line);padding-top:12px;margin-top:-5px}
+.relations h3{font-size:14px;margin:0 0 8px}
+.relations ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.relations li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:13px;line-height:1.45}
+.relation-summary{display:grid;grid-template-columns:minmax(200px,340px) 1fr;gap:8px}
+.relation-swatch{width:16px;align-self:center;border-top:2px solid #397571}
+.relation-swatch.draft{border-top:2px dashed #a76a2e}
+.relation-label{color:var(--muted)}
+.relation-source{color:var(--muted);white-space:nowrap}
+.text-button{padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.text-button:hover{text-decoration:underline;text-underline-offset:3px}
+[hidden]{display:none!important}
+@media(max-width:760px){
+ main{padding-top:26px}
+ main>header{align-items:flex-start;margin-bottom:18px}
+ .source{font-size:12px;padding:7px 8px}
+ .chart{--rail:122px;--inset:18px}
+ .rail{padding-left:12px}
+ .lane .rail{padding-left:12px;font-size:13px}
+ .detail{grid-template-columns:1fr;gap:9px;padding:15px}
+ .relations{margin-top:4px}
+ .relations li{grid-template-columns:16px 1fr auto;gap:2px 6px}
+ .relation-summary{grid-template-columns:1fr;gap:1px}
+}
+@media(max-width:550px){
+ main>header{flex-direction:column;gap:10px}
+ .header-actions{justify-content:flex-start}
+}
+</style>
+<link rel="stylesheet" href="./assets/space-preview.css"><link rel="stylesheet" href="./assets/swimlane-modal.css">
+</head>
+<body>
+<main>
+ <header><div><h1>일제강점기와 독립운동</h1><p class="range" id="range">1910–1945</p></div><div class="header-actions"><select id="year-jump" class="source" aria-label="연도 이동" disabled><option value="">연도 이동</option></select><button type="button" class="source" id="all-relations" disabled>전체 관계</button><a class="source" href="https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit#gid=201117001" target="_blank" rel="noopener">원본 시트 ↗</a></div></header>
+ <p class="chart-note" id="load-status" role="status">연표를 불러오는 중입니다.</p>
+ <div class="scroll" role="region" aria-label="시기와 사건군·주제별 연표" tabindex="0"><div class="chart" id="chart"></div></div>
+ <p class="chart-note">가로선은 사건이 이어진 기간입니다. 빈 점은 날짜가 월이나 연도까지만 기록된 사건입니다.</p>
+ <section class="detail" aria-label="선택한 사건" aria-live="polite" hidden>
+  <div><h2 id="event-title"></h2><p id="event-meta" class="detail-meta"></p></div>
+  <p id="event-body" class="detail-body"></p>
+  <div class="detail-side"><p id="event-place"></p><p id="event-actors"></p><a id="event-link" target="_blank" rel="noopener">시트의 사건 행 ↗</a></div>
+  <div class="relations" id="event-relations" hidden><h3>관계</h3><ul></ul></div>
+ </section>
+</main>
+
+<script src="./sheet-config.js?v=normalized-schema"></script>
+<script src="./sheets.js?v=normalized-schema"></script>
+<script type="module">
+import {setupSwimlaneModal} from './assets/swimlane-modal.js?v=lesson-view';
+import {importanceLabels,loadSwimlane, eventPeriods, packTimelineItems, pointRelationPath} from './swimlane-data.js?v=normalized-schema';
+const params=new URLSearchParams(location.search);
+const embedded=params.has('embedded');
+const frame=embedded?window.frameElement:null;
+const lesson=frame?.lessonSwimlane;
+const packageId=params.get('package')==='cold-war'?'cold-war':'japan';
+const packageName=lesson?.name||(packageId==='cold-war'?'냉전':'일제강점기와 독립운동');
+document.title=packageName+' · 스윔레인';
+document.querySelector('h1').textContent=packageName;
+if(packageId==='cold-war')document.getElementById('range').textContent='';
+if(embedded)document.documentElement.classList.add('embedded');
+if(frame){
+ const main=document.querySelector('main');
+ new ResizeObserver(()=>{
+  const height=Math.ceil(main.getBoundingClientRect().height);
+  if(height)frame.style.height=height+'px';
+ }).observe(main);
+}
+const status=document.getElementById('load-status');
+if(lesson){
+ status.hidden=true;
+ document.querySelector('h1').hidden=true;
+}
+const {events,categories,periods,actors,detailActors,relations}=lesson??await loadSwimlane(SHEET_CONFIG,SheetData,packageId)
+ .then(data=>{status.hidden=true;return data;})
+ .catch(async()=>{
+  const response=await fetch('./assets/swimlane-'+packageId+'.json');
+  if(!response.ok)throw Error('스윔레인 자료를 읽지 못했습니다.');
+  status.textContent='저장된 연표 자료를 표시합니다.';
+  return response.json();
+ }).catch(error=>{status.textContent='연표 자료를 불러오지 못했습니다.';throw error;});
+const sheetBase='https://docs.google.com/spreadsheets/d/'+SHEET_CONFIG.id+'/edit#gid=';
+const sheet=sheetBase+SHEET_CONFIG.eventSheetId;
+const groups=[
+ {label:'사건군',kind:'arc',field:'arcs'},
+ {label:'주제',kind:'theme',field:'themes'}
+];
+const typeNames={event:'사건',policy:'정책',publication:'선언·보고서',context:'배경',period:'시기·국면'};
+const relationTypes={cause:'인과',shift:'전환',action:'활동',succession:'계승',integration:'통합·편입',split:'분화',background:'배경'};
+const roles={initiator:'주도',participant:'참여',related:'관련',affected:'영향을 받음',counterparty:'상대',mediator:'중재',leader:'지도',executor:'실행',author:'저술',founder:'창립'};
+const chart=document.getElementById('chart');
+const create=(tag,css,label)=>Object.assign(document.createElement(tag),{className:css,textContent:label??''});
+const day=(year,month=1,date=1)=>Date.UTC(year,month-1,date);
+const years=events.flatMap(({date,end})=>[date,end].filter(Boolean).map(value=>SheetData.dateRange(value).year));
+for(const era of periods){
+ if(era.start)years.push(SheetData.dateRange(era.start).year);
+ if(era.end)years.push(SheetData.dateRange(era.end).year);
+}
+const firstYear=Math.min(...years),lastYear=Math.max(...years);
+const initialYear=lesson?Math.min(...events.map(e=>SheetData.dateRange(e.date).year)):packageId==='cold-war'?1945:firstYear;
+let positioned=false;
+const chartStart=day(firstYear),chartEnd=day(lastYear+1);
+const plotWidth=(lastYear-firstYear+1)*176;
+const fraction=moment=>Math.max(0,Math.min(1,(moment-chartStart)/(chartEnd-chartStart)));
+const percent=moment=>fraction(moment)*100+'%';
+chart.style.setProperty('--plot-width',plotWidth+'px');
+document.getElementById('range').textContent=(packageId==='cold-war'?'수록 범위 ':'')+firstYear+'–'+lastYear;
+function dateLabel(date){
+ const [y,m,d]=date.split('-').map(Number);
+ return y+'년'+(m?' '+m+'월':'')+(d?' '+d+'일':'');
+}
+function dateParts(date,until){
+ const {start,end}=SheetData.dateRange(date);
+ const moment=until?start:(start+end+86400000)/2;
+ return {
+  position:percent(moment),x:fraction(moment)*plotWidth,precision:date.length===10?'day':'partial',
+  endPosition:until?percent(SheetData.dateRange(until).end+86400000):'',
+  label:until?dateLabel(date)+' – '+dateLabel(until):dateLabel(date)
+ };
+}
+function addRow(css,label,category){
+ const row=create('div','row '+css);
+ const track=create('div','track');
+ const rail=create('div','rail',category?'':label);
+ if(category){
+  const button=create('button','',label);
+  button.type='button';
+  button.addEventListener('click',()=>openModal('category',category));
+  rail.append(button);
+ }
+ row.append(rail,track);
+ chart.append(row);
+ return track;
+}
+const grid=create('div','grid');
+grid.setAttribute('aria-hidden','true');
+chart.append(grid);
+const axis=addRow('axis','연도');
+const yearJump=document.getElementById('year-jump');
+for(let year=firstYear;year<=lastYear;year++){
+ const option=create('option','',year+'년');
+ option.value=year;
+ yearJump.append(option);
+ const label=create('span','year',year);
+ label.style.setProperty('--x',percent(day(year)));
+ axis.append(label);
+ for(const month of [1,7]){
+  const tick=create('i',month===7?'mid':'');
+  tick.style.setProperty('--x',percent(day(year,month)));
+  grid.append(tick);
+ }
+}
+yearJump.disabled=false;
+function moveToYear(year){
+ chart.parentElement.scrollLeft=axis.clientWidth*fraction(day(year));
+}
+yearJump.addEventListener('change',()=>{
+ if(!yearJump.value)return;
+ moveToYear(Number(yearJump.value));
+ yearJump.value='';
+});
+const guide=create('div','guide');
+grid.append(guide);
+const svg=(tag,attributes)=> {
+ const element=document.createElementNS('http://www.w3.org/2000/svg',tag);
+ for(const [name,value] of Object.entries(attributes))element.setAttribute(name,value);
+ return element;
+};
+const relationLayer=svg('svg',{class:'relation-layer','aria-label':packageName+' 관계'});
+const arrowheads=svg('defs',{});
+for(const [key,color] of [['verified','#397571'],['draft','#a76a2e']]){
+ const arrow=svg('marker',{id:'arrow-'+key,viewBox:'0 0 10 10',refX:10,refY:5,markerWidth:10,markerHeight:10,markerUnits:'userSpaceOnUse',orient:'auto'});
+ arrow.append(svg('path',{d:'M 0 1 L 10 5 L 0 9 L 2 5 Z',fill:color}));
+ arrowheads.append(arrow);
+}
+const relationPaths=svg('g',{});
+relationLayer.append(arrowheads,relationPaths);
+chart.append(relationLayer);
+const eras=addRow('eras','시기');
+const eraTracks=packTimelineItems(periods.map(era=>({
+ era,start:era.start?SheetData.dateRange(era.start).start:chartStart,
+ end:era.end?SheetData.dateRange(era.end).end+86400000:chartEnd
+})));
+eras.parentElement.style.minHeight=(20+Math.max(1,...eraTracks.map(item=>item.track+1))*29)+'px';
+for(const {era,start,end,track} of eraTracks){
+ const bar=create('button','era');
+ bar.type='button';
+ bar.dataset.period=era.name;
+ bar.dataset.category=era.id;
+ bar.style.setProperty('--index',track);
+ bar.style.setProperty('--start',percent(start));
+ bar.style.setProperty('--end',percent(end));
+ const caption=create('span','era-caption',era.name);
+ caption.append(create('span','era-date',[era.start,era.end].filter(Boolean).join('–')));
+ bar.append(caption);
+ bar.addEventListener('click',()=>{highlightRelationNode(era.id);openModal('category',era);});
+ eras.append(bar);
+}
+const laneMarkers=[];
+function renderLane(track,records,label,kind='event'){
+ const markers=records.map(record=>{
+  const date=kind==='actor'?dateParts(record.start):dateParts(record.date,record.end);
+  const button=create('button','mark');
+  button.type='button';
+  button.dataset[kind]=record.id;
+  button.dataset.precision=date.precision;
+  button.style.setProperty('--x',date.position);
+  const level=importanceLabels.get(record.importance);
+  if(level)button.dataset.importance=record.importance;
+  button.title=[record.title,level].filter(Boolean).join(' · ');
+  button.setAttribute('aria-label',[record.title,date.label,label,level].filter(Boolean).join(', '));
+  const title=create('span','mark-title',record.title);
+  button.append(create('span','dot'),title);
+  button.addEventListener('click',()=>{
+   if(kind==='event')selectEvent(record,button);
+   else highlightRelationNode(record.id,button);
+   openModal(kind,record);
+  });
+  track.append(button);
+  let bar;
+  if(date.endPosition){
+   bar=create('span','duration-line');
+   bar.setAttribute('aria-hidden','true');
+   bar.style.setProperty('--x',date.position);
+   bar.style.setProperty('--end',date.endPosition);
+   bar.onclick=()=>button.click();
+   track.append(bar);
+  }
+  return {button,date,bar};
+ });
+ if(markers.length)laneMarkers.push({track,markers});
+}
+function layoutLaneMarkers(){
+ const width=axis.clientWidth;
+ if(!width)return;
+ if(!positioned){
+  moveToYear(initialYear);
+  positioned=true;
+ }
+ const layouts=laneMarkers.map(({track,markers})=>({
+  track,
+  bars:packTimelineItems(markers.filter(m=>m.bar).map(({bar})=>{
+   const rect=bar.getBoundingClientRect();
+   return {bar,start:rect.left,end:rect.right+2};
+  })),
+  items:packTimelineItems(markers.map(({button,date})=>{
+   const rect=button.getBoundingClientRect();
+   const x=date.x*width/plotWidth;
+   const reverse=x-6+rect.width>width;
+   const left=reverse?x+6-rect.width:x-6;
+   return {button,reverse,height:rect.height,start:left-3,end:left+rect.width+3};
+  }))
+ }));
+ for(const {track,items,bars} of layouts){
+  let labelTop=8;
+  for(const {bar,track:level} of bars){
+   const top=5+level*7;
+   bar.style.top=top+'px';
+   labelTop=Math.max(labelTop,top+7);
+  }
+  const heights=[];
+  for(const item of items)heights[item.track]=Math.max(heights[item.track]||0,item.height);
+  const offsets=[labelTop];
+  for(const height of heights)offsets.push(offsets.at(-1)+height+6);
+  for(const item of items){
+   item.button.classList.toggle('reverse',item.reverse);
+   item.button.style.setProperty('--y',(offsets[item.track]+heights[item.track]/2)+'px');
+  }
+  track.parentElement.style.minHeight=Math.max(54,offsets.at(-1)+2)+'px';
+ }
+}
+const periodOnly=events.filter(event=>!event.arcs.length&&!event.themes.length);
+const periodLanes=periods.map(period=>({period,items:periodOnly.filter(event=>eventPeriods(event).includes(period.name))})).filter(lane=>lane.items.length);
+if(periodLanes.length){
+ addRow('group arc','시기별 사건');
+ for(const {period,items} of periodLanes)renderLane(addRow('lane arc',period.name,period),items,period.name);
+}
+for(const group of groups){
+ if(lesson&&!categories.some(record=>record.kind===group.kind))continue;
+ addRow('group '+group.kind,group.label);
+ for(const category of categories.filter(record=>record.kind===group.kind)){
+  const track=addRow('lane '+group.kind,category.name,category);
+  renderLane(track,events.filter(event=>event[group.field].includes(category.name)),category.name);
+ }
+}
+const unclassified=periodOnly.filter(event=>!eventPeriods(event).length);
+if(unclassified.length)renderLane(addRow('lane theme','미분류'),unclassified,'미분류');
+const datedActors=actors.filter(actor=>actor.start);
+if(datedActors.length){
+ addRow('group arc','관계 주체');
+ renderLane(addRow('lane actor','존속 시작일'),datedActors,'존속 시작일','actor');
+}
+const relationPanel=document.getElementById('event-relations');
+const relationList=relationPanel.querySelector('ul');
+const connectedTo=id=>relations.filter(rel=>rel.fromId===id||rel.toId===id);
+const endpoints=relation=>relation.fromName+' → '+relation.toName;
+const relationTitle=relation=>relation.label||relationTypes[relation.kind]||'관계';
+const groupButton=document.getElementById('all-relations');
+groupButton.textContent='전체 관계 '+relations.length+'건';
+groupButton.disabled=false;
+groupButton.addEventListener('click',()=>{highlightRelationNode('');openModal('all');});
+const {open:openModal}=setupSwimlaneModal({events,categories,actors,detailActors,relations},frame);
+function link(text,url){
+ const anchor=create('a','',text);
+ anchor.href=url;
+ anchor.target='_blank';
+ anchor.rel='noopener';
+ return anchor;
+}
+let highlightedId='',selectedMarker;
+
+function highlightRelationNode(id,marker){
+ highlightedId=id;
+ selectedMarker=marker;
+ for(const point of chart.querySelectorAll('.mark')){
+  point.setAttribute('aria-pressed',String((point.dataset.event||point.dataset.actor)===id));
+ }
+ drawRelations();
+}
+
+function drawRelations(){
+ const origin=relationLayer.getBoundingClientRect();
+ function locate(type,id){
+  const shape=type==='category'
+   ? eras.querySelector('[data-category="'+CSS.escape(id)+'"]')
+   : ((id===highlightedId && selectedMarker) || chart.querySelector('[data-'+type+'="'+CSS.escape(id)+'"]'))?.querySelector('.dot');
+  if(!shape)return null;
+  const rect=shape.getBoundingClientRect();
+  return {
+   x:rect.left-origin.left+rect.width/2,
+   y:rect.top-origin.top+rect.height/2,
+   left:rect.left-origin.left,
+   labelSide:shape.closest('.mark')?.classList.contains('reverse')?-1:1
+  };
+ }
+ relationPaths.replaceChildren();
+ const focus=new Set(connectedTo(highlightedId).filter(relation=>relation.visible));
+ const drawn=relations.filter(relation=>relation.visible).sort((a,b)=>Number(focus.has(a))-Number(focus.has(b)));
+ for(const relation of drawn){
+  const from=locate(relation.fromType,relation.fromId);
+  const to=locate(relation.toType,relation.toId);
+  if(!from||!to)continue;
+  const variant=relation.status==='draft'?'draft':'verified';
+  let curve;
+  if(relation.toType==='category'){
+   const startY=from.y-9;
+   const endX=to.left-3;
+   const channel=endX-14;
+   curve=`M ${from.x} ${startY} C ${from.x} ${(startY+to.y)/2} ${channel} ${to.y+90} ${channel} ${to.y+17} Q ${channel} ${to.y} ${endX} ${to.y}`;
+  }else{
+   curve=pointRelationPath(from,to);
+  }
+  relationPaths.append(svg('path',{
+   class:'relation-line '+variant+(focus.size&&!focus.has(relation)?' is-muted':''),
+   'data-relation':relation.id,
+   d:curve,
+   'aria-hidden':'true',
+   'marker-end':'url(#arrow-'+variant+')'
+  }));
+  const hit=svg('path',{class:'relation-hit '+variant,d:curve,tabindex:0,role:'button','aria-label':relationTitle(relation)+', '+endpoints(relation)});
+  hit.append(svg('title',{}));
+  hit.firstChild.textContent=relationTitle(relation)+': '+endpoints(relation);
+  hit.addEventListener('click',()=>openModal('relation',relation));
+  hit.addEventListener('keydown',key=>{
+   if(key.key==='Enter'||key.key===' '){
+    key.preventDefault();
+    openModal('relation',relation);
+   }
+  });
+  relationPaths.append(hit);
+ }
+}
+function showRelations(event){
+ const connected=connectedTo(event.id);
+ relationPanel.hidden=!connected.length;
+ relationList.replaceChildren();
+ for(const relation of connected){
+  const draft=relation.status==='draft';
+  const row=create('li','');
+  const swatch=create('span','relation-swatch'+(draft?' draft':''));
+  swatch.setAttribute('aria-hidden','true');
+  const button=create('button','text-button relation-summary');
+  button.type='button';
+  button.addEventListener('click',()=>openModal('relation',relation));
+  const caption=relationTitle(relation)+(draft?' · 초안':'');
+  button.append(create('span','',endpoints(relation)),create('span','relation-label',caption));
+  row.append(swatch,button);
+  if(/^https?:\/\//i.test(relation.source??'')){
+   const source=link('출처 ↗',relation.source);
+   source.className='relation-source';
+   source.setAttribute('aria-label',relationTitle(relation)+' 출처');
+   row.append(source);
+  }
+  relationList.append(row);
+ }
+}
+function selectEvent(event,marker){
+ document.querySelector('.detail').hidden=false;
+ const date=dateParts(event.date,event.end);
+ guide.style.setProperty('--x',date.position);
+ for(const bar of eras.children)bar.classList.toggle('is-active',eventPeriods(event).includes(bar.dataset.period));
+ document.getElementById('event-title').textContent=event.title;
+ document.getElementById('event-meta').textContent=[date.label,typeNames[event.type],...eventPeriods(event)].filter(Boolean).join(' · ');
+ document.getElementById('event-body').textContent=event.body??'';
+ document.getElementById('event-place').textContent=event.place??'';
+ document.getElementById('event-actors').textContent=event.actors.map(actor=>[actor.name,roles[actor.role]].filter(Boolean).join(' · ')).join(', ');
+ document.getElementById('event-link').href=sheet+(event.row?'&range=A'+event.row+':J'+event.row:'');
+ showRelations(event);
+ highlightRelationNode(event.id,marker);
+}
+layoutLaneMarkers();
+const orderedEvents=[...events].sort((a,b)=>a.date.localeCompare(b.date));
+selectEvent(orderedEvents.find(event=>Number(event.date.slice(0,4))>=initialYear)||orderedEvents[0]);
+function relayoutTimeline(){
+ layoutLaneMarkers();
+ drawRelations();
+}
+const layoutObserver=new ResizeObserver(entries=>{
+ if(entries.some(entry=>entry.target===axis))layoutLaneMarkers();
+ drawRelations();
+});
+layoutObserver.observe(axis);
+layoutObserver.observe(chart);
+layoutObserver.observe(eras);
+document.fonts.ready.then(relayoutTimeline);
+</script>
+</body>
+</html>
+

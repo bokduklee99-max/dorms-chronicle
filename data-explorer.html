@@ -4,140 +4,148 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f3ed">
-  <title>연표 시트 구조 · Dorms' Chronicle</title>
-  <link rel="stylesheet" href="./data-explorer.css?v=structure">
-  <script defer src="./sheet-config.js"></script>
-  <script defer src="./sheet-snapshot.js?v=20261118-leaders"></script>
-  <script defer src="./sheets.js?v=data-explorer"></script>
-  <script type="module" src="./metro/assets/data-explorer.js?v=structure"></script>
-  <link rel="stylesheet" href="/assets/chronicle-theme.css">
+  <title>데이터 구조 · Dorms' Chronicle</title>
+  <link rel="stylesheet" href="./assets/chronicle-theme.css">
+  <link rel="stylesheet" href="./metro/assets/data-explorer.css?v=relation-counts">
+  <link rel="stylesheet" href="./assets/space-preview.css?v=regional-atlas">
+  <link rel="stylesheet" href="./data-explorer.css?v=showroom">
+  <script defer src="./sheet-config.js?v=map-views"></script>
+  <script defer src="./sheets.js?v=source-studio"></script>
+  <script type="module" src="./metro/assets/data-explorer.js?v=showroom-2"></script>
 </head>
 <body class="chronicle-data">
   <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
   <header class="guide-nav">
     <div class="guide-nav-inner">
-      <a class="wordmark" href="/">Dorms' Chronicle</a>
+      <a class="wordmark" href="/">Dorms' Chronicle<span aria-hidden="true">✳</span></a>
       <nav aria-label="연표 데이터">
-        <a id="guide-link" href="#structure" aria-current="page">시트 구조</a>
-        <a id="records-link" href="#overview">데이터 조회</a>
+        <a id="structure-link" href="#structure" aria-current="page">데이터 구조</a>
+        <a id="records-link" href="#overview">연표 편집</a>
+        <a id="relation-editor-link" href="#event-relations">관계 편집</a>
+        <a id="studio-link" href="#package-studio">패키지 제작실</a>
+        <a id="examples-link" href="#examples">시각화 쇼룸</a>
       </nav>
-      <div class="actions">
-        <a id="open-sheet" class="primary" target="_blank" rel="noopener noreferrer">구글 시트 <span aria-hidden="true">↗</span></a>
-      </div>
+      <a id="open-sheet" class="dashboard-button dashboard-primary" target="_blank" rel="noopener noreferrer">구글 시트 <span aria-hidden="true">↗</span></a>
     </div>
   </header>
   <main id="main-content" tabindex="-1">
-    <section id="structure" aria-labelledby="structure-title">
-      <header class="guide-heading">
-        <h1 id="structure-title">연표 시트 구조</h1>
-        <p>사건은 한 번 등록하고, 관련 카테고리와 국가는 ID로 연결합니다.</p>
-      </header>
-
-      <div class="guide-layout">
-        <section class="panel schema-panel" aria-labelledby="schema-title">
-          <h2 id="schema-title">연결 구조</h2>
-          <div class="schema" role="group" aria-label="사건에서 연결표를 거쳐 카테고리와 국가로">
-            <button class="schema-node schema-root" data-table="events" type="button"><strong>사건</strong><span>사건ID</span></button>
-            <button class="schema-node schema-link" data-table="event_categories" type="button"><strong>사건_카테고리</strong><span>사건ID · 카테고리ID</span></button>
-            <button class="schema-node schema-end" data-table="categories" type="button"><strong>카테고리</strong><span>카테고리ID</span></button>
-            <button class="schema-node schema-link" data-table="event_countries" type="button"><strong>사건_국가</strong><span>사건ID · 국가ID · 역할</span></button>
-            <button class="schema-node schema-end" data-table="countries" type="button"><strong>국가</strong><span>국가ID</span></button>
-          </div>
-          <button class="text-action" id="open-example" type="button" hidden>서베를린 봉쇄 예시 보기 <span aria-hidden="true">↗</span></button>
-        </section>
-
-        <section id="editing" class="panel editing-panel" aria-labelledby="editing-title">
-          <h2 id="editing-title">사건 추가 순서</h2>
+    <iframe id="studio-frame" title="패키지 제작실" hidden></iframe>
+    <div class="dashboard-heading">
+      <div class="dashboard-title">
+        <nav id="table-breadcrumb" aria-label="현재 위치" hidden>
           <ol>
-            <li><strong>사건 탭에 한 행 추가</strong><span>새 사건ID와 사건명, 날짜를 입력합니다.</span></li>
-            <li><strong>숨겨진 연결표에 한 행씩 추가</strong><span>관련 국가나 카테고리마다 사건ID를 연결합니다.</span></li>
-            <li><strong>데이터 조회에서 확인</strong><span>시트 새로고침 후 사건과 연결을 확인합니다.</span></li>
+            <li><a href="#structure">데이터 구조</a></li>
+            <li><span aria-hidden="true">›</span><a id="table-section-link"></a></li>
+            <li><span aria-hidden="true">›</span><span id="table-current-page" aria-current="page"></span></li>
           </ol>
-        </section>
+        </nav>
+        <h1 id="page-title" tabindex="-1">데이터 구조</h1>
+        <p id="sync-badge" role="status">시트를 불러오는 중이에요.</p>
       </div>
-
-      <section class="sheet-reference" aria-labelledby="sheet-tabs-title">
-        <h2 id="sheet-tabs-title">시트 탭별 입력 내용</h2>
-        <dl class="schema-guide">
-          <div><dt>사건</dt><dd>날짜는 <code>1948</code>, <code>1948-06</code>, <code>1948-06-24</code>처럼 아는 범위까지 입력합니다. 사진 주소는 이미지 셀에 한 줄에 하나씩 넣습니다.</dd></div>
-          <div><dt>국가</dt><dd>국가·지역·조직마다 한 행을 등록합니다. 사건과 재임기간에서 같은 국가ID를 참조합니다.</dd></div>
-          <div><dt>재임기간</dt><dd>한 인물의 한 직위 기간이 한 행입니다. 겸직과 재취임은 별도 행으로 기록합니다.</dd></div>
-          <div><dt>카테고리</dt><dd>분류마다 한 행을 등록합니다. 하위 분류는 상위카테고리ID로 연결합니다.</dd></div>
-          <div><dt><a id="package-sheet" target="_blank" rel="noopener noreferrer">패키지 ↗</a></dt><dd>수업용 패키지 정보 등록에 쓰입니다. 조회 화면의 냉전 사건은 이 시트, 한국 근현대사 사건은 앱에 포함된 데이터에서 읽습니다.</dd></div>
-          <div><dt>숨겨진 탭</dt><dd><strong>사건_국가</strong>와 <strong>사건_카테고리</strong>에서 연결을 수정합니다. 사건 탭의 국가·카테고리 표시 열과 <code>web_feed</code>는 수식으로 채워집니다.</dd></div>
-        </dl>
-        <p class="schema-rule">이름을 바꿔도 기존 ID는 유지하세요. 다른 탭의 연결이 그 ID를 참조합니다.</p>
-      </section>
-    </section>
-
-    <section id="overview" class="data-overview" aria-labelledby="overview-title" hidden>
-      <div class="page-heading">
-        <div>
-          <h1 id="overview-title">데이터 조회</h1>
-          <p id="source-status" role="status">데이터를 불러오는 중입니다.</p>
-        </div>
-        <div class="actions" id="sheet-actions">
-          <button id="reload" type="button" aria-disabled="true">시트 새로고침</button>
-        </div>
+      <button id="btn-new-workspace-event" type="button" class="dashboard-button dashboard-primary" hidden><span aria-hidden="true">+</span> 새 사건</button>
+      <div class="dashboard-actions dashboard-source-actions">
+        <button id="btn-load-sheet" type="button" class="dashboard-button">시트 새로고침</button>
+        <button id="btn-mobile-sidebar" type="button" class="dashboard-button lg:hidden" aria-controls="sidebar" aria-expanded="false" hidden>시트 목록</button>
       </div>
-
-      <div id="package-scope" class="actions package-scope" role="group" aria-label="패키지 범위"></div>
-
-      <section id="records" class="panel records" aria-labelledby="table-title">
-        <div class="actions table-types" role="group" aria-label="데이터 표">
-          <button data-table="events" type="button" aria-pressed="true">사건</button>
-          <button data-table="categories" type="button" aria-pressed="false">카테고리</button>
-          <button data-table="countries" type="button" aria-pressed="false">국가·지역·조직</button>
-          <button data-table="tenure_periods" type="button" aria-pressed="false">재임기간</button>
-          <button data-table="packages" type="button" aria-pressed="false">패키지</button>
-          <button data-table="event_categories" type="button" aria-pressed="false">사건_카테고리</button>
-          <button data-table="event_countries" type="button" aria-pressed="false">사건_국가</button>
+    </div>
+    <div id="fallback-banner" class="dashboard-notice" hidden>
+      <span id="source-message"></span>
+      <button id="btn-retry-sync" type="button">다시 시도</button>
+    </div>
+    <div id="dirty-controls" class="dashboard-notice hidden">
+      <span id="dirty-badge">브라우저 사본</span>
+      <button id="btn-revert-changes" type="button">변경사항 되돌리기</button>
+    </div>
+    <div class="dashboard-layout">
+      <nav id="structure-toc" class="dashboard-toc" aria-label="데이터 구조 목차">
+        <a href="#structure-actors" aria-current="location">주체·지도자</a>
+        <a href="#structure-catalog">패키지·사건</a>
+        <a href="#structure-geography">공간·영토</a>
+        <a href="#structure-relations">관계 유형</a>
+      </nav>
+      <button id="sidebar-backdrop" class="hidden lg:hidden fixed inset-0 z-30" type="button" tabindex="-1" aria-label="시트 목록 닫기"></button>
+      <aside id="sidebar" class="dashboard-sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-auto transform -translate-x-full lg:translate-x-0 transition-transform" inert hidden>
+        <div class="lg:hidden dashboard-sidebar-heading">
+          <strong>시트 목록</strong>
+          <button id="btn-close-sidebar" type="button" class="dashboard-button">닫기</button>
         </div>
-        <div class="records-heading">
-          <div>
-            <h2 id="table-title" tabindex="-1">사건</h2>
-            <p id="table-description"></p>
+        <nav id="sidebar-nav" class="space-y-5" aria-label="시트 목록"></nav>
+        <div class="dashboard-file-actions">
+          <button id="btn-json-export" type="button" class="dashboard-button">JSON 백업</button>
+          <label class="dashboard-button">JSON 복원<input id="json-import-input" type="file" accept=".json" class="sr-only"></label>
+          <label class="dashboard-button">CSV 불러오기<input id="csv-upload-input" type="file" accept=".csv" multiple class="sr-only"></label>
+        </div>
+      </aside>
+      <div class="dashboard-content">
+        <div id="table-tools" class="dashboard-tools" hidden>
+          <header id="workspace-package-heading" class="workspace-block-heading" hidden>
+            <h2>패키지</h2>
+            <input class="workspace-search" id="package-search" type="search" aria-label="패키지 검색" placeholder="패키지 검색" autocomplete="off">
+          </header>
+          <div id="table-search" class="dashboard-search">
+            <label for="global-search" class="sr-only">현재 시트 검색</label>
+            <span class="dashboard-search-icon" aria-hidden="true"></span>
+            <input id="global-search" type="search" placeholder="현재 시트 검색" autocomplete="off">
+            <button id="btn-clear-search" type="button" class="dashboard-button" aria-label="검색 지우기" hidden><span class="dashboard-clear-label">검색 지우기</span><span class="dashboard-clear-icon" aria-hidden="true">×</span></button>
           </div>
-          <div class="search">
-            <label for="search">표 검색</label>
-            <input id="search" type="search" placeholder="사건명, 날짜, 국가, ID" autocomplete="off">
-          </div>
+          <div id="package-filter" class="dashboard-actions" role="group" aria-label="패키지"></div>
+          <p id="package-search-empty" class="workspace-empty" hidden>검색 결과가 없습니다.</p>
         </div>
-        <div class="record-status">
-          <p id="result-count" role="status"></p>
-          <button id="clear-filter" type="button" hidden></button>
-        </div>
-        <div class="table-scroll" role="region" aria-labelledby="table-title" tabindex="0">
-          <table aria-labelledby="table-title">
-            <thead id="table-head"></thead>
-            <tbody id="table-body"></tbody>
-          </table>
-        </div>
-        <noscript><p>데이터를 보려면 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
-      </section>
-      <div class="charts">
-        <section class="panel decade-panel" aria-labelledby="decade-title">
-          <div class="panel-heading"><h2 id="decade-title">연대별 사건</h2><p>시작일 기준</p></div>
-          <div id="decade-chart" class="decade-chart" role="group" aria-label="사건을 연대로 필터링"></div>
+        <section id="workspace-categories" aria-label="카테고리 필터 및 편집" hidden>
+          <header class="workspace-category-header">
+            <div class="workspace-block-heading"><h2>카테고리</h2><input class="workspace-search" id="category-search" type="search" aria-label="카테고리 검색" placeholder="카테고리 검색" autocomplete="off"></div>
+            <div class="dashboard-actions">
+              <button type="button" class="dashboard-button" id="clear-category-filter" hidden>필터 해제</button>
+              <button type="button" class="dashboard-button" id="edit-filtered-category" aria-haspopup="dialog" disabled>선택한 카테고리 편집</button>
+            </div>
+          </header>
+          <div id="workspace-category-groups"></div>
+          <p id="category-search-empty" class="workspace-empty" hidden>검색 결과가 없습니다.</p>
         </section>
-        <section class="panel review-panel" aria-labelledby="review-title">
-          <div class="panel-heading"><h2 id="review-title">사건 검토 상태</h2><p id="review-rate"></p></div>
-          <div id="review-list" class="review-list" role="group" aria-label="사건을 검토 상태로 필터링"></div>
-        </section>
+        <div id="workspace-event-block">
+          <header id="workspace-events-heading" class="workspace-block-heading" hidden><h2>사건 <span id="workspace-event-count"></span></h2></header>
+          <div id="main-view" tabindex="-1"></div>
+        </div>
       </div>
+    </div>
+    <noscript>데이터를 보려면 자바스크립트를 켜 주세요.</noscript>
+    <section id="example-view" aria-labelledby="showroom-title" hidden>
+      <header class="dashboard-heading"><div><h1 id="showroom-title">시각화 쇼룸</h1><p>냉전의 사건들을 세 가지 수업 화면으로 살펴보세요.</p></div></header>
+      <nav id="showroom-views" aria-label="시각화 유형"></nav>
+      <section id="showroom-exhibit" aria-labelledby="exhibit-title" hidden>
+        <header><h2 id="exhibit-title" tabindex="-1"></h2><a id="showroom-open" target="_blank" rel="noreferrer">새 창에서 열기 ↗</a></header>
+        <div id="showroom-stage"></div>
+      </section>
     </section>
   </main>
-
-  <dialog id="detail" aria-labelledby="detail-title">
-    <header class="detail-header">
-      <button id="detail-back" type="button" hidden>← 이전 기록</button>
-      <form method="dialog"><button type="submit" autofocus>닫기</button></form>
+  <dialog id="record-preview" aria-labelledby="record-preview-title">
+    <header class="record-preview-header">
+      <div>
+        <p id="record-preview-kind" hidden></p>
+        <h2 id="record-preview-title"></h2>
+      </div>
+      <form method="dialog"><button class="record-preview-close" aria-label="닫기" autofocus>×</button></form>
     </header>
-    <div class="detail-content">
-      <h2 id="detail-title" tabindex="-1"></h2>
-      <dl id="detail-fields"></dl>
-      <div id="detail-links"></div>
-    </div>
+    <div id="record-preview-body"></div>
+    <footer class="record-preview-footer">
+      <button id="btn-preview-edit" type="button" class="dashboard-button">브라우저 사본 편집</button>
+    </footer>
   </dialog>
+  <dialog id="edit-drawer" aria-labelledby="drawer-title">
+    <div id="drawer-header" class="dashboard-drawer-header"></div>
+    <div id="drawer-body" class="dashboard-drawer-body space-y-4"></div>
+    <div id="drawer-footer" class="dashboard-drawer-footer"></div>
+  </dialog>
+  <dialog id="confirm-modal" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <form method="dialog" class="space-y-4">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-message"></p>
+      <div class="dashboard-actions">
+        <button class="dashboard-button" value="no" autofocus>취소</button>
+        <button class="dashboard-button dashboard-primary" value="yes">확인</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 </body>
 </html>

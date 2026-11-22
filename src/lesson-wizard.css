@@ -1,0 +1,115 @@
+.lesson-page { max-width: 1100px; margin: auto; padding: 42px clamp(18px,4vw,54px) 25px; word-break: keep-all; overflow-wrap: anywhere }
+.lesson-title h1 { margin: 0; font-size: clamp(34px,4.3vw,54px); font-weight: 600; letter-spacing: -.055em }
+.lesson-title ol { display: flex; margin: 24px 0 30px; border-bottom: 1px solid var(--chronicle-line) }
+.lesson-title li { flex: 1; min-width: 0 }
+.lesson-title button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 4px; border-bottom: 3px solid transparent; font-weight: 600 }
+.lesson-title button span { font-variant-numeric: tabular-nums; color: var(--chronicle-muted) }
+.lesson-title [aria-current=step] { border-bottom-color: var(--chronicle-accent); color: var(--chronicle-accent) }
+.lesson-page button:not(:disabled) { cursor: pointer }
+.lesson-page button:disabled { opacity: .48 }
+.lesson-section-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; margin-bottom: 18px }
+.lesson-section-title h2 { font-size: clamp(22px,3vw,30px); letter-spacing: -.04em; font-weight: 600; outline: none }
+.lesson-section-title>span,.lesson-row small { color: var(--chronicle-muted); font-size: 14px }
+.lesson-packages,.lesson-workbench { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px }
+.lesson-package,.lesson-map-panel,.lesson-picker,.lesson-settings { border: 1px solid var(--chronicle-line); border-radius: 10px; background: var(--chronicle-surface); min-width: 0 }
+.lesson-package { overflow: hidden; text-align: left; display: flex; flex-direction: column }
+.lesson-package[aria-pressed=true] { border-color: var(--chronicle-green); box-shadow: 0 0 0 2px var(--chronicle-green) }
+.lesson-package-map { width: 100%; height: 138px; background: #dce8e0; overflow: hidden }
+.lesson-package-map .lesson-basemap svg { height: 138px }
+.lesson-package-map figcaption { display: none }
+.lesson-package-info { display: grid; gap: 7px; padding: 19px 20px; flex: 1 }
+.lesson-package-info strong { font-size: 23px; letter-spacing: -.035em }
+.lesson-package-fields { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; color: var(--chronicle-muted); font-size: 14px }
+.lesson-package-fields>span { white-space: normal; overflow-wrap: anywhere }
+.lesson-package-fields b { margin-inline-start: 2px; color: var(--chronicle-green); font-size: 17px; font-weight: 700 }
+.lesson-package-info p,.lesson-package-info>div { color: var(--chronicle-muted) }
+.lesson-package-info>div { align-self: end; display: flex; gap: 12px; margin-top: 8px; font-size: 14px }
+.lesson-workbench { grid-template-columns: minmax(0,1.12fr) minmax(0,1fr); align-items: start }
+.lesson-events-workbench { grid-template-columns: minmax(0,2.1fr) minmax(0,1fr) }
+.lesson-picker { padding: 14px }
+.lesson-event-picker .author-priority-items { max-height: min(87dvh,840px) }
+.lesson-event-picker .lesson-row { display: grid; gap: 2px; align-items: start; border-top: 0; border-bottom: 1px solid var(--chronicle-line); padding: 8px 10px 4px }
+.lesson-event-picker .lesson-row label { align-items: start }
+.lesson-event-picker .lesson-row input { margin-block-start: 3px }
+.lesson-event-meta { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-inline-start: 25px }
+.lesson-event-meta time { font-size: 14px; color: var(--chronicle-muted); font-variant-numeric: tabular-nums }
+.lesson-picker fieldset { min-width: 0; border: 0; padding: 0; margin: 0 0 15px }
+.lesson-picker legend,.lesson-bulk { font-weight: 600; padding: 7px 0 }
+.lesson-row { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--chronicle-line); padding: 5px 7px; min-height: 45px }
+.lesson-row[data-preview=true] { background: #eef2e9; box-shadow: inset 3px 0 var(--chronicle-green) }
+.lesson-row label { flex: 1; display: flex; align-items: center; gap: 9px; min-width: 0; cursor: pointer; font-weight: 600 }
+.lesson-row small { display: block; font-weight: 400; font-variant-numeric: tabular-nums }
+.lesson-row input { flex: none; width: 16px; height: 16px; accent-color: var(--chronicle-green) }
+.lesson-row button,.lesson-bulk button { font-size: 13px; min-height: 34px; padding-inline: 4px; color: var(--chronicle-green); text-decoration: underline; text-underline-offset: 3px; flex: none }
+.lesson-bulk { display: flex; justify-content: space-between; align-items: center }
+.lesson-category-bulk { justify-content: flex-end; padding: 0 }
+.lesson-priority-actions { justify-content: flex-end; flex-wrap: wrap; gap: 0 8px; padding: 0 8px; border-bottom: 1px solid var(--chronicle-line) }
+.lesson-map-panel { overflow: hidden }
+.lesson-map-heading { padding: 16px 18px; background: var(--chronicle-green); color: #fffdf4 }
+.lesson-map-heading p,.lesson-map-heading time { font-size: 14px; opacity: .85 }
+.lesson-map-heading h3 { font-size: 22px; font-weight: 600; line-height: 1.4 }
+.lesson-event-description { margin: 0; padding: 14px 18px; line-height: 1.6; white-space: pre-line; border-bottom: 1px solid var(--chronicle-line) }
+.lesson-basemap svg { display: block; width: 100%; height: clamp(190px,28vw,310px); background: #dce7e3 }
+.lesson-basemap path { fill: #e9e6d3; stroke: #899c8b; stroke-width: .68 }
+.lesson-basemap figcaption,.lesson-empty-map { padding: 12px 16px; color: var(--chronicle-muted); font-size: 15px }
+.lesson-empty-map { min-height: 100px; display: grid; align-items: center }
+.lesson-spaces { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px }
+.lesson-map-panel .lesson-spaces { padding: 10px 12px; margin: 0 }
+.lesson-spaces button { border: 1px solid var(--chronicle-line); border-radius: 5px; padding: 5px 9px; font-size: 14px }
+.lesson-spaces [aria-pressed=true] { color: white; background: var(--chronicle-green) }
+.lesson-category-filters { display: grid; gap: 8px }
+.lesson-category-filters>button { justify-self: start }
+.lesson-category-filter { display: grid; grid-template-columns: 5.5rem minmax(0,1fr); align-items: start; gap: 8px }
+.lesson-category-type { font-weight: 600 }
+.lesson-category-type:not([aria-pressed=true]) { background: #edf1e7; color: var(--chronicle-green) }
+.lesson-category-buttons { display: flex; flex-wrap: wrap; gap: 6px }
+.lesson-settings { overflow: hidden }
+.lesson-review,.lesson-settings-fields { padding: clamp(16px,2.6vw,28px) }
+.lesson-review { background: #edf1e9; border-bottom: 1px solid var(--chronicle-line) }
+.lesson-review header,.lesson-review ul { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 14px }
+.lesson-review header { justify-content: space-between; color: var(--chronicle-green) }
+.lesson-review h3 { font-size: clamp(19px,2.6vw,25px); font-weight: 600 }
+.lesson-review ul { gap: 5px 8px; margin-top: 12px; list-style: none; padding: 0 }
+.lesson-review li { font-size: 14px; border: 1px solid #c9d3c5; border-radius: 5px; padding: 3px 8px; background: var(--chronicle-surface) }
+.lesson-settings-fields { display: grid; gap: 22px }
+.lesson-school-field { max-width: 28rem }
+.lesson-view-cards { grid-template-columns: repeat(3,minmax(0,1fr)) }
+.lesson-view-cards label { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; min-width: 0; overflow: hidden; padding: 0 }
+.lesson-view-cards img { width: 100%; aspect-ratio: 1.85; object-fit: cover; border-bottom: 1px solid var(--chronicle-line) }
+.lesson-view-cards label span { padding: 7px 3px; font-weight: 600; font-size: 14px }
+.lesson-view-cards label:has(input:checked)::after { content: '✓'; position: absolute; top: 5px; right: 5px; border: 1px solid white; border-radius: 50%; width: 21px; height: 21px; background: var(--chronicle-green); color: white; line-height: 19px; pointer-events: none }
+.lesson-actions .lesson-save { margin-left: auto; padding: 8px 15px; border: 1px solid var(--chronicle-line); border-radius: 24px; background: var(--chronicle-surface) }
+@media(max-width:620px){ .lesson-view-cards { grid-template-columns: repeat(auto-fit,minmax(min(115px,100%),1fr)) } }
+@media(max-width:1020px){ .lesson-events-workbench { grid-template-columns: minmax(0,1fr) } }
+@media(max-width:560px){
+ .lesson-event-picker { max-height: 58.5svh; overflow: auto; scrollbar-gutter: stable }
+ .lesson-event-picker .author-priority-items { max-height: none }
+}
+.lesson-actions { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 16px; margin-top: 22px; padding: 14px 0; border-top: 1px solid var(--chronicle-line); background: var(--chronicle-paper) }
+.lesson-actions strong { margin-left: auto; font-size: 15px }
+.lesson-actions [role=alert] { color: #98391f }
+@media(max-width:700px){
+ .lesson-page { padding-top: 24px }
+ .lesson-packages,.lesson-workbench { grid-template-columns: minmax(0,1fr); gap: 12px }
+ .lesson-package { display: grid; grid-template-columns: minmax(65px,.48fr) minmax(0,1fr) }
+ .lesson-package-map,.lesson-package-map .lesson-basemap,.lesson-package-map .lesson-basemap svg { height: 100% }
+ .lesson-package-info { padding: 12px }
+ .lesson-title ol { margin: 14px 0 18px }
+ .lesson-title button { font-size: 14px; gap: 4px }
+ .lesson-actions { gap: 8px; flex-wrap: wrap }
+ .lesson-actions .setup-action { padding: 8px 14px }
+}
+.category-map-summary { padding: 10px 16px; font-weight: 600 }
+.category-map-summary span { margin: 0 3px; color: var(--chronicle-muted) }
+.lesson-basemap .category-location-area { fill: #327358; fill-opacity: .35; stroke: #285640; stroke-width: 1 }
+.lesson-basemap .category-location-line { fill: none; stroke: #94351d; stroke-width: 2.5 }
+.category-location-dot { fill: #b53816; stroke: #fff; stroke-width: 1.4; vector-effect: non-scaling-stroke }
+.category-places .lesson-basemap svg { height: clamp(160px,23vw,245px) }
+.category-places .lesson-basemap figcaption { padding: 6px 14px; font-size: 13px }
+.category-map-events { max-height: clamp(320px,60svh,640px); overflow: auto; padding: 0 14px 8px; scrollbar-gutter: stable }
+.category-map-events li { border-top: 1px solid var(--chronicle-line); padding: 7px 0; display: grid; grid-template-columns: 5.3rem 1fr; gap: 5px; font-size: 14px }
+.category-map-events time { color: var(--chronicle-muted); font-variant-numeric: tabular-nums }
+.category-map-feature { cursor: pointer }
+.category-map-label { fill: #273e34; font-weight: 600; paint-order: stroke; stroke: #fffdf5; stroke-width: 2.4px; vector-effect: non-scaling-stroke; pointer-events: none }
+.category-map-events small,.category-edition { display: block; color: var(--chronicle-muted); font-size: 13px }
+.category-edition { padding: 6px 14px }

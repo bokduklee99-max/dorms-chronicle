@@ -5,7 +5,7 @@ const colors = ['#4979e8', '#df6c46', '#21a896', '#9a71d2', '#d9a532', '#cf658b'
  * @param {import('./src/metro-model.ts').Topic[]} topics
  */
 export function constellationLayout(events, topics) {
-  const anchors = topics.filter(topic => topic.parent_topic_id).map((topic, index, groups) => {
+  const anchors = topics.map((topic, index, groups) => {
     const angle = index / groups.length * Math.PI * 2 - .5;
     return {
       id: topic.topic_id,

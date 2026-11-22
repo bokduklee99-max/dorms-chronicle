@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"type":"Feature","id":"geo_seoul","properties":{"name":"서울"},"geometry":{"type":"Point","coordinates":[126.978,37.5665]}},
+    {"type":"Feature","id":"geo_hongkou_park","properties":{"name":"상하이 훙커우 공원"},"geometry":{"type":"Point","coordinates":[121.482,31.2728]}},
+    {"type":"Feature","id":"geo_incheon_station_1899","properties":{"name":"인천역"},"geometry":{"type":"Point","coordinates":[126.6170064800001,37.47688932300008]}},
+    {"type":"Feature","id":"geo_noryangjin_temporary_1899","properties":{"name":"노량진 가설정거장"},"geometry":{"type":"Point","coordinates":[126.9074173890001,37.51571248800008]}},
+    {"type":"Feature","id":"geo_incheon","properties":{"name":"인천"},"geometry":{"type":"Point","coordinates":[126.7052,37.4563]}},
+    {"type":"Feature","id":"geo_panmunjom","properties":{"name":"판문점"},"geometry":{"type":"Point","coordinates":[126.6769,37.9561]}},
+    {"type":"Feature","id":"geo_pyongyang","properties":{"name":"평양"},"geometry":{"type":"Point","coordinates":[125.7625,39.0392]}},
+    {"type":"Feature","id":"geo_shanghai","properties":{"name":"상하이"},"geometry":{"type":"Point","coordinates":[121.4737,31.2304]}},
+    {"type":"Feature","id":"geo_nanjing","properties":{"name":"난징"},"geometry":{"type":"Point","coordinates":[118.7969,32.0603]}},
+    {"type":"Feature","id":"geo_chongqing","properties":{"name":"충칭"},"geometry":{"type":"Point","coordinates":[106.9123,29.4316]}},
+    {"type":"Feature","id":"geo_tokyo","properties":{"name":"도쿄"},"geometry":{"type":"Point","coordinates":[139.6503,35.6762]}},
+    {"type":"Feature","id":"geo_berlin","properties":{"name":"베를린"},"geometry":{"type":"Point","coordinates":[13.405,52.52]}},
+    {"type":"Feature","id":"geo_west_berlin","properties":{"name":"서베를린"},"geometry":{"type":"Point","coordinates":[13.3,52.5]}},
+    {"type":"Feature","id":"geo_moscow","properties":{"name":"모스크바"},"geometry":{"type":"Point","coordinates":[37.6173,55.7558]}},
+    {"type":"Feature","id":"geo_washington_dc","properties":{"name":"워싱턴 D.C."},"geometry":{"type":"Point","coordinates":[-77.0369,38.9072]}},
+    {"type":"Feature","id":"geo_yalta","properties":{"name":"얄타"},"geometry":{"type":"Point","coordinates":[34.1663,44.4952]}},
+    {"type":"Feature","id":"geo_potsdam","properties":{"name":"포츠담"},"geometry":{"type":"Point","coordinates":[13.0645,52.3906]}},
+    {"type":"Feature","id":"geo_geneva","properties":{"name":"제네바"},"geometry":{"type":"Point","coordinates":[6.1432,46.2044]}},
+    {"type":"Feature","id":"geo_bay_of_pigs","properties":{"name":"피그스만"},"geometry":{"type":"Point","coordinates":[-81.0833,22.0833]}},
+    {"type":"Feature","id":"geo_beijing","properties":{"name":"베이징"},"geometry":{"type":"Point","coordinates":[116.4074,39.9042]}},
+    {"type":"Feature","id":"geo_yanan","properties":{"name":"옌안"},"geometry":{"type":"Point","coordinates":[109.4897,36.5854]}},
+    {"type":"Feature","id":"geo_guangzhou","properties":{"name":"광저우"},"geometry":{"type":"Point","coordinates":[113.2644,23.1291]}},
+    {"type":"Feature","id":"geo_brussels","properties":{"name":"브뤼셀"},"geometry":{"type":"Point","coordinates":[4.3517,50.8503]}},
+    {"type":"Feature","id":"geo_new_york","properties":{"name":"뉴욕"},"geometry":{"type":"Point","coordinates":[-74.006,40.7128]}}
+  ]
+}

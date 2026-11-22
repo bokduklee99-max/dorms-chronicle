@@ -12,6 +12,10 @@ test('the axis includes only event years in chronological order',()=>{
  assert.equal(empty.years.length,0);
  assert.equal(empty.points.length,0);
 });
+test('route order follows the first event for each category',()=>{
+ const firstDates=Array.from(full.routes,route=>route.stations[0].event.bounds.start);
+ assert.deepEqual(firstDates,[...firstDates].sort((a,b)=>a-b));
+});
 test('each event has exactly one physical station, shared by every participating category',()=>{for(const m of [full,sample]){assert.equal(new Set(m.points.map(p=>p.event.id)).size,m.events.length);assert.equal(m.points.length,m.events.length);for(const s of m.points){assert.equal(s.lines.length,s.event.directTopicIds.length);for(const line of s.lines)assert.equal(m.routes[line].stations.find(x=>x.event.id===s.event.id),s);assert.ok(Number.isFinite(s.x)&&Number.isFinite(s.y));}}});
 test('every route travels monotonically left to right and stations remain in their labeled year',()=>{for(const m of [full,sample]){for(const r of m.routes){for(let i=1;i<r.nodes.length;i++)assert.ok(r.nodes[i].x>=r.nodes[i-1].x);assert.ok(!/NaN|undefined/.test(r.d));}for(const s of m.points){const y=m.years.find(y=>y.year===s.event.year);assert.ok(s.x>=y.x&&s.x<y.x+y.width);}assert.ok(m.height>0);}});
 test('country filters use relational country IDs and never delete stations',()=>{const m=sample,total=m.points.length;const us=m.points.filter(p=>countryMatches(p.event,'actor_usa'));assert.ok(us.length>0&&us.length<total);assert.ok(m.points.every(p=>countryMatches(p.event,'')));assert.equal(m.points.filter(p=>countryMatches(p.event,'missing')).length,0);assert.equal(m.points.length,total);});
@@ -31,7 +35,7 @@ test('sticky category names track the visible route and separate at transfers',(
 });
 
 test('route emphasis retains shared transfer events and intersects country emphasis',()=>{
- const m=sample,route=m.routes.find(r=>r.stations.some(p=>p.lines.length>1));
+ const m=sample,route=m.routes.find(r=>r.stations.some(p=>p.lines.length>1)&&r.stations.some(p=>countryMatches(p.event,'actor_usa')));
  const selected=m.events.filter(e=>topicMatches(e,route.topic_id));
  assert.deepEqual(selected.map(e=>e.id),route.stations.map(p=>p.event.id));
  assert.ok(selected.some(e=>e.directTopicIds.length>1));

@@ -30,7 +30,6 @@ function renderReadingMode() {
   $('#timeline-heading').textContent=title;$('#timeline-intro').textContent=intro;
   $$('[data-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===reading.mode)));
   for(const name of Object.keys(headings))$(`#timeline-${name}`).hidden=name!==reading.mode;
-  $('#timeline-map-button').hidden=reading.mode==='reveal';
   if(reading.mode==='countries')renderCountries();
   if(reading.mode==='network')renderNetwork();
   if(reading.mode==='reveal')renderReveal();
@@ -45,7 +44,7 @@ function renderCountries() {
   const result=HistoryViews.countryRows(events,viewData.actors,viewData.tenures,reading.decade,reading.countryBasis);
   $('#country-note').textContent=reading.countryBasis==='tags'?'원본 지도자 태그로 나눴어요. 사건의 참여국을 뜻하지는 않아요.':'시트에 연결된 국가를 표시해요. 같은 사건은 여러 국가에 함께 나올 수 있어요.';
   $('#country-board').innerHTML=result.columns.length?`<table class="country-table"><thead><tr><th scope="col">연도</th>${result.columns.map(column=>`<th scope="col">${escapeHTML(column.name)}</th>`).join('')}</tr></thead><tbody>${result.rows.map(row=>`<tr><th scope="row">${row.year}</th>${row.cells.map(cell=>`<td>${cell.leaders.length?`<div class="year-leaders">${cell.leaders.map(leader=>`${leader.source?`<a href="${escapeHTML(leader.source)}" target="_blank" rel="noreferrer">`:'<div>'}${escapeHTML(leader.title)} ${escapeHTML(leader.person)}<span>${escapeHTML(leader.startDate)} ~ ${escapeHTML(leader.endDate||'종료 미입력')}</span>${leader.source?'</a>':'</div>'}`).join('')}</div>`:''}${cell.events.map(event=>`<button class="country-event" data-event="${escapeHTML(event.id)}" aria-pressed="${event.id===state.eventId}"><time>${escapeHTML(event.date)}</time><strong>${escapeHTML(event.shortTitle)}</strong></button>`).join('')}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'<div class="empty-state"><h3>이 시기의 사건이 없어요</h3><p>다른 주제를 골라보세요.</p></div>';
-  $('#country-detail').innerHTML=detailHTML(selectedEvent(),'timeline');
+  $('#country-detail').innerHTML=detailHTML(selectedEvent());
 }
 
 function renderNetwork() {
@@ -56,7 +55,7 @@ function renderNetwork() {
   $('#network-note').textContent=prefix+(graph.total>6?` 연결된 사건 ${graph.total}개 중 가까운 6개를 보여줘요.`:'');
   $('#network-evidence').hidden=true;
   if(!graph.center){$('#network-board').innerHTML='<p class="empty-state">연결을 살펴볼 사건이 없어요.</p>';$('#network-detail').innerHTML='';return;}
-  $('#network-detail').innerHTML=detailHTML(graph.center,'timeline');
+  $('#network-detail').innerHTML=detailHTML(graph.center);
   if(!graph.nodes.length){$('#network-board').innerHTML=`<div class="empty-state"><h3>${reading.networkBasis==='relations'?'등록된 사건 관계가 없어요':'같은 주제의 다른 사건이 없어요'}</h3>${reading.networkBasis==='relations'?'':'<p>다른 주제나 사건을 골라보세요.</p>'}</div>`;return;}
   const slots=[[30,22],[350,22],[670,22],[30,462],[350,462],[670,462]];
   const positions=new Map([[graph.center.id,[480,312]],...graph.nodes.map((node,index)=>[node.id,[slots[index][0]+130,slots[index][1]+68]])]);

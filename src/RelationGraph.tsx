@@ -1,7 +1,7 @@
 import React from 'react';
 import type {EventRecord,HistoryData} from './metro-model';
 export function RelationGraph({event:e,data}:{event:EventRecord;data:HistoryData}){
- const topics=e.directTopicIds.map(id=>data.topics.find(t=>t.topic_id===id)).filter(t=>t!==undefined);
+ const topics=data.topics.filter(t=>e.directTopicIds.includes(t.topic_id));
  const actors=e.actorIds.map(id=>data.actors.find(a=>a.actor_id===id)).filter(a=>a!==undefined);
  const h=Math.max(310,actors.length*68+70,topics.length*74+70),middle=h/2;
  const nodes=[...topics.map((t,i)=>({id:t.topic_id,label:t.name,x:122,y:35+((h-70)/(topics.length+1))*(i+1),kind:'topic'})),...actors.map((a,i)=>({id:a.actor_id,label:a.name,x:718,y:35+((h-70)/(actors.length+1))*(i+1),kind:'actor'}))];

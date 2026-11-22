@@ -1,5 +1,20 @@
+const CHRONICLE_SHEET_IDS = Object.freeze({
+  유형설명: 1805815581, 패키지: 1965822688, 카테고리: 201117005, 사건: 201117001,
+  주체: 201117003, 직위: 1685936172, 재임: 201117004, 사건_주체: 201117006, 관계: 201117008,
+  사건_카테고리: 1859891208, 사건_패키지: 1675177887,
+  공간: 201117010, 영토변화: 201117011, 사건_공간: 201117012, 지도도형: 201117013, 지도뷰: 201117014,
+  주체_공간: 1813628837, 카테고리_공간: 1456709406
+});
 const SHEET_CONFIG = Object.freeze({
   id: '1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0',
+  sheetIds: CHRONICLE_SHEET_IDS,
+  eventSheetId: CHRONICLE_SHEET_IDS.사건,
+  packageSheetId: CHRONICLE_SHEET_IDS.패키지,
+  categorySheetId: CHRONICLE_SHEET_IDS.카테고리,
+  relationSheetId: CHRONICLE_SHEET_IDS.관계,
+  spaceSheetId: CHRONICLE_SHEET_IDS.공간,
+  eventSpaceSheetId: CHRONICLE_SHEET_IDS.사건_공간,
+  mapShapeSheetId: CHRONICLE_SHEET_IDS.지도도형,
   url: 'https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit#gid=201117001',
   feedUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1eX3_Q-cCT5zz2BN4F5VMVIsMXAlGp99lWBEc-wyGeEz73i37QV6dVC9WsKJWjkKo3DQt1_-KLWob/pub?gid=734217007&single=true&output=csv'
 });

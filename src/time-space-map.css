@@ -1,0 +1,63 @@
+.metro-app.map-sync-mode { padding-top: 22px }
+.map-sync-mode > .hero { margin-bottom: 10px }
+.map-sync-mode > .hero h1 { font-size: clamp(28px, 5vw, 42px) }
+.sync-map { background: #fffefa; border: 1px solid #cdd6ca; border-radius: 14px; overflow: clip }
+.sync-map-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 20px; padding: 14px 20px }
+.sync-map-header h2 { font-size: 23px; line-height: 1.25; font-weight: 750; letter-spacing: -.035em }
+.sync-map-views { display: flex; flex-wrap: wrap; gap: 6px }
+.sync-map-views button,.sync-map-controls button,.sync-map-inspector header button { min-height: 38px; padding: 5px 11px; border: 1px solid #c7d1c5; border-radius: 7px; background: #fffefa; font-size: 14px; font-weight: 680; color: #324c42 }
+.sync-map-views button[aria-pressed="true"] { border-color: #7e9988; background: #dce7dd; color: #203c32 }
+.sync-map-layout { display: grid; grid-template-columns: minmax(0,1fr) clamp(235px, 24vw, 320px); border-top: 1px solid #cdd6ca }
+.sync-map-stage { min-width: 0 }
+.sync-map-stage figure { position: relative; background: #d5e5e5; margin: 0 }
+.sync-map-stage svg { display: block; width: 100%; height: clamp(330px, 44vw, 568px); overflow: hidden }
+.sync-map-stage figcaption,.sync-map-status { position: absolute; left: 14px; bottom: 13px; max-width: calc(100% - 28px); color: #344d47; background: #fffef4ee; border: 1px solid #869c9277; border-radius: 5px; padding: 3px 8px; font-size: 13px }
+.sync-map-status { top: 13px; bottom: auto; margin: 0 }
+.sync-map-base { fill: #f2eed9; stroke: #82958b; stroke-width: .66 }
+.sync-map-territory { stroke-width: 1.15; pointer-events: none }
+.sync-map-territory.sovereignty { fill: #afcbbb; stroke: #35624e }
+.sync-map-territory.sphere { fill: #786aaf48; stroke: #69568d; stroke-dasharray: 4 2 }
+.sync-map-territory.occupation { fill: #ead09a; stroke: #775006 }
+.sync-map-place { cursor: pointer; outline: none }
+.sync-map-dot { fill: #b7442d; stroke: #fffbea; stroke-width: 1.8 }
+.sync-map-line { fill: none; stroke: #ab3924; stroke-width: 3.5 }
+.sync-map-area { fill: #d66a3a31; stroke: #a6432e; stroke-width: 1.7; stroke-dasharray: 5 2 }
+.sync-map-place:is(:hover,:focus-visible,[aria-pressed="true"]) :is(.sync-map-dot,.sync-map-line,.sync-map-area) { stroke: #552012; stroke-width: 3.5 }
+.sync-map-controls { position: sticky; bottom: 0; z-index: 1; display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; align-items: start; gap: 8px; padding: 13px 15px 8px; border-top: 1px solid #bccdc0; background: #fffefa }
+.sync-map-controls button:not(.sync-map-play) { min-width: 38px }
+.sync-map-controls .sync-map-play { min-width: 82px; background: #2f5043; color: #fffef6; border-color: #2f5043 }
+.sync-map-controls button:disabled { opacity: .46 }
+.sync-map-scrubber { padding: 0 2px }
+.sync-map-scrubber input { width: 100%; height: 37px; cursor: ew-resize; accent-color: #ac4d32; display: block }
+.sync-map-scrubber div { display: flex; justify-content: space-between; color: #56675d; font-size: 12px; font-variant-numeric: tabular-nums }
+.sync-map-inspector { display: flex; flex-direction: column; min-width: 0; background: #f8f8f0; border-left: 1px solid #cdd6ca }
+.sync-map-inspector header { padding: 16px; border-bottom: 1px solid #d7ded1 }
+.sync-map-inspector header time { display: block; color: #8b3927; font-size: clamp(22px, 2.45vw, 35px); font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.055em }
+.sync-map-inspector h3 { font-size: 16px; font-weight: 750 }
+.sync-map-inspector h3 span,.sync-map-inspector small { color: #52695b; font-size: 13px; font-weight: 500 }
+.sync-map-inspector header button { margin-top: 7px; min-height: 32px }
+.sync-map-records { flex: 1; overflow: auto; max-height: 480px }
+.sync-map-records > p,.sync-map-unmapped { margin: 0; padding: 13px 16px; color: #52695b; font-size: 14px }
+.sync-map-events button { width: 100%; text-align: left; padding: 12px 16px; border-bottom: 1px solid #d7ded1 }
+.sync-map-events button:hover { background: #eaf0e5 }
+.sync-map-events button strong,.sync-map-events button small { display: block; overflow-wrap: anywhere }
+.sync-map-events button small { margin-top: 4px }
+.sync-map-regions { padding: 14px 16px }
+.sync-map-regions h4 { font-size: 15px; font-weight: 750; margin-bottom: 6px }
+.sync-map-regions li { display: flex; align-items: baseline; gap: 7px; margin-bottom: 5px; overflow-wrap: anywhere }
+.sync-map-regions i { flex: 0 0 9px; height: 9px; border-radius: 2px; background: #4b856c }
+.sync-map-regions i.sphere { background: #786aaf }
+.sync-map-regions i.occupation { background: #aa7929 }
+.sync-map-regions p,.sync-map-unmapped { color: #596b60; font-size: 13px }
+.sync-map-unmapped { border-top: 1px solid #d7ded1 }
+@media (max-width: 760px) {
+ .sync-map-layout { grid-template-columns: minmax(0,1fr) }
+ .sync-map-inspector { border-left: 0; border-top: 1px solid #cdd6ca }
+ .sync-map-inspector header { padding: 11px 16px }
+ .sync-map-stage svg { height: clamp(245px, 70vw, 430px) }
+}
+@media (max-width: 420px) {
+ .sync-map-header { padding-inline: 12px }
+ .sync-map-views button { min-height: 34px; padding-inline: 7px }
+ .sync-map-controls { padding-inline: 8px; gap: 5px }
+}

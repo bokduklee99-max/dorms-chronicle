@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>사건을 지도로 읽기</title>
+<link rel="stylesheet" href="./assets/chronicle-theme.css">
+<link rel="stylesheet" href="./assets/space-preview.css">
+<link rel="stylesheet" href="./assets/event-map-reader.css">
+</head><body><main>
+<p id="status" role="status">사건과 연결된 지도를 불러오는 중입니다.</p>
+<button type="button" id="retry" hidden>다시 불러오기</button>
+<section id="reader" hidden aria-label="사건 지도">
+<article>
+  <header class="event-heading">
+    <div class="event-meta"><span id="group-name"></span><span id="date"></span>
+      <button type="button" id="browse" aria-haspopup="dialog">사건 찾기</button>
+    </div>
+    <h1 id="title"></h1>
+  </header>
+  <figure>
+    <div class="layer-bar"><span>연결 지도</span><div id="layers" role="group" aria-label="연결 지도"></div></div>
+    <div id="maps"></div>
+    <div class="transport" role="group" aria-label="사건 재생">
+      <button type="button" id="prev" aria-label="이전 사건">←</button>
+      <button type="button" id="play">날짜순 재생</button>
+      <button type="button" id="next" aria-label="다음 사건">→</button>
+      <span id="position" aria-label="현재 사건 순서"></span>
+    </div>
+    <figcaption id="caption"></figcaption>
+  </figure>
+  <p id="body"></p><a id="source" target="_blank" rel="noopener noreferrer">사건 원본 ↗</a>
+</article>
+<dialog id="library" aria-label="사건 찾기">
+  <div class="library-head"><h2>사건 찾기</h2><button type="button" id="close-library" aria-label="사건 목록 닫기">닫기</button></div>
+  <div class="modes" role="group" aria-label="목록 선택">
+    <button type="button" id="by-group" aria-pressed="true">사건군별</button>
+    <button type="button" id="by-feature" aria-pressed="false">대표 사건</button>
+  </div>
+  <div id="group-tools">
+    <select id="groups" aria-label="사건군"></select>
+    <input type="search" id="search" aria-label="현재 사건군에서 사건명 또는 연도 찾기" placeholder="사건명 또는 연도 찾기">
+  </div>
+  <nav class="event-list" id="events" aria-label="사건 목록"></nav>
+  <nav class="event-list" id="featured" aria-label="대표 사건" hidden></nav>
+</dialog>
+</section>
+</main>
+<script src="./sheet-config.js?v=normalized-schema"></script><script src="./sheets.js?v=normalized-schema"></script>
+<script type="module" src="./assets/event-map-reader.js?v=map-library"></script></body></html>

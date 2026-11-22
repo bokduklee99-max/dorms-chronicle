@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사건 지도</title>
+<link rel="stylesheet" href="./assets/cuba-story.css">
+<link rel="stylesheet" href="./assets/berlin-story.css">
+</head>
+<body class="berlin">
+<main>
+  <header>
+    <a class="back" href="./event-map-demo.html">← 사건 지도</a>
+    <div class="heading"><h1>사건 지도</h1><p></p></div>
+  </header>
+  <div class="layout">
+    <section class="player" aria-label="베를린 지도 재생">
+      <div class="map">
+        <svg id="atlas" role="img" aria-label="독일과 베를린 지도">
+          <defs>
+            <pattern id="east-hatch" width=".19" height=".19" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+              <path d="M0 0V.19" stroke="#fff1d4" opacity=".33" stroke-width=".04"/>
+            </pattern>
+          </defs>
+          <g id="geography">
+            <path id="terrain"/><g id="zones"></g><g id="states"><path id="west-state"/><path id="east-state"/><path id="east-ink"/></g>
+            <g id="city-detail"><path id="city"/><path id="water"/></g>
+            <g id="wall"></g>
+            <g id="airlift">
+              <path d="M8.326,-50.049 Q9.95,-52.28 13.403,-52.473" fill="none" stroke="#437575" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-dasharray="5 4"/>
+              <circle class="cargo" r=".072" fill="#183f42"><animateMotion begin="indefinite" dur="3.1s" repeatCount="2" fill="freeze" path="M8.326,-50.049 Q9.95,-52.28 13.403,-52.473"/></circle>
+            </g>
+          </g>
+          <g id="labels"></g>
+        </svg>
+        <div class="map-note" id="scale-note"></div>
+        <div class="locator" aria-hidden="true"><span>북</span>↑</div>
+      </div>
+      <div class="progress" aria-hidden="true"><i></i></div>
+      <div class="caption" aria-live="polite" aria-atomic="true">
+        <time id="date"></time><h2 id="scene-title">지도를 불러오는 중…</h2><p id="story-text"></p>
+      </div>
+      <div class="transport">
+        <button id="play" disabled>▶ 재생</button>
+        <button id="prev" aria-label="이전 장면" disabled>←</button>
+        <button id="next" aria-label="다음 장면" disabled>→</button>
+        <span id="counter"></span>
+      </div>
+    </section>
+    <aside class="sidebar"><nav aria-label="베를린 사건 순서"><h2>사건 순서</h2><ol id="chapters"></ol></nav>
+    <figure class="archive" hidden>
+      <img src="./assets/event-geometry/berlin-airlift.jpg" width="450" height="360" alt="템펠호프 공항에서 수송기의 화물을 내리는 사람들">
+      <figcaption><a href="https://history.state.gov/milestones/1945-1952/berlin-airlift" target="_blank" rel="noopener noreferrer">템펠호프 공항의 공수 물자 하역 · 미 공군 사진 ↗</a></figcaption>
+    </figure></aside>
+  </div>
+  <footer><a href="https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit#gid=201117001">원본 연표 ↗</a><span>지도 · <a href="https://github.com/aourednik/historical-basemaps/blob/master/geojson/world_1945.geojson">1945년 4국 점령구역</a> · <a href="https://icr.ethz.ch/data/cshapes/">CShapes 2.1</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>) · <a href="https://daten.berlin.de/datensaetze/verlauf-der-berliner-mauer-1989-wfs-3dcda64c">베를린 장벽의 위치</a> · <a href="https://www.usafe.af.mil/News/Article-Display/Article/255483/wiesbaden-celebrates-berlin-airlift-anniversary/">베를린 공수 기록</a> · <a href="https://www.berlin.de/en/history/8482274-8619314-opening-and-fall-of-the-berlin-wall.en.html">장벽 개방 기록</a></span></footer>
+  <noscript>사건 지도를 재생하려면 자바스크립트를 켜 주세요.</noscript>
+</main>
+<script src="./sheet-config.js?v=normalized-schema"></script><script src="./sheets.js?v=normalized-schema"></script>
+<script type="module" src="./assets/berlin-story.js"></script>
+</body>
+</html>

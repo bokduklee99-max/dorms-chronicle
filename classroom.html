@@ -8,18 +8,19 @@
   <meta name="theme-color" content="#121418" media="(prefers-color-scheme: dark)">
   <title>연표 | 냉전의 흐름</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230e8063'/%3E%3Cpath d='M16 20h32M16 32h32M16 44h32' stroke='white' stroke-width='4'/%3E%3Ccircle cx='26' cy='20' r='5' fill='white'/%3E%3Ccircle cx='40' cy='32' r='5' fill='white'/%3E%3Ccircle cx='30' cy='44' r='5' fill='white'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=timeline-only">
   <link rel="stylesheet" href="views.css?v=4">
-  <link rel="stylesheet" href="design.css?v=5">
-  <script defer src="assets/world.js"></script>
-  <script defer src="sheet-config.js?v=3"></script>
+  <link rel="stylesheet" href="design.css?v=timeline-only">
+  <script defer src="sheet-config.js?v=normalized-schema"></script>
   <script defer src="sheet-snapshot.js?v=20261118-leaders"></script>
-  <script defer src="sheets.js?v=20261118-leaders"></script>
+  <script defer src="sheets.js?v=normalized-schema"></script>
   <script defer src="history.js?v=20261118-leaders"></script>
-  <script defer src="data.js?v=3"></script>
-  <script defer src="views.js?v=4"></script>
-  <script defer src="app.js?v=4"></script>
+  <script defer src="data.js?v=timeline-only"></script>
+  <script defer src="views.js?v=timeline-only"></script>
+  <script defer src="app.js?v=event-importance-1"></script>
 <link rel="stylesheet" href="/assets/chronicle-theme.css">
+  <link rel="stylesheet" href="/assets/record-quiz.css?v=event-importance-1">
+  <link rel="stylesheet" href="/assets/event-importance.css?v=event-importance-1">
 </head>
 <body class="chronicle-classroom">
   <header class="site-header">
@@ -27,46 +28,30 @@
       <a class="wordmark" href="./" aria-label="연표 처음으로"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 7h22M3 14h22M3 21h22"/><circle cx="10" cy="7" r="3"/><circle cx="19" cy="14" r="3"/><circle cx="12" cy="21" r="3"/></svg>연표</a>
       <span class="header-divider"></span><span class="workspace-name">우리의 역사 수업</span>
       <div class="header-actions">
-        <a class="button quiet" href="metro/">Metro 관계 지도 ↗</a>
+        <a class="button quiet" href="metro/">연표 보기 ↗</a>
         <button class="icon-button" id="theme-button" aria-label="어두운 화면으로 전환"></button>
         <button class="button quiet" id="fullscreen-button"></button>
       </div>
     </div>
   </header>
+  <nav class="topbar" id="lesson-nav" aria-label="수업 탐색" hidden>
+    <div class="lesson-nav-links"><a href="/?setup=1">← 수업 목록으로</a><a id="lesson-timeline-link" hidden>연표 열기 ↗</a></div>
+    <a href="/">Dorms' Chronicle</a>
+  </nav>
   <main class="app-shell">
     <div class="page-heading">
       <div><p class="breadcrumb">세계사 <span>/</span> 국제정치</p><h1><span class="title-short">냉전의 장면들</span><span class="title-long">냉전, 같은 시간의<br>다른 세계</span> <span id="date-span"></span></h1><p id="sheet-status" role="status">시트 데이터를 불러오는 중입니다.</p></div>
       <div class="data-actions"><button class="text-button" id="refresh-sheet">새로고침</button><a class="source-link" data-sheet-link target="_blank" rel="noreferrer">시트 편집 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7M10 14 21 3M21 14v6H4V3h6"/></svg></a></div>
     </div>
+    <div id="lesson-activity"></div>
     <nav class="main-tabs" role="tablist" aria-label="수업 활동">
-      <button id="tab-timeline" role="tab" aria-selected="false" aria-controls="panel-timeline" tabindex="-1" data-tab="timeline"></button>
-      <button id="tab-map" role="tab" aria-selected="true" aria-controls="panel-map" data-tab="map"></button>
+      <button id="tab-timeline" role="tab" aria-selected="true" aria-controls="panel-timeline" data-tab="timeline"></button>
       <button id="tab-game" role="tab" aria-selected="false" aria-controls="panel-game" tabindex="-1" data-tab="game"></button>
       <button id="tab-library" role="tab" aria-selected="false" aria-controls="panel-library" tabindex="-1" data-tab="library"></button>
     </nav>
 
-    <section id="panel-map" role="tabpanel" aria-labelledby="tab-map">
-      <div class="explore-layout">
-        <div class="map-card">
-          <div class="map-heading"><h2 id="map-title">1962년의 세계</h2><div class="region-buttons" role="group" aria-label="지도 지역"><button data-region="world" aria-pressed="true">세계</button><button data-region="europe" aria-pressed="false">유럽</button><button data-region="asia" aria-pressed="false">동아시아</button></div></div>
-          <div class="map-stage">
-            <svg id="world-map" viewBox="0 0 954 410" role="img" aria-labelledby="map-title map-caption"></svg>
-            <div class="map-legend"><span><i class="legend-dot west"></i>미국 중심 진영</span><span><i class="legend-dot east"></i>소련 중심 진영</span><span><i class="legend-dot other"></i>그 밖의 국가</span></div>
-            <div class="zoom-buttons"><button class="icon-button" id="zoom-in" aria-label="지도 확대">+</button><button class="icon-button" id="zoom-out" aria-label="지도 축소">−</button></div>
-          </div>
-          <div class="map-foot"><p id="map-caption">현대 국경으로 단순화한 진영 예시</p><a href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noreferrer">지도: Natural Earth</a></div>
-        </div>
-        <aside class="event-detail" id="map-detail" aria-label="선택한 사건"></aside>
-      </div>
-      <div class="time-player">
-        <div class="player-controls"><button class="icon-button" id="previous-year" aria-label="이전 주요 시점"></button><button class="play-button" id="play-years" aria-label="시간 흐름 재생" aria-pressed="false"></button><button class="icon-button" id="next-year" aria-label="다음 주요 시점"></button></div>
-        <div class="time-track"><div class="track-heading"><label for="year-slider">시간 이동</label><output id="year-output" for="year-slider">1962년</output></div><input type="range" id="year-slider" min="1945" max="1991" value="1962" aria-label="지도의 연도"><div class="year-ticks" id="year-ticks"></div></div>
-      </div>
-      <div class="nearby-section"><div class="section-title"><h2>이 시기를 함께 보기</h2><button class="text-button" data-go="timeline">연표에서 보기 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><div class="nearby-events" id="nearby-events"></div></div>
-    </section>
-
-    <section id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline" hidden>
-      <div class="section-title timeline-title"><div><h2 id="timeline-heading">사건을 따라 냉전 읽기</h2><p id="timeline-intro">같은 시기, 서로 다른 곳에서 일어난 일</p></div><button class="button secondary" id="timeline-map-button">선택한 시점 지도 보기</button></div>
+    <section id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline">
+      <div class="section-title timeline-title"><div><h2 id="timeline-heading">사건을 따라 냉전 읽기</h2><p id="timeline-intro">같은 시기, 서로 다른 곳에서 일어난 일</p></div></div>
       <div class="view-buttons" role="group" aria-label="연표를 읽는 방식"><button data-view="standard" aria-pressed="true">기본 연표</button><button data-view="countries" aria-pressed="false">국가별 동시 연표</button><button data-view="network" aria-pressed="false">사건 관계망</button><button data-view="reveal" aria-pressed="false">하루씩 공개</button></div>
       <div class="timeline-filters" role="group" aria-label="연표 사건 분류"></div>
       <div id="topic-picker" popover role="group" aria-label="다른 주제"><div class="topic-picker-heading"><h3>다른 주제</h3><button class="text-button" popovertarget="topic-picker" popovertargetaction="hide">닫기</button></div><div id="other-topic-buttons" class="choice-buttons"></div></div>
@@ -89,15 +74,15 @@
 
     <section id="panel-game" role="tabpanel" aria-labelledby="tab-game" hidden>
       <div class="game-surface">
-        <div id="game-empty" class="empty-state" hidden><h2>출제할 사건을 먼저 골라주세요</h2><p>시트에서 사건 6개 이상을 verified로 검토 완료하고 game_eligible을 체크하세요. 날짜가 겹치는 사건끼리는 비교하지 않습니다.</p><a class="button primary" data-sheet-link target="_blank" rel="noreferrer">출제 사건 고르기</a></div>
+        <div id="game-empty" class="empty-state" hidden><h2>출제할 사건을 먼저 골라주세요</h2><p>시트에서 시작 순서를 비교할 수 있는 사건 6개 이상을 검토 완료하고 게임 출제로 표시하세요.</p><a class="button primary" data-sheet-link target="_blank" rel="noreferrer">출제 사건 고르기</a></div>
         <div id="game-content">
         <div class="game-heading"><span class="game-label">냉전 사건 줄 세우기</span><div class="game-status"><span id="game-round">1 / 5</span><strong id="game-score">0점</strong><button class="text-button" id="restart-game"></button></div></div>
         <h2 id="game-title">이 사건은 어디에 들어갈까요?</h2>
-        <div class="game-context"><figure class="game-map"><svg id="game-map" viewBox="0 0 954 410" role="img" aria-labelledby="game-map-caption"></svg><figcaption id="game-map-caption">출제 사건의 위치, 현대 국경 기준</figcaption></figure><article class="game-prompt"><p id="game-prompt-label">이번에 놓을 사건</p><h3 id="game-prompt-title"></h3><span id="game-prompt-place"></span><p id="game-revealed-date" hidden></p></article></div>
+        <article class="game-prompt"><p id="game-prompt-label">이번에 놓을 사건</p><h3 id="game-prompt-title"></h3><span id="game-prompt-place"></span></article>
         <p class="game-instruction" id="game-instruction">새 사건이 들어갈 틈을 고르세요.</p>
         <div class="game-endpoints"><span>먼저 일어난 일</span><span>나중에 일어난 일</span></div>
         <div class="insertion-board" id="game-board" role="group" aria-label="사건을 놓을 위치"></div>
-        <div class="game-bottom"><div id="game-feedback" role="status"></div><button class="button primary" id="next-game" hidden>다음 사건</button><button class="button primary" id="game-result-timeline" hidden>연표에서 이어 보기</button></div>
+        <div class="game-bottom"><button class="button primary" id="next-game" hidden>다음 사건</button><button class="button primary" id="game-result-timeline" hidden>연표에서 이어 보기</button></div>
         </div>
       </div>
     </section>
@@ -109,6 +94,15 @@
       <p class="library-source">검토 전 사건을 포함합니다. 추가·수정은 구글 시트에서 하세요.</p>
     </section>
   </main>
+  <dialog id="game-popup" class="record-quiz quiz-outcome quiz-feedback" aria-labelledby="game-popup-title">
+    <header class="quiz-tools">
+      <span id="game-popup-mark" class="quiz-outcome-mark" aria-hidden="true"></span>
+      <h2 id="game-popup-title" tabindex="-1"></h2>
+      <button type="button" id="game-popup-close" aria-label="닫기">×</button>
+    </header>
+    <div id="game-popup-body" class="quiz-outcome-body"></div>
+    <footer class="quiz-outcome-actions"><button type="button" class="button primary" id="game-popup-next"></button></footer>
+  </dialog>
   <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>

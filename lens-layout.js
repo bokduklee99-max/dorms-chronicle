@@ -5,7 +5,7 @@ globalThis.LensLayout = (() => {
     const W=Math.max(1180,(end-start+1)*170+76);
     const counts=Array.from({length:end-start+1},(_,i)=>events.filter(e=>e.year===start+i).length);
     const height=Math.max(740,Math.max(0,...counts)*70+160);
-    const hub=topics.reduce((best,t)=>events.filter(e=>e.directTopicIds.includes(t.topic_id)).length>events.filter(e=>e.directTopicIds.includes(best?.topic_id)).length?t:best,topics[0]);
+    const hub=topics[0];
     let ring=0;
     const anchors=topics.map(t=>{if(t===hub)return {...t,x:W/2,y:height/2-40};const angle=-Math.PI/2+(ring++)*Math.PI*2/Math.max(1,topics.length-1);return {...t,x:W/2+W*.35*Math.cos(angle),y:height/2+height*.36*Math.sin(angle)};});
     const byTopic=new Map(anchors.map(a=>[a.topic_id,a]));

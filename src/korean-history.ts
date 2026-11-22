@@ -41,7 +41,7 @@ export function koreanHistory(tenures: HistoryData['tenures']): HistoryData {
  return {
   actors,
   tenures:tenures.filter(tenure=>actors.some(actor=>actor.actor_id===tenure.actorId)),
-  topics:Object.entries(topics).map(([topic_id,name])=>({topic_id,name,parent_topic_id:'korean-history'})),
+  topics:Object.entries(topics).map(([topic_id,name])=>({topic_id,name})),
   events:records.map(([id,date,title,directTopicIds,actorIds,source,description]):EventRecord=>{
    const [year,month,day]=date.split('-').map(Number);
    const start=Date.UTC(year,(month??1)-1,day??1);

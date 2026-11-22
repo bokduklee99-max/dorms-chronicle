@@ -70,5 +70,5 @@
   reduced.addEventListener('change',()=>{if(reduced.matches){cancelAnimationFrame(frame);positions=target.positions;paint();}});
   mount();
   // shortcut: Load once per visit; use the main app for periodic synchronization.
-  (async()=>{try{const response=await fetch(SHEET_CONFIG.feedUrl+'&v='+Math.floor(Date.now()/60000),{credentials:'omit',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('feed');const fresh=SheetData.build(SheetData.decodeFeed(SheetData.parseCSV(await response.text())));if(JSON.stringify(data)!==JSON.stringify(fresh)){stopTour();data=fresh;mount();}$('#data-status').textContent='공개 시트 연결됨';}catch{$('#data-status').textContent='저장된 시트 데이터 · 실시간 연결 실패';}})();
+  (async()=>{try{const response=await fetch(SHEET_CONFIG.feedUrl+'&v='+Math.floor(Date.now()/60000),{credentials:'omit',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('feed');const fresh=SheetData.build(SheetData.scopePackage('cold-war',await SheetData.readPublishedTables(SheetData.parseCSV(await response.text()),SHEET_CONFIG)));if(JSON.stringify(data)!==JSON.stringify(fresh)){stopTour();data=fresh;mount();}$('#data-status').textContent='공개 시트 연결됨';}catch{$('#data-status').textContent='저장된 시트 데이터 · 실시간 연결 실패';}})();
 })();

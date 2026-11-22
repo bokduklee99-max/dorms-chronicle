@@ -342,7 +342,7 @@ async function startClassroom(){
   }
   let workspace, mountRecordQuiz, sharedPlan, sharedRoute;
   try{
-    const entry=await import('/metro/assets/classroom-workspace.js?v=event-importance-1');
+    const entry=await import('/metro/assets/classroom-workspace.js?v=quiz-feedback-1');
     if(example){
       showContext('', '일제강점기와 독립운동');
       const timeline=$('#lesson-timeline-link');

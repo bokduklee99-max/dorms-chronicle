@@ -70,11 +70,6 @@ export function OrderBoard({title,records,close,next,progress}:{title:string;rec
   return ()=>{active=false;animations.forEach(animation=>animation.cancel());};
  },[phase,records,slots]);
 
- function grade(){
-  if(locked||placed.size!==records.length)return;
-  setSelected(null);setMessage('');
-  setPhase(allCorrect||window.matchMedia('(prefers-reduced-motion: reduce)').matches?'review':'moving');
- }
  function choose(record:QuizRecord){
   setSelected(selected?.id===record.id?null:record);
   setMessage('');
@@ -88,7 +83,10 @@ export function OrderBoard({title,records,close,next,progress}:{title:string;rec
   placedIndex.current=index;
   setSlots(next);setSelected(null);setOver(null);
   setMessage(`${record.title}, ${index+1}번째에 배치했습니다.`);
-
+  if(next.every(slot=>slot!==null)){
+   const correct=next.every((slot,i)=>slot.id===records[i].id);
+   setPhase(correct||window.matchMedia('(prefers-reduced-motion: reduce)').matches?'review':'moving');
+  }
  }
  function reset(){
   setResultDismissed(false);
@@ -135,11 +133,10 @@ export function OrderBoard({title,records,close,next,progress}:{title:string;rec
   {!graded&&remaining.length>0&&<section className="order-deck"><h3>배치할 사건</h3>
    <div>{remaining.map(record=><div key={record.id}>{card(record)}</div>)}</div>
   </section>}
-  <footer className="quiz-footer order-controls" data-review={graded}>
+  {(graded||selected)&&<footer className="quiz-footer order-controls" data-review={graded}>
    {graded?<><button className="button secondary" onClick={()=>setResultDismissed(false)}>내 배치 확인</button><button className="button secondary" onClick={reset}>다시 풀기</button><button className="button primary" onClick={next??close}>{next?'다음 문항':'마치기'}</button></>:
-    <>{selected&&<button className="button secondary" onClick={()=>setSelected(null)}>선택 해제</button>}
-     <button className="button primary" disabled={locked||placed.size!==records.length} onClick={grade}>정답 확인</button></>}
-  </footer>
+    <button className="button secondary" onClick={()=>setSelected(null)}>선택 해제</button>}
+  </footer>}
   {showResult&&<QuizResultDialog title={allCorrect?'순서가 모두 맞았어요':'순서가 달라요'} correct={allCorrect} close={()=>setResultDismissed(true)} wide
    actions={<><button className="button secondary" onClick={reset}>다시 풀기</button><button className={next?'button secondary':'button primary'} onClick={()=>setResultDismissed(true)}>시간선에서 보기</button>
     {next&&<button className="button primary" onClick={next}>다음 문항</button>}</>}>

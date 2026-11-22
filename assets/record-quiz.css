@@ -285,11 +285,10 @@ dialog.record-quiz{scroll-padding:76px 0 82px}
  display:flex;align-items:center;gap:8px;min-height:46px;padding:8px 12px;border:1px solid #b8cbbf;
  border-radius:8px;background:white;color:#214b37;font-size:1rem;cursor:pointer;
 }
-.person-option input{flex:none;width:17px;height:17px;margin:0;accent-color:#28634c}
 .person-option span{min-width:0}
-.person-option:has(input:focus-visible){outline:2px solid #387758;outline-offset:2px}
-.person-option:has(input:disabled){cursor:default}
-.person-option:has(input:not(:disabled)):is(:hover,:has(:checked)),.person-option[data-result=correct]{border-color:#4b8060;background:#e2f1e6}
+.person-option:focus-visible{outline:2px solid #387758;outline-offset:2px}
+.person-option:disabled{cursor:default}
+.person-option:enabled:hover,.person-option[data-result=correct]{border-color:#4b8060;background:#e2f1e6}
 .person-option[data-result=incorrect]{border-color:#ca8f80;background:#f9e6e2;color:#8e3328}
 .person-option-result{flex:none;margin-inline-start:auto;font-size:.9rem}
 @media(max-width:420px){.person-options{grid-template-columns:minmax(0,1fr)}}

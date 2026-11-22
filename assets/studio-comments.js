@@ -23,7 +23,7 @@ function threadSummary(t){
 
 export function mountStudioComments(studio,host){
  const layer=document.createElement('div');layer.id='studio-comment-layer';
- layer.innerHTML=`<div class="sc-pins"></div><span class="sc-draft-pin" aria-hidden="true" hidden>＋</span>
+ layer.innerHTML=`<div class="sc-pins"></div><button type="button" class="sc-selection" hidden>댓글 달기</button><span class="sc-draft-pin" aria-hidden="true" hidden>＋</span>
   <dialog class="sc-panel" aria-labelledby="sc-heading">
    <header class="sc-heading">
     <button type="button" class="sc-icon" data-sc="list" aria-label="댓글 목록으로" title="댓글 목록으로">←</button>
@@ -47,6 +47,8 @@ export function mountStudioComments(studio,host){
  const submit=form.querySelector('[type=submit]');
  let book=null,threads=[],picking=false,mode='',activeId='',anchor=null,finished=false,sending=false,loading=false;
  let generation=0,readId=0,frame=0,loadError='',ready=false,dirty=false,returnTo=null;
+ const selectionButton=q('.sc-selection');
+ let selected=null;
  const drafts=new Map();
  const current=()=>threads.find(t=>t.id===activeId);
  const elementFor=key=>studio.querySelector('[data-note-key="'+CSS.escape(key)+'"]');
@@ -61,7 +63,7 @@ export function mountStudioComments(studio,host){
   tools.querySelector('[data-note-count]').textContent=ready?String(threads.filter(t=>!t.resolved).length):'';
   studio.classList.toggle('sc-picking',picking);
  }
- function draftKey(){return JSON.stringify([book,mode==='new'?anchor?.key:activeId]);}
+ function draftKey(){return JSON.stringify(mode==='new'?[book,anchor.key,anchor.label]:[book,activeId]);}
  function stash(){if(!form.hidden&&dirty){drafts.set(draftKey(),input.value);dirty=false;}}
  function close(focus=true){
   stash();mode='';picking=false;if(panel.open)panel.close();anchor=null;activeId='';updateTools();
@@ -139,10 +141,39 @@ export function mountStudioComments(studio,host){
   }
   return {x,y};
  }
+ function selectionAt(){
+  if(!book||mode||studio.inert)return null;
+  const field=document.activeElement;
+  let target,quote,rect;
+  if(studio.contains(field)&&field.matches('textarea,input')&&field.selectionStart!=null){
+   if(field.selectionStart===field.selectionEnd)return null;
+   target=field;quote=field.value.slice(field.selectionStart,field.selectionEnd);
+   rect=field.getBoundingClientRect();
+  }else{
+   const selection=window.getSelection();
+   if(!selection?.rangeCount||selection.isCollapsed)return null;
+   const range=selection.getRangeAt(0);
+   const owner=node=>(node.nodeType===1?node:node.parentElement)?.closest('[data-note-key]');
+   target=owner(range.startContainer);
+   if(!target||target!==owner(range.endContainer))return null;
+   quote=selection.toString();rect=range.getClientRects()[0];
+  }
+  const el=target.closest('[data-note-key]');
+  if(!el||!studio.contains(el)||!rect||!quote.trim())return null;
+  return {target,at:makeAnchor(el,rect.left+rect.width/2,rect.bottom,quote)};
+ }
  function position(){
   const draftPin=q('.sc-draft-pin'),point=mode==='new'&&pinPoint(anchor);
   draftPin.hidden=!point;
   if(point){draftPin.style.left=point.x+scrollX+'px';draftPin.style.top=point.y+scrollY+'px';}
+  if(picking||mode||!book)selected=null;
+  else if(document.activeElement!==selectionButton)selected=selectionAt();
+  const selectionPoint=selected?.target.isConnected&&pinPoint(selected.at);
+  selectionButton.hidden=!selectionPoint;
+  if(selectionPoint){
+   selectionButton.style.left=clamp(selectionPoint.x+scrollX,4,document.documentElement.clientWidth-selectionButton.offsetWidth-4)+'px';
+   selectionButton.style.top=selectionPoint.y+scrollY+2+'px';
+  }
   if(!book)return;
   const offsets=new Map();
   for(const pin of pins.children){
@@ -169,18 +200,26 @@ export function mountStudioComments(studio,host){
   start('thread',id);
   if(!el)feedback.textContent='현재 화면에 원래 위치가 없습니다.';
  }
+ function makeAnchor(el,x,y,quote=''){
+  const rect=el.getBoundingClientRect(),fraction=(value,base,size)=>Math.round(clamp((value-base)/(size||1),0,1)*1000)/1000;
+  const label=el.dataset.noteLabel||'패키지';
+  return {key:el.dataset.noteKey,label:quote.trim()?label.slice(0,40)+' · “'+quote.trim().slice(0,45)+'”':label.slice(0,90),
+   x:x==null ? .5 : fraction(x,rect.left,rect.width),y:y==null ? .5 : fraction(y,rect.top,rect.height)};
+ }
+ function openSelection(selection){
+  returnTo=selection.target.closest('button,input,textarea,select')||control();
+  start('new','',selection.at);
+ }
+ selectionButton.addEventListener('mousedown',event=>event.preventDefault());
+ selectionButton.addEventListener('click',()=>{if(selected?.target.isConnected&&book)openSelection(selected);});
+ document.addEventListener('selectionchange',schedule,true);
+ document.addEventListener('focusin',schedule);
  function pickElement(target,event){
   if(!book||sending)return;
   const wire=target.closest('[data-wire-id]'),el=(wire&&elementFor('relation|'+encodeURIComponent(wire.dataset.wireId)))||target.closest('[data-note-key]');
   if(!el)return;
-  const rect=el.getBoundingClientRect(),fraction=(value,base,size)=>Math.round(clamp((value-base)/(size||1),0,1)*1000)/1000;
   const point=event?.detail>0&&!wire;
-  let label=el.dataset.noteLabel||'패키지';
-  if(!event&&target.matches('textarea,input[type=text],input:not([type])')){
-   const quote=target.value.slice(target.selectionStart??0,target.selectionEnd??0).trim().slice(0,45);
-   if(quote)label=label.slice(0,40)+' · “'+quote+'”';
-  }
-  const at={key:el.dataset.noteKey,label:label.slice(0,90),x:point?fraction(event.clientX,rect.left,rect.width):.5,y:point?fraction(event.clientY,rect.top,rect.height):.5};
+  const at=makeAnchor(el,point?event.clientX:null,point?event.clientY:null);
   returnTo=target.closest('button,input,textarea,select')||control();start('new','',at);
  }
  studio.addEventListener('click',event=>{
@@ -203,7 +242,9 @@ export function mountStudioComments(studio,host){
   if(event.key==='Escape'&&(picking||mode)){event.preventDefault();close();return;}
   if(studio.contains(event.target)&&!event.target.closest('dialog,[data-note-act]')&&
    ((event.altKey&&(event.ctrlKey||event.metaKey)&&event.code==='KeyM')||(picking&&event.key==='Enter'))){
-   event.preventDefault();event.stopImmediatePropagation();pickElement(event.target);
+   event.preventDefault();event.stopImmediatePropagation();
+   const selection=selectionAt();
+   if(selection)openSelection(selection);else pickElement(event.target);
   }
  },true);
  async function save(action){
@@ -254,6 +295,6 @@ export function mountStudioComments(studio,host){
  return {bind(id){
   if(id===book){updateTools();schedule();return;}
   close(false);++generation;++readId;book=id;threads=[];ready=false;loading=false;sending=false;finished=false;loadError='';
-  pins.replaceChildren();updateTools();if(book)void refresh();
+  selected=null;selectionButton.hidden=true;pins.replaceChildren();updateTools();if(book)void refresh();
  }};
 }

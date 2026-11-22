@@ -162,10 +162,10 @@ function QuizPlayer({items,close,title,person=false}:{items:Item[];close:()=>voi
  const here=responses.filter(r=>r.id===item?.record.id);
  const blanks=item?.fields.filter(f=>item.blanks.includes(f.key))??[];
  const active=blanks[here.length];
- const input=useRef<HTMLInputElement>(null),next=useRef<HTMLButtonElement>(null);
+ const input=useRef<HTMLInputElement>(null),action=useRef<HTMLButtonElement>(null);
  const [feedback,setFeedback]=useState(false);
  useEffect(()=>{
-  if(!feedback&&!finished)(input.current??next.current)?.focus({preventScroll:person||!active});
+  if(!feedback&&!finished)(input.current??action.current)?.focus({preventScroll:person||!active});
  },[index,here.length,active,feedback,finished,person]);
  const displayClue=useMemo(()=>{
   const answers=items.flatMap(q=>q.fields.filter(f=>q.blanks.includes(f.key)));
@@ -199,12 +199,11 @@ function QuizPlayer({items,close,title,person=false}:{items:Item[];close:()=>voi
   const choices=choiceSets[index];
   if(choices)return <div className="person-options">{choices.map((name,i)=>{
    const result=graded?(name===f.value?'correct':name===graded.text?'incorrect':undefined):undefined;
-   return <label key={name} className="person-option" data-result={result}>
-    <input type="radio" name="person-answer" value={name} ref={i===0?input:undefined}
-     checked={name===(graded?.text??text)} disabled={!!graded} onChange={()=>setText(name)}/>
+   return <button key={name} type="button" className="person-option" data-result={result}
+    ref={!graded&&i===0?action:undefined} disabled={!!graded} onClick={()=>grade(name)}>
     <span>{name}</span>
     {result&&<span className="person-option-result">{result==='correct'?'정답':'내 답'}</span>}
-   </label>;
+   </button>;
   })}</div>;
   const current=f.key===active?.key;
   return <span className="numbered-blank">
@@ -214,10 +213,10 @@ function QuizPlayer({items,close,title,person=false}:{items:Item[];close:()=>voi
     <span className="pending-blank" aria-label={f.label+' 빈칸'}>□□ {f.unit}</span>}
   </span>;
  }
- function grade(){
-  if(feedback||!active||!text.trim())return;
-  const correct=fieldMatches(active,text);
-  setResponses([...responses,{id:item.record.id,key:active.key,text,correct}]);
+ function grade(answer:string){
+  if(feedback||!active||!answer.trim())return;
+  const correct=fieldMatches(active,answer);
+  setResponses([...responses,{id:item.record.id,key:active.key,text:answer,correct}]);
   setFeedback(true);setText('');
  }
  if(finished)return <QuizResultDialog title={person?'관련 인물 퀴즈 결과':'빈칸 퀴즈 결과'} close={close} wide
@@ -231,11 +230,11 @@ function QuizPlayer({items,close,title,person=false}:{items:Item[];close:()=>voi
  return <QuizDialog title={title} close={close} className={person?'quiz-player person-player':'quiz-player'}
   progress={{current:index+1,total:items.length}}>
   {!person&&items.length>1&&<QuizLine items={items} index={index} displayClue={displayClue}/>}
-    <form key={item.record.id} onSubmit={e=>{e.preventDefault();grade();}}>
+    <form key={item.record.id} onSubmit={e=>{e.preventDefault();grade(text);}}>
      <RecordSheet item={item} cell={cell} number={index+1} showImage={!active}/>
-     <footer className="quiz-footer">{!person&&total>1&&<p>빈칸 {currentNumber} / {total}</p>}
-      {active?<button className="button primary" type="submit" disabled={!text.trim()}>정답 확인</button>:<button type="button" ref={next} className="button primary" onClick={advance}>{nextLabel}</button>}
-     </footer>
+     {(!active||!item.choices)&&<footer className="quiz-footer">{!person&&total>1&&<p>빈칸 {currentNumber} / {total}</p>}
+      {active?<button className="button primary" type="submit" disabled={!text.trim()}>정답 확인</button>:<button type="button" ref={action} className="button primary" onClick={advance}>{nextLabel}</button>}
+     </footer>}
     </form>
   {feedback&&last&&lastField&&<QuizFeedback correct={last.correct} submitted={last.text} answer={lastField.value+(lastField.unit||'')}
    nextLabel={nextLabel} onNext={advance} onDismiss={()=>setFeedback(false)}/>}
@@ -568,11 +567,11 @@ function QuizLibrary({records,workspace,packageId}:{records:QuizRecord[];workspa
     description={records.length?'사건명, 날짜, 본문의 빈칸에 답을 입력합니다.':'수업 설정에서 출제할 사건을 선택하세요.'}>
     <button className="button primary" disabled={!records.length} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0})}>빈칸 퀴즈 만들기</button>
    </QuizTypeCard>
-   <QuizTypeCard kind="order" title="사건 순서 퀴즈" introduction="교사가 세 사건을 한 문항에 넣습니다. 학생은 대한 광복회, 봉오동 전투, 광주 학생 항일 운동을 차례로 시간선에 놓고 채점합니다."
+   <QuizTypeCard kind="order" title="사건 순서 퀴즈" introduction="교사가 세 사건을 한 문항에 넣습니다. 학생은 대한 광복회, 봉오동 전투, 광주 학생 항일 운동을 차례로 시간선에 놓으면 배치 결과가 나타납니다."
     description={canOrder?'사건 카드를 칠판 시간선에 일어난 순서대로 놓습니다.':'시작일이 확인된 사건이 두 개 이상 필요합니다.'}>
     <button className="button primary" disabled={!canOrder} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'order',questions:[{items:[]}]}})}>사건 순서 퀴즈 만들기</button>
    </QuizTypeCard>
-   <QuizTypeCard kind="person" title="관련 인물 퀴즈" introduction="교사가 의열단 결성의 정답 인물로 김원봉을 지정합니다. 학생은 사건 기록을 읽고 보기에서 김원봉을 선택한 뒤 채점합니다."
+   <QuizTypeCard kind="person" title="관련 인물 퀴즈" introduction="교사가 의열단 결성의 정답 인물로 김원봉을 지정합니다. 학생은 사건 기록을 읽고 보기에서 김원봉을 누르면 정답 피드백이 나타납니다."
     description={canPerson?'사건을 읽고 보기에서 관련 인물이나 당시 지도자를 고릅니다.':'정답과 구분되는 인물 보기를 만들 자료가 필요합니다.'}>
     <button className="button primary" disabled={!canPerson} onClick={()=>setEditor({id:crypto.randomUUID(),updated:0,draft:{kind:'person',title:'관련 인물 퀴즈',items:[]}})}>관련 인물 퀴즈 만들기</button>
    </QuizTypeCard>

@@ -3,22 +3,52 @@ import {postComment,readThreads} from './studio-comment-store.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clamp=(value,min,max)=>Math.max(min,Math.min(value,max));
 const dateFormat=new Intl.DateTimeFormat('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+function author(post){return post.author?.displayName||(post.author?.me?'나':'Google 사용자');}
+function postTime(post){
+ const date=new Date(post.createTime);
+ return Number.isFinite(+date)?'<time datetime="'+date.toISOString()+'">'+esc(dateFormat.format(date))+'</time>':'';
+}
 function postHtml(post){
- const date=new Date(post.createTime),name=post.author?.displayName||(post.author?.me?'나':'Google 사용자');
- return '<article><header><strong>'+esc(name)+'</strong><time>'+esc(Number.isFinite(+date)?dateFormat.format(date):'')+'</time></header><p>'+esc(post.content||(post.commentAction==='RESOLVE'?'해결함':post.commentAction==='REOPEN'?'다시 엶':''))+'</p></article>';
+ const name=esc(author(post));
+ if(!post.content&&['RESOLVE','REOPEN'].includes(post.commentAction)){
+  const action=post.commentAction==='RESOLVE'?'댓글을 해결했습니다.':'댓글을 다시 열었습니다.';
+  return '<article class="sc-history"><span>'+name+' 님이 '+action+'</span>'+postTime(post)+'</article>';
+ }
+ return '<article class="sc-post"><span class="sc-avatar" aria-hidden="true">'+esc(Array.from(author(post))[0])+'</span><div><header><strong>'+name+'</strong>'+postTime(post)+'</header><p>'+esc(post.content)+'</p></div></article>';
+}
+function threadSummary(t){
+ const replies=t.replies.filter(p=>p.content).length;
+ return '<button type="button" class="sc-summary" data-thread="'+esc(t.id)+'"><strong>'+esc(t.anchor.label)+'</strong><span class="sc-excerpt">'+esc(t.post.content)+'</span><span class="sc-meta"><span>'+esc(author(t.post))+'</span>'+postTime(t.post)+(replies?'<span>답글 '+replies+'</span>':'')+'</span></button>';
 }
 
 export function mountStudioComments(studio,host){
  const layer=document.createElement('div');layer.id='studio-comment-layer';
- layer.innerHTML='<div class="sc-pins"></div><span class="sc-draft-pin" aria-hidden="true" hidden>＋</span><aside class="sc-panel" aria-labelledby="sc-heading" hidden><header><h2 id="sc-heading"></h2><button type="button" data-sc="close" aria-label="댓글 창 닫기">×</button></header><p class="sc-location"></p><div class="sc-body"></div><p class="sc-status" role="status"></p><form hidden><label for="sc-text">댓글</label><textarea id="sc-text" rows="3" required></textarea><button type="submit">등록</button></form><footer></footer></aside>';
+ layer.innerHTML=`<div class="sc-pins"></div><span class="sc-draft-pin" aria-hidden="true" hidden>＋</span>
+  <dialog class="sc-panel" aria-labelledby="sc-heading">
+   <header class="sc-heading">
+    <button type="button" class="sc-icon" data-sc="list" aria-label="댓글 목록으로" title="댓글 목록으로">←</button>
+    <h2 id="sc-heading"></h2>
+    <button type="button" data-sc="refresh">새로고침</button>
+    <button type="button" data-sc="resolve">해결</button><button type="button" data-sc="reopen">다시 열기</button>
+    <button type="button" class="sc-icon" data-sc="close" aria-label="댓글 창 닫기" title="닫기">×</button>
+   </header>
+   <p class="sc-location"></p>
+   <div class="sc-filters" role="group" aria-label="댓글 상태">
+    <button type="button" data-sc="filter-0">진행 중 <span></span></button>
+    <button type="button" data-sc="filter-1">해결됨 <span></span></button>
+   </div>
+   <div class="sc-body"></div>
+   <p class="sc-status" role="status"></p>
+   <form hidden><label for="sc-text">댓글 내용</label><textarea id="sc-text" rows="3" required></textarea><button type="submit">댓글 등록</button></form>
+  </dialog>`;
  document.body.append(layer);
  const q=selector=>layer.querySelector(selector);
- const panel=q('aside'),pins=q('.sc-pins'),body=q('.sc-body'),input=q('textarea'),form=q('form'),feedback=q('.sc-status');
+ const panel=q('dialog'),pins=q('.sc-pins'),body=q('.sc-body'),input=q('textarea'),form=q('form'),feedback=q('.sc-status');
+ const submit=form.querySelector('[type=submit]');
  let book=null,threads=[],picking=false,mode='',activeId='',anchor=null,finished=false,sending=false,loading=false;
  let generation=0,readId=0,frame=0,loadError='',ready=false,dirty=false,returnTo=null;
  const drafts=new Map();
  const current=()=>threads.find(t=>t.id===activeId);
- const btn=(action,label)=>'<button type="button" data-sc="'+action+'">'+label+'</button>';
  const elementFor=key=>studio.querySelector('[data-note-key="'+CSS.escape(key)+'"]');
  const control=()=>studio.querySelector('[data-note-act=list]');
  function updateTools(){
@@ -34,31 +64,46 @@ export function mountStudioComments(studio,host){
  function draftKey(){return JSON.stringify([book,mode==='new'?anchor?.key:activeId]);}
  function stash(){if(!form.hidden&&dirty){drafts.set(draftKey(),input.value);dirty=false;}}
  function close(focus=true){
-  stash();mode='';picking=false;panel.hidden=true;anchor=null;activeId='';updateTools();
+  stash();mode='';picking=false;if(panel.open)panel.close();anchor=null;activeId='';updateTools();
   if(focus)(returnTo?.isConnected?returnTo:control())?.focus({preventScroll:true});
   schedule();
  }
  function start(next,id='',at=null){
   if(sending)return;
-  stash();picking=false;mode=next;activeId=id;anchor=at;panel.hidden=false;feedback.textContent='';
+  stash();picking=false;mode=next;activeId=id;anchor=at;feedback.textContent=mode==='list'?loadError:'';
   input.value=drafts.get(draftKey())||'';dirty=false;
   render();updateTools();position();
-  (mode==='new'?input:q('[data-sc=close]')).focus({preventScroll:true});
+  if(!panel.open)panel.showModal();
+  body.scrollTop=0;
+  (mode==='new'?input:mode==='list'?q('[aria-pressed=true]'):q('[data-sc=list]')).focus({preventScroll:true});
  }
  function render(){
   const t=current(),list=mode==='list',isNew=mode==='new';
-  q('h2').textContent=list?'댓글 목록':isNew?'댓글 달기':'댓글';
+  panel.dataset.mode=mode;
+  q('h2').textContent=list?'댓글 목록':isNew?'새 댓글':'댓글';
   q('.sc-location').textContent=list?'':(anchor||t?.anchor)?.label||'';
+  q('[data-sc=list]').hidden=list;
+  q('[data-sc=refresh]').hidden=!list;
+  q('[data-sc=resolve]').hidden=!t||t.resolved;
+  q('[data-sc=reopen]').hidden=!t||!t.resolved;
+  q('.sc-filters').hidden=!list;
   if(list){
    const shown=threads.filter(item=>item.resolved===finished);
-   body.innerHTML='<div class="sc-filters">'+['진행 중','해결됨'].map((label,i)=>'<button type="button" data-sc="filter-'+i+'" aria-pressed="'+(finished===!!i)+'">'+label+'</button>').join('')+'</div>'+
-    (shown.map(item=>'<button type="button" class="sc-summary" data-thread="'+esc(item.id)+'"><small>'+esc(item.anchor.label)+'</small><strong>'+esc(item.post.author?.displayName||'Google 사용자')+'</strong> '+esc(item.post.content)+'</button>').join('')||
-     '<p>'+esc(loadError||(!ready?'댓글을 불러오는 중입니다.':finished?'해결된 댓글이 없습니다.':'아직 댓글이 없습니다.'))+'</p>');
+   for(const [i,filter] of q('.sc-filters').querySelectorAll('button').entries()){
+    filter.setAttribute('aria-pressed',String(finished===!!i));
+    filter.querySelector('span').textContent=ready?String(threads.filter(item=>item.resolved===!!i).length):'';
+   }
+   const focused=document.activeElement?.dataset.thread;
+   body.innerHTML=shown.length?shown.map(threadSummary).join(''):loadError?'':'<p class="sc-empty">'+(!ready?'댓글을 불러오는 중입니다.':finished?'해결된 댓글이 없습니다.':'아직 댓글이 없습니다.')+'</p>';
+   if(focused)body.querySelector('[data-thread="'+CSS.escape(focused)+'"]')?.focus({preventScroll:true});
   }else body.innerHTML=t?[t.post,...t.replies].map(postHtml).join(''):'';
   form.hidden=list||(!isNew&&(!t||t.resolved));
   q('label').textContent=isNew?'댓글 내용':'답글';
-  q('footer').innerHTML=list?btn('refresh','새로고침'):btn('list','댓글 목록')+(t?btn(t.resolved?'reopen':'resolve',t.resolved?'다시 열기':'해결'):'');
+  input.rows=isNew?4:2;
+  input.placeholder=isNew?'이 위치에 남길 의견을 적으세요.':'답글을 입력하세요.';
+  submit.textContent=isNew?'댓글 등록':'답글 등록';
   for(const el of panel.querySelectorAll('button,textarea'))el.disabled=sending;
+  submit.disabled=sending||!input.value.trim();
   schedule();
  }
  function paintPins(){
@@ -106,16 +151,14 @@ export function mountStudioComments(studio,host){
    const group=Math.round(point.x/22)+':'+Math.round(point.y/22),offset=offsets.get(group)||0;
    offsets.set(group,offset+1);pin.style.left=clamp(point.x+scrollX+offset*17,0,document.documentElement.clientWidth-25)+'px';pin.style.top=Math.max(0,point.y+scrollY-10)+'px';
   }
-  if(panel.hidden)return;
-  const at=pinPoint(anchor||current()?.anchor),nav=control()?.getBoundingClientRect();
-  const embedding=window.frameElement?.getBoundingClientRect(),height=embedding?parent.innerHeight:innerHeight;
-  const top=embedding?Math.max(0,-embedding.top):0,bottom=embedding?Math.min(innerHeight,height-embedding.top):height;
-  const gap=8,pt=at||{x:nav?.left||0,y:nav?.bottom||top};
-  const maxHeight=Math.max(135,bottom-top-2*gap);
-  panel.style.maxHeight=maxHeight+'px';
-  const width=document.documentElement.clientWidth;
-  panel.style.left=clamp(pt.x+panel.offsetWidth+18<=width?pt.x+14:pt.x-panel.offsetWidth-12,gap,width-panel.offsetWidth-gap)+scrollX+'px';
-  panel.style.top=clamp(pt.y+10,top+gap,Math.max(top+gap,bottom-panel.offsetHeight-gap))+scrollY+'px';
+  if(!mode)return;
+  // The editor iframe is as tall as its content. Center the dialog in the visible portion.
+  const embedding=window.frameElement?.getBoundingClientRect(),hostWindow=embedding?parent:window;
+  const viewport=hostWindow.visualViewport,offset=(viewport?.offsetTop||0)-(embedding?.top||0);
+  const top=Math.max(0,offset),bottom=Math.min(innerHeight,offset+(viewport?.height||hostWindow.innerHeight));
+  if(bottom<=top)return;
+  panel.style.top=(top+bottom)/2+'px';
+  panel.style.setProperty('--sc-room',Math.max(1,bottom-top-16)+'px');
  }
  function schedule(){if(!frame&&(book||!q('.sc-draft-pin').hidden))frame=requestAnimationFrame(()=>{frame=0;position();});}
  function openThread(id){
@@ -176,10 +219,15 @@ export function mountStudioComments(studio,host){
   }catch(error){if(scope===generation)feedback.textContent=error.message;}
   finally{if(scope===generation){sending=false;render();}}
   if(scope!==generation||!saved)return;
-  drafts.delete(key);input.value='';dirty=false;
-  mode='thread';activeId=saved;anchor=first?at:null;feedback.textContent='저장했습니다.';
+  if(action)stash();
+  else{drafts.delete(key);input.value='';dirty=false;}
+  mode='thread';activeId=saved;anchor=first?at:null;feedback.textContent='';
   await refresh();
-  if(scope===generation){render();if(!current()&&!loadError){start('list');feedback.textContent='저장했습니다. 목록을 새로고침해 확인하세요.';}}
+  if(scope===generation){
+   render();body.scrollTop=body.scrollHeight;
+   if(current())(action?q(current().resolved?'[data-sc=reopen]':'[data-sc=resolve]'):input).focus({preventScroll:true});
+   else if(!loadError){start('list');feedback.textContent='저장했습니다. 목록을 새로고침해 확인하세요.';}
+  }
  }
  layer.addEventListener('click',event=>{
   const target=event.target.closest('button');if(!target||sending)return;
@@ -187,18 +235,21 @@ export function mountStudioComments(studio,host){
   switch(target.dataset.sc){
    case 'close':close();break;
    case 'list':start('list');void refresh();break;
-   case 'filter-0':case 'filter-1':finished=target.dataset.sc==='filter-1';render();break;
+   case 'filter-0':case 'filter-1':finished=target.dataset.sc==='filter-1';render();body.scrollTop=0;break;
    case 'refresh':void refresh(true);break;
    case 'resolve':case 'reopen':void save(target.dataset.sc==='resolve'?'RESOLVE':'REOPEN');break;
   }
  });
- input.addEventListener('input',()=>{dirty=true;});
+ panel.addEventListener('cancel',event=>{event.preventDefault();if(!sending)close();});
+ input.addEventListener('input',()=>{dirty=true;submit.disabled=sending||!input.value.trim();});
  form.addEventListener('submit',event=>{event.preventDefault();if(input.value.trim())void save();});
  input.addEventListener('keydown',event=>{if(!event.isComposing&&event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();form.requestSubmit();}});
  const observer=new MutationObserver(schedule);observer.observe(studio,{childList:true,subtree:true});
  new ResizeObserver(schedule).observe(studio);
  document.addEventListener('scroll',schedule,true);window.addEventListener('resize',schedule);
  if(window.frameElement)parent.addEventListener('scroll',schedule,{passive:true});
+ const viewport=(window.frameElement?parent:window).visualViewport;
+ viewport?.addEventListener('resize',schedule);viewport?.addEventListener('scroll',schedule);
  setInterval(()=>{if(book&&!document.hidden&&!window.frameElement?.hidden&&!loadError)void refresh();},15000);
  return {bind(id){
   if(id===book){updateTools();schedule();return;}

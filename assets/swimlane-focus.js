@@ -1,4 +1,4 @@
-import {importanceLabels,loadSwimlane,eventPeriods,packTimelineItems,cardRelationPaths} from '../swimlane-data.js';
+import {importanceLabels,loadSwimlane,swimlaneDateRange,eventPeriods,packTimelineItems,cardRelationPaths} from '../swimlane-data.js';
 import {setupSwimlaneModal} from './swimlane-modal.js';
 
 const $=id=>document.getElementById(id);
@@ -17,7 +17,7 @@ const DAY=86400000;
 const iso=t=>new Date(t).toISOString().slice(0,10);
 const monthOf=t=>new Date(t).getUTCFullYear()*12+new Date(t).getUTCMonth();
 const monthStart=m=>Date.UTC(Math.floor(m/12),m%12,1);
-const bounds=value=>SheetData.dateRange(value);
+const bounds=value=>swimlaneDateRange(value,SheetData.dateRange);
 const params=new URLSearchParams(location.search);
 const frame=window.frameElement;
 async function init(){

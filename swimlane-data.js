@@ -121,6 +121,12 @@ export function buildSwimlane(tables, parser, packageId) {
   return {events, categories, periods, actors, detailActors, relations};
 }
 
+export function swimlaneDateRange(value, dateRange) {
+  const decade = /^(\d{3})0s$/.exec(value);
+  if (!decade) return dateRange(value);
+  return {...dateRange(decade[1] + '0'), end: dateRange(decade[1] + '9').end};
+}
+
 export function packTimelineItems(items) {
   const ends = [];
   return [...items].sort((a, b) => a.start - b.start).map(item => {

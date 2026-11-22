@@ -11,7 +11,7 @@ export async function googleSheet(token,path,body){
  const response=await fetch(api+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},
   ...(body?{body:JSON.stringify(body)}:{}),cache:'no-store',signal:AbortSignal.timeout(20000)});
  if(!response.ok){
-  if(response.status===401)forgetSheetToken();
+  if(response.status===401)forgetSheetToken(token);
   const message={401:'Google 인증이 만료됐습니다. 다시 연결해 주세요.',403:'이 Google 계정의 시트 편집 권한을 확인해 주세요.',404:'공동 초안 시트 주소와 공유 권한을 확인해 주세요.',429:'Google 시트 요청이 많습니다. 잠시 후 다시 시도해 주세요.'};
   throw Object.assign(new Error(message[response.status]||'Google 시트에 반영됐는지 확인하지 못했습니다. 다시 동기화해 주세요.'),{status:response.status});
  }

@@ -1,7 +1,7 @@
 import {mountStudioComments} from './studio-comments.js';
 import {mountStudioGrid} from './studio-grid.js';
 import {fetchStudioCatalog,studioCatalog} from './studio-catalog.js';
-import {loadGoogleIdentity,authorizeRelationSheet,currentSheetToken} from './google-sheet-auth.js';
+import {loadGoogleIdentity,authorizeRelationSheet,restoreDraftToken,rememberDraftAccount,rememberedAccount,forgetDraftAccount} from './google-sheet-auth.js';
 import {sharedContent,same,mergeChanges,readLegacyDraft,googleSheet} from './studio-cloud.js';
 import {studioDraftDirectory} from './studio-library.js';
 import {publishDraft,readDraft,createDraft,writeDraft} from './studio-publish.js';
@@ -19,9 +19,13 @@ let draft=fresh();
 const requestedBook=new URL(location.href).searchParams.get('draft');
 let pendingBook=requestedBook,token='',syncing=null,saveTimer,sharedMessage='',busy=false,conflict=false,composing=false;
 const catalog={actor:{},event:{},place:{}},opened=new Map();
+function studioAuth(choose=false){
+ const subject=rememberedAccount(googleClientId,pendingBook||draft.cloud?.book);
+ return authorizeRelationSheet(googleClientId,{studio:true,subject,choose});
+}
 const notes=mountStudioComments(studio,{
  config:SHEET_CONFIG,token:()=>token,
- authenticate:async()=>token=await authorizeRelationSheet(googleClientId),
+ authenticate:async()=>token=await studioAuth(),
  reveal:key=>grid?.revealNote(key),
  showRegistration(){
   cloudStatus('댓글을 함께 보려면 이 패키지를 공동 초안으로 등록해 주세요.');
@@ -63,8 +67,7 @@ async function switchGrid(id,create){
  if(publishedIds.has(id)){leavePublished(id);return;}
  if(opened.has(id)){begin(opened.get(id));return;}
  directory.group='shared';pendingBook=id;draw();
- const activeToken=currentSheetToken();
- if(activeToken)await connectCloud(activeToken);
+ await connectCloud({restore:true});
 }
 function connectUrl(book){
  const url=new URL('./data-explorer.html',location.href);
@@ -75,7 +78,7 @@ function cloudBar(){
  const c=draft.cloud;
  const status=sharedMessage||(c?'Google 시트에 연결됨':'이 탭에서만 작성 중');
  return `<div class="studio-sharing"><p role="status" id="cloud-status">${esc(status)}</p><div>${c?
-  `<a href="https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_CONFIG.id)}/edit#gid=${SHEET_CONFIG.packageSheetId}" target="_blank" rel="noreferrer">원본 시트 ↗</a>${button('공동 작업 링크 복사','cloud-link')}${button(token?'동기화':'Google 다시 연결','cloud-connect')}`:
+  `<a href="https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_CONFIG.id)}/edit#gid=${SHEET_CONFIG.packageSheetId}" target="_blank" rel="noreferrer">원본 시트 ↗</a>${button('공동 작업 링크 복사','cloud-link')}${button(token?'동기화':'Google 다시 연결','cloud-connect')}${button('이 초안 연결 해제','cloud-disconnect')}`:
   button('공동 초안으로 등록','cloud-connect')}${conflict?button('충돌한 항목에 내 수정 적용','cloud-keep')+button('충돌한 항목에 시트 수정 적용','cloud-remote'):''}</div></div>`;
 }
 function refreshCloudBar(){
@@ -139,11 +142,13 @@ async function runSync(choice){
  })().finally(()=>{syncing=null;});
  return syncing;
 }
-async function connectCloud(activeToken){
+async function connectCloud({restore=false,choose=false}={}){
  if(busy)return;busy=true;studio.inert=true;
  try{
-  token=activeToken||await authorizeRelationSheet(googleClientId);
   const source=pendingBook||draft.cloud?.book;
+  const nextToken=restore?await restoreDraftToken(googleClientId,source):await studioAuth(choose);
+  if(!nextToken)return;
+  token=nextToken;
   let remote;
   if(source){
    try{remote=await readDraft(token,SHEET_CONFIG,source);}
@@ -157,13 +162,16 @@ async function connectCloud(activeToken){
   if(remote.tables?.주체_공간)installCatalog(studioCatalog(remote.tables));
   const item=draft.cloud?.book===remote.book?draft:{...(draft.id===remote.book?draft:fresh()),...remote.content,
    cloud:{book:remote.book,base:remote.content,version:remote.version}};
+  rememberDraftAccount(googleClientId,item.id,token);
+  if(source&&source!==item.id)rememberDraftAccount(googleClientId,source,token);
   pendingBook=null;opened.delete(item.id);libraryItems.set(item.id,{id:item.id,name:item.name,school:item.school,course:item.subject});begin(item);
   await runSync();
  }catch(e){
+  if(e.status===401)token='';
   if(e.published){leavePublished(pendingBook||draft.id);return;}
   cloudStatus(e.message);say(e.message);
  }
- finally{busy=false;studio.inert=false;refreshCloudBar();}
+ finally{busy=false;studio.inert=false;if(pendingBook)draw();else refreshCloudBar();}
 }
 function say(message){document.querySelector('#notice').textContent=message;}
 function begin(item){
@@ -196,7 +204,7 @@ async function refreshLibrary(authenticate=false){
  const request=++listRequest;
  libraryState='loading';grid?.refreshLibrary();
  try{
-  if(authenticate)token=await authorizeRelationSheet(googleClientId);
+  if(authenticate)token=await studioAuth();
   let rows;
   if(token){
    const result=await googleSheet(token,'/'+SHEET_CONFIG.id+'/values/'+encodeURIComponent('패키지'));
@@ -226,7 +234,10 @@ function draw(sheetView){
  }
  if(pendingBook){
   const entry=libraryItems.get(pendingBook);
-  studio.innerHTML='<section class="shared-entry"><nav aria-label="현재 패키지 위치">'+button('← 공동 초안 목록','cancel-pending')+'</nav><h1>'+esc(entry?.name||'공동 초안 열기')+'</h1><p>함께 작성하려면 원본 시트를 편집할 수 있는 Google 계정으로 연결하세요.</p><div>'+button('Google로 공동 초안 열기','cloud-connect')+'</div><p id="cloud-status" role="status">'+esc(sharedMessage)+'</p></section>';return;
+  const remembered=rememberedAccount(googleClientId,pendingBook);
+  const actions=button(remembered?'이전 계정으로 열기':'Google로 공동 초안 열기','cloud-connect')+
+   (remembered||sharedMessage?button('다른 계정으로 열기','cloud-choose'):'');
+  studio.innerHTML='<section class="shared-entry"><nav aria-label="현재 패키지 위치">'+button('← 공동 초안 목록','cancel-pending')+'</nav><h1>'+esc(entry?.name||'공동 초안 열기')+'</h1><p>함께 작성하려면 원본 시트를 편집할 수 있는 Google 계정으로 연결하세요.</p><div>'+actions+'</div><p id="cloud-status" role="status">'+esc(sharedMessage)+'</p></section>';return;
  }
  studio.innerHTML='<div id="studio-grid-host"></div>';
  grid=mountStudioGrid(studio.querySelector('#studio-grid-host'),{
@@ -246,7 +257,7 @@ async function finish(){
  }
  busy=true;studio.inert=true;clearTimeout(saveTimer);
  try{
-  token=await authorizeRelationSheet(googleClientId);
+  token=await studioAuth();
   await syncing;
   const synced=await runSync();
   if(!synced)return;
@@ -265,6 +276,13 @@ async function finish(){
   cloudStatus(e.message);say(e.message);
  }finally{busy=false;studio.inert=false;refreshCloudBar();}
 }
+async function disconnectDraft(){
+ const book=draft.cloud?.book;
+ if(!book||busy)return;
+ await switchGrid(null);
+ if(draft.cloud)return;
+ forgetDraftAccount(googleClientId,book,token||undefined);token='';
+}
 studio.addEventListener('click',ev=>{
  const b=ev.target.closest('[data-act]');if(!b)return;
  if(!b.closest('.studio-sharing,.shared-entry'))return;
@@ -275,7 +293,8 @@ studio.addEventListener('click',ev=>{
   begin(fresh());void refreshLibrary();return;
  }
  if(act==='cancel-pending'){pendingBook=null;begin(draft);if(draft.name)void switchGrid(null);return;}
- if(act==='cloud-connect'){connectCloud();return;}
+ if(act==='cloud-disconnect'){void disconnectDraft();return;}
+ if(act==='cloud-connect'||act==='cloud-choose'){connectCloud({choose:act==='cloud-choose'});return;}
  if(act==='cloud-keep'||act==='cloud-remote'){runSync(act==='cloud-keep'?'local':'remote');return;}
  if(act==='cloud-link'){
   const link=String(connectUrl(draft.cloud.book));
@@ -297,6 +316,7 @@ try{
  if(response.ok)installCatalog(studioCatalog(await response.json()));
 }catch{/* The live catalog can still supply package data. */}
 draw();
+if(pendingBook)void connectCloud({restore:true});
 void fetchStudioCatalog().then(source=>{if(!token)installCatalog(source);}).catch(()=>{
  if(!publicCatalog)say('원본 목록을 읽지 못했습니다. Google 시트 연결을 확인해 주세요.');
 });

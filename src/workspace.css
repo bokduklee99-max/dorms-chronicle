@@ -23,7 +23,6 @@
 .setup-saved-manage{display:flex;justify-content:flex-end;gap:18px;margin-top:4px}
 .setup-saved-actions button{font-size:15px;min-height:44px;cursor:pointer}
 .setup-delete{color:#805747}
-.setup-empty{padding:44px 0;color:var(--chronicle-muted)}
 html:has(.setup-dialog[open]){overflow:hidden}
 .setup-dialog{width:min(1200px,calc(100% - 32px));max-width:none;max-height:calc(100svh - 40px);margin:auto;padding:0;border:1px solid #c7cec0;border-radius:14px;background:var(--chronicle-paper);color:var(--chronicle-ink)}
 .setup-dialog::backdrop{background:#17251db3;backdrop-filter:blur(3px)}
@@ -161,7 +160,3 @@ html:has(.setup-dialog[open]){overflow:hidden}
  .setup-editor-footer .setup-action{padding:10px 16px}
 }
 @media(prefers-reduced-motion:reduce){.setup-saved-cover img{transition:none}}
-
-.setup-example{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px 28px;margin:24px 0 32px;padding:20px 24px;border:1px solid var(--chronicle-line);border-left:4px solid var(--chronicle-green);border-radius:6px;background:var(--chronicle-surface)}
-.setup-example p{margin:0 0 5px;color:var(--chronicle-muted);font-size:15px}
-.setup-example h2{margin:0;font-size:clamp(20px,2.5vw,26px)}

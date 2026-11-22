@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import {CreatorCredit} from './CreatorCredit';
 import type {EventRecord} from './metro-model';
 import {fetchWorkspaceGeography,type readWorkspaceGeography} from './package-content';
@@ -15,6 +15,27 @@ function SelectionChanges({label,items}:{label:string;items:string[]}){
  const list=<ul>{items.map((item,index)=><li key={index}>{item}</li>)}</ul>;
  return items.length>6?<details><summary>{label} {items.length}개</summary>{list}</details>:
   <div><h4>{label} {items.length}개</h4>{list}</div>;
+}
+
+function LessonCard({title,description,preview,view,count,timeline,activities,children}:{
+ title:string;description?:string;preview:string;view:string;count?:number;timeline:string;activities:string;children?:ReactNode;
+}){
+ const label=[title,description].filter(Boolean).join(' ');
+ return <li>
+  <a className="setup-saved-cover" href={timeline} aria-label={label+' 연표 미리보기'}><img src={preview} alt=""/></a>
+  <div className="setup-saved-card">
+   <div className="setup-saved-meta"><span>{view}</span><span>{count===undefined?'사건 읽는 중…':`사건 ${count}개`}</span></div>
+   <h3>{title}</h3>
+   {description&&<p>{description}</p>}
+  </div>
+  <div className="setup-saved-actions">
+   <div className="setup-saved-links">
+    <a href={timeline} aria-label={label+' 연표 열기'}>연표 열기 <span aria-hidden="true">↗</span></a>
+    <a href={activities} aria-label={label+' 학습 콘텐츠 열기'}>학습 콘텐츠 열기 <span aria-hidden="true">↗</span></a>
+   </div>
+   {children}
+  </div>
+ </li>;
 }
 
 export function WorkspaceSetup(){
@@ -238,36 +259,24 @@ export function WorkspaceSetup(){
   <header className="landing-nav setup-nav"><a className="wordmark" href="/">Dorms' Chronicle<span aria-hidden="true">✳</span></a><nav aria-label="주요 메뉴"><a className="setup-back" href="/">← 처음으로</a></nav></header>
   <main className="setup-page">
    <div className="setup-intro"><h1>나의 <em>역사 탐색.</em></h1><button ref={newButton} className="setup-action" type="button" onClick={()=>location.assign(setupHref()+'&lesson=new')}>새 수업 만들기 <span aria-hidden="true">＋</span></button></div>
-   <section className="setup-example" aria-labelledby="setup-example-title">
-    <div><p>수업 예시</p><h2 id="setup-example-title">일제강점기와 독립운동</h2></div>
-    <div className="setup-saved-links"><a href="/example/">연표 열기 ↗</a><a href="/example/#activities">학습 콘텐츠 열기 ↗</a></div>
-   </section>
    <section className="setup-saved" aria-labelledby="setup-saved-title">
-    <div className="setup-section-heading"><h2 id="setup-saved-title">저장한 수업</h2><span>{saved.length}개</span></div>
-    <ul>{saved.map(item=>{
-     const packageLabel=packageName(packages,item.packageId);
-     const itemData=packageData(item.packageId);
-     const count=filterPackage(itemData,item.hiddenTopics,item.hiddenEvents,item.includedEvents).events.length;
-     return <li key={item.id}>
-      <a className="setup-saved-cover" href={exploreHref(item)} aria-label={`${item.school} ${packageLabel} 연표 미리보기`}><img src={`/assets/view-previews/${item.view}.jpg`} alt=""/></a>
-      <div className="setup-saved-card">
-       <div className="setup-saved-meta"><span>{viewName(item.view)}</span><span>{pending?'사건 읽는 중…':`사건 ${count}개`}</span></div>
-       <h3>{item.school}</h3>
-       <p>{packageLabel}</p>
-      </div>
-      <div className="setup-saved-actions">
-       <div className="setup-saved-links">
-        <a href={exploreHref(item)} aria-label={`${item.school} ${packageLabel} 연표 열기`}>연표 열기 <span aria-hidden="true">↗</span></a>
-        <a href={learningHref(item)} aria-label={`${item.school} ${packageLabel} 학습 콘텐츠 열기`}>학습 콘텐츠 열기 <span aria-hidden="true">↗</span></a>
-       </div>
+    <div className="setup-section-heading"><h2 id="setup-saved-title">수업 목록</h2><span>{saved.length+1}개</span></div>
+    <ul>
+     <LessonCard title="일제강점기와 독립운동" view="수업 예시 · 기본 연표" count={145}
+      preview="/assets/view-previews/example-japan.jpg" timeline="/example/" activities="/example/#activities"/>
+     {saved.map(item=>{
+      const packageLabel=packageName(packages,item.packageId);
+      const itemData=packageData(item.packageId);
+      const count=filterPackage(itemData,item.hiddenTopics,item.hiddenEvents,item.includedEvents).events.length;
+      return <LessonCard key={item.id} title={item.school} description={packageLabel} view={viewName(item.view)} count={pending?undefined:count}
+       preview={`/assets/view-previews/${item.view}.jpg`} timeline={exploreHref(item)} activities={learningHref(item)}>
        <div className="setup-saved-manage">
         <button type="button" aria-label={`${item.school} ${packageLabel} 편집`} onClick={()=>editWorkspace(item)}>편집</button>
         <button type="button" className="setup-delete" aria-label={`${item.school} ${packageLabel} 삭제`} onClick={()=>{clearFeedback();setDeleting(item);}}>삭제</button>
        </div>
-      </div>
-     </li>;
-    })}</ul>
-    {!saved.length&&<p className="setup-empty">수업을 만들면 여기에 표시됩니다.</p>}
+      </LessonCard>;
+     })}
+    </ul>
     {notice&&<p className="setup-feedback" role="status">{notice}</p>}
    </section>
   </main>

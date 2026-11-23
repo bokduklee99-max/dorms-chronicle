@@ -2,101 +2,102 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>역사 지도 제작실 · DoRms' Chronicle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>역사 지도 제작실 · Chronicle</title>
     <link rel="stylesheet" href="./assets/history-map/editor.css" />
   </head>
   <body>
-    <header class="mast">
-      <div class="identity">
-        <a class="brand" href="/" aria-label="DoRms' Chronicle 홈"
-          ><span class="brandmark" data-icon="atlas"></span>Chronicle</a
-        ><span class="divider"></span>
-        <h1>역사 지도 제작실</h1>
-      </div>
-      <nav aria-label="지도 파일">
-        <button id="gallery"><i data-icon="folder"></i>내 지도</button
-        ><button id="save"><i data-icon="save"></i>저장</button
-        ><button id="export" class="primary"><i data-icon="download"></i>내보내기</button>
+    <header class="top">
+      <a class="brand" href="/" aria-label="Chronicle 홈"
+        ><span class="brand-icon" data-icon="atlas"></span><span>Chronicle</span></a
+      >
+      <span class="brand-divider"></span>
+      <h1>역사 지도 제작실</h1>
+      <nav>
+        <button id="gallery">내 지도</button><button id="save">저장</button
+        ><button id="export" class="dark"><i data-icon="download"></i>지도 내보내기</button>
       </nav>
     </header>
     <main>
-      <aside class="library" aria-labelledby="library-title">
-        <div class="library-head">
-          <h2 id="library-title">지도 라이브러리</h2>
-          <label class="search"
-            ><i data-icon="search"></i
-            ><input
-              id="search"
-              type="search"
-              placeholder="주제 또는 지명 검색"
-              aria-label="주제 또는 지명 검색"
-          /></label>
-          <div id="tabs" class="tabs" role="group" aria-label="자료 보기">
-            <button data-tab="themes" aria-pressed="true">주제</button
-            ><button data-tab="places" aria-pressed="false">지명</button
-            ><button data-tab="mine" aria-pressed="false">표시한 곳</button>
-          </div>
+      <aside class="side" aria-label="지도 구성">
+        <div class="side-head">
+          <h2>지도 구성</h2>
+          <button class="add" id="browse"><i data-icon="plus"></i>지명 추가</button>
         </div>
-        <div class="filters">
-          <label for="era">시대</label
-          ><select id="era">
-            <option value="">모든 시대</option>
-          </select>
-        </div>
-        <div id="results" class="results" aria-label="지도 자료 목록"></div>
-        <footer class="source">
-          <a id="source-sheet" target="_blank" rel="noreferrer">구글 시트 불러오는 중…</a>
-        </footer>
+        <section class="pins">
+          <h3>표시한 지점 <span id="count"></span></h3>
+          <div id="pins"></div>
+        </section>
+        <section class="inspector" id="inspect" aria-label="선택한 지점"></section>
+        <a class="source" id="source" target="_blank" rel="noreferrer"
+          ><i data-icon="sheet"></i><span>시트 연결 중…</span><i data-icon="external"></i
+        ></a>
       </aside>
-      <section class="workspace" aria-label="지도 작업 공간">
-        <div class="work-head">
-          <div class="title-wrap">
-            <span class="map-badge" data-icon="map"></span>
+      <section class="work" aria-label="지도 편집">
+        <div class="doc-head">
+          <div>
+            <div class="category"></div>
             <h2>
               <button id="rename" title="지도 제목 수정">
                 <span id="map-name">역사 지도</span><i data-icon="pencil"></i>
               </button>
             </h2>
           </div>
-          <button id="new"><i data-icon="plus"></i>새 지도</button>
+          <div class="doc-actions">
+            <button id="new">새 지도</button><button id="themes"><i data-icon="layers"></i>주제 변경</button>
+          </div>
         </div>
-        <div class="workboard">
-          <div class="tools">
-            <div id="tools" role="group" aria-label="지도 도구"></div>
-            <div class="history">
-              <button id="undo" aria-label="되돌리기" title="되돌리기 (Ctrl+Z)">
-                <i data-icon="undo"></i></button
-              ><button id="redo" aria-label="다시 실행" title="다시 실행 (Ctrl+Shift+Z)">
-                <i data-icon="redo"></i>
+        <div class="stage">
+          <div class="stage-tools">
+            <div class="modes" id="tools" role="group" aria-label="지도 도구"></div>
+            <div class="end-tools">
+              <button id="undo" title="마지막 편집 되돌리기" disabled><i data-icon="undo"></i>되돌리기</button
+              ><button id="redo" aria-label="다시 실행" title="다시 실행"><i data-icon="redo"></i></button
+              ><button id="labels" aria-pressed="true" title="지도 위 지명 표시">
+                <span aria-hidden="true">Aa</span> 지명
               </button>
             </div>
           </div>
-          <div class="viewport">
+          <div class="paper-desk">
             <svg
+              id="atlas"
+              data-layout="portrait"
               xmlns="http://www.w3.org/2000/svg"
-              id="map"
-              viewBox="0 0 900 610"
-              role="img"
-              aria-label="편집 중인 역사 지도"
+              aria-label="편집 지도"
+              role="group"
               tabindex="0"
+              viewBox="0 0 900 610"
             ></svg>
           </div>
-          <div class="view-controls">
-            <div class="base">
-              <i data-icon="globe"></i
-              ><select id="base" aria-label="지도 범위"></select>
-            </div>
+          <div class="stage-foot">
+            <span class="legend"><b></b>표시한 지점 <b></b>선택한 지점</span>
             <div class="zoom">
+              <select id="base" aria-label="지도 범위"></select>
               <button id="minus" aria-label="축소">−</button
-              ><button id="reset" title="기본 배율과 위치로">100%</button
+              ><button id="reset" title="전체 지점에 맞추기">100%</button
               ><button id="plus" aria-label="확대">+</button>
             </div>
           </div>
         </div>
-        <div class="under"><span id="hint" role="status"></span><span id="counts"></span></div>
+        <div class="status" role="status" id="status">지도를 불러오는 중입니다.</div>
       </section>
     </main>
+    <dialog id="picker" aria-labelledby="picker-title">
+      <div class="dialog-head">
+        <h2 id="picker-title"></h2>
+        <button id="close" aria-label="닫기">×</button>
+      </div>
+      <label class="search"
+        ><i data-icon="search"></i><input id="query" type="search" aria-label="검색"
+      /></label>
+      <label class="era"
+        >시대
+        <select id="era">
+          <option value="">모든 시대</option>
+        </select></label
+      >
+      <div id="choices"></div>
+    </dialog>
     <dialog id="dialog">
       <form method="dialog">
         <div class="dialog-head">

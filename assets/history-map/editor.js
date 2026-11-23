@@ -1,8 +1,24 @@
 import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js';
-import { W, H, camera, presets, xy, ll, esc, definitions, draw } from './cartography.js';
+import {
+  W,
+  mapHeight,
+  camera,
+  presets,
+  xy as project,
+  ll as invert,
+  esc,
+  definitions,
+  draw,
+} from './cartography.js';
 
+const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
+const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
 const $ = (id) => document.getElementById(id);
 const paths = {
+  trash: 'M3 7h18M9 7V4h6v3 M6 7l1 14h10l1-14 M10 10v8m4-8v8',
+  layers: 'M2 9l10-6 10 6-10 6z M3 13l9 5 9-5 M3 17l9 5 9-5',
+  sheet: 'M4 3h16v18H4z M4 9h16 M4 15h16 M10 9v12',
+  external: 'M7 17 18 6 M8 6h10v10',
   atlas: 'M3 5l6-2 6 3 6-2v15l-6 2-6-3-6 2z M9 3v15m6-12v15',
   map: 'M2 5l7-2 6 3 7-2v15l-7 2-6-3-7 2z M9 3v15m6-12v15',
   folder: 'M3 5h7l2 3h9v12H3z',
@@ -20,13 +36,13 @@ const paths = {
   note: 'M4 4h16v12l-5 5H4z M15 21v-5h5 M8 9h8m-8 4h5',
 };
 const icon = (k) =>
-  '<svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="' +
+  '<svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="' +
   paths[k] +
   '"/></svg>';
 document.querySelectorAll('[data-icon]').forEach((el) => (el.innerHTML = icon(el.dataset.icon)));
 const modes = {
-  move: ['이동', '지도를 끌어 이동하고, 이름이나 메모를 끌어 배치하세요.'],
-  pin: ['지점', '지도를 눌러 새 지점을 표시하세요.'],
+  move: ['선택·이동', '지도를 끌어 이동하고, 이름이나 메모를 끌어 배치하세요.'],
+  pin: ['직접 찍기', '지도를 눌러 새 지점을 표시하세요.'],
   route: ['경로', '지도나 지명 목록에서 두 곳 이상을 차례로 선택하세요.'],
   note: ['메모', '메모를 놓을 위치를 선택하세요.'],
 };
@@ -47,24 +63,29 @@ async function start() {
   } catch {
     /* Storage may be disabled. */
   }
+  const periods = new Map();
+  const readRecords = async (...args) => {
+    const rows = await SheetData.sheetRecords(...args);
+    if (args[1] === '카테고리')
+      for (const r of rows) periods.set(r.카테고리명, [r.시작일, r.종료일].filter(Boolean).join(' — '));
+    return rows;
+  };
   const [library, bases] = await Promise.all([
-    json('presets.json').then((presets) =>
-      loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
-    ),
+    json('presets.json').then((presets) => loadSheetLibrary(SHEET_CONFIG, presets, readRecords, storage)),
     json('bases.json'),
   ]);
   const { places, themes, eras } = library;
   const byId = new Map(places.map((p) => [p.id, p]));
   const example = themes.find((t) => t.source === '시트 주제' && t.name === '한국전쟁') ?? themes[0];
-  const source = $('source-sheet');
+  const source = $('source');
   const sheetUrl = new URL(SHEET_CONFIG.url);
   sheetUrl.hash = 'gid=' + SHEET_CONFIG.spaceSheetId;
   source.href = sheetUrl;
-  source.textContent =
+  source.querySelector('span').textContent =
     library.source === 'live'
-      ? '구글 시트 · 지명 ' + places.length + '곳 ↗'
+      ? '구글 시트 · 지명 ' + places.length + '곳'
       : library.source === 'cached'
-        ? '시트 연결 실패 · 저장된 지명 ' + places.length + '곳 ↗'
+        ? '시트 연결 실패 · 저장된 지명 ' + places.length + '곳'
         : '시트 연결 실패 · 원본 확인 ↗';
   const fresh = () => ({
     id: crypto.randomUUID(),
@@ -91,8 +112,14 @@ async function start() {
       return fallback;
     }
   }
+  function openDrawing(drawing) {
+    const { base, lon, lat, span } = drawing.view;
+    // Migrate the old default framing; keep custom pans and zooms.
+    if (base === 'korea' && lon === 127.6 && lat === 38.25 && span === 19) drawing.view = camera('korea');
+    return refreshDrawing(drawing, byId);
+  }
   let doc = read(draftKey, null);
-  if (valid(doc)) refreshDrawing(doc, byId);
+  if (valid(doc)) openDrawing(doc);
   else {
     doc = fresh();
     if (example) {
@@ -103,16 +130,24 @@ async function start() {
   }
   const samePlace = (mark, p) =>
     mark.spaceId ? mark.spaceId === p.id : mark.name === p.name && mark.lon === p.lon && mark.lat === p.lat;
-  let tab = themes.length ? 'themes' : 'places',
+  let selected = doc.points.length
+    ? {
+        kind: 'points',
+        index: Math.max(
+          0,
+          doc.points.findIndex((p) => p.name === '인천'),
+        ),
+      }
+    : null;
+  let pickerMode = 'places',
     mode = 'move',
     activeRoute = null,
     routeStart = null,
-    era = '',
-    query = '';
+    routePicker = $('picker');
   const past = [],
     future = [];
   function message(s) {
-    $('hint').textContent = s;
+    $('status').textContent = s;
   }
   function persist() {
     try {
@@ -136,6 +171,7 @@ async function start() {
     if (!from.length) return;
     to.push(doc);
     doc = from.pop();
+    selected = null;
     activeRoute = null;
     routeStart = null;
     render();
@@ -148,166 +184,135 @@ async function start() {
     render();
   }
   $('era').insertAdjacentHTML('beforeend', eras.map((e) => '<option>' + esc(e) + '</option>').join(''));
-  $('era').value = era;
   $('base').innerHTML = Object.entries(bases)
-    .map(([key, b]) => '<option value="' + key + '">' + b.name + '</option>')
+    .map(([key, b]) => '<option value="' + key + '">' + esc(b.name) + '</option>')
     .join('');
-  const svg = $('map');
+  const svg = $('atlas');
   svg.innerHTML = definitions(bases) + '<g id="scene"></g>';
   const scene = $('scene');
-  // Share the two coastline paths across all theme previews.
-  const mini = document.createElementNS(svg.namespaceURI, 'svg');
-  mini.setAttribute('aria-hidden', 'true');
-  mini.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
-  mini.innerHTML =
-    '<defs>' +
-    ['east', 'world', 'globe']
-      .map((key) => '<path id="mini-' + key + '" d="' + bases[key].land + '"/>')
-      .join('') +
-    '</defs>';
-  document.body.append(mini);
-  function thumb(theme) {
-    const locations = theme.places.map((n) => byId.get(n));
-    const [west, east, south, north] = bases.east.bbox;
-    const key = locations.every((p) => p.lon >= west && p.lon <= east && p.lat >= south && p.lat <= north)
-      ? 'east'
-      : locations.every(
-            (p) =>
-              p.lon >= bases.world.bbox[0] &&
-              p.lon <= bases.world.bbox[1] &&
-              p.lat >= bases.world.bbox[2] &&
-              p.lat <= bases.world.bbox[3],
-          )
-        ? 'world'
-        : 'globe';
-    const b = bases[key];
-    const coords = locations.map((p) => {
-      const v = { lon: b.bbox[0], lat: b.bbox[3], span: ((b.bbox[1] - b.bbox[0]) * W) / b.w };
-      const [x, y] = xy(v, p.lon, p.lat);
-      return [x - W / 2, y - H / 2];
-    });
-    const xs = coords.map((p) => p[0]),
-      ys = coords.map((p) => p[1]),
-      span =
-        Math.max(46, Math.max(...xs) - Math.min(...xs), 1.2 * (Math.max(...ys) - Math.min(...ys))) * 1.65;
-    const x = (Math.max(...xs) + Math.min(...xs) - span) / 2,
-      y = (Math.max(...ys) + Math.min(...ys) - span * 0.84) / 2;
-    return (
-      '<svg class="thumb" aria-hidden="true" viewBox="' +
-      [x, y, span, span * 0.84].join(' ') +
-      '"><use href="#mini-' +
-      key +
-      '" fill="#e9e8cd" stroke="#879c87" stroke-width="' +
-      span / 140 +
-      '"/>' +
-      coords
-        .map(([a, b]) => '<circle cx="' + a + '" cy="' + b + '" r="' + span / 29 + '" fill="#a65037"/>')
-        .join('') +
-      '</svg>'
-    );
-  }
-  const thumbs = themes.map(thumb);
-  function row(key, name, sub, lead, selected, action) {
-    return (
-      '<button class="row ' +
-      (selected ? 'on' : '') +
-      '" data-row="' +
-      esc(key) +
-      '" aria-label="' +
-      esc(name + ' ' + action) +
-      '">' +
-      lead +
-      '<span class="labels"><strong>' +
-      esc(name) +
-      '</strong>' +
-      (sub ? '<small>' + esc(sub) + '</small>' : '') +
-      '</span><span aria-hidden="true" class="indicator">' +
-      (action === '삭제' ? '×' : selected ? '✓' : '+') +
-      '</span></button>'
-    );
-  }
+  const kindNames = { points: '지점', notes: '메모', routes: '경로' },
+    kindIcons = { points: 'pin', notes: 'note', routes: 'route' };
   function list() {
-    const selected = new Set(
-      places.filter((p) => doc.points.some((mark) => samePlace(mark, p))).map((p) => p.id),
+    $('count').textContent = doc.points.length;
+    const rows = Object.keys(kindNames).flatMap((kind) =>
+      doc[kind].map((item, index) => {
+        const active = selected?.kind === kind && selected.index === index;
+        return (
+          '<button class="place" data-kind="' +
+          kind +
+          '" data-index="' +
+          index +
+          '" aria-pressed="' +
+          active +
+          '"><i>' +
+          icon(kindIcons[kind]) +
+          '</i>' +
+          esc(kind === 'routes' ? '경로 ' + (index + 1) : item.name) +
+          (active ? '<span class="current">선택됨</span>' : '') +
+          '</button>'
+        );
+      }),
     );
-    document
-      .querySelectorAll('[data-tab]')
-      .forEach((b) => b.setAttribute('aria-pressed', String(tab === b.dataset.tab)));
-    document.querySelector('.filters').hidden = tab === 'mine' || !!query;
-    const html = [];
-    if (tab === 'themes' || (query && tab !== 'mine'))
-      themes.forEach((t, i) => {
-        if (query ? !t.name.includes(query) : era && t.era !== era) return;
-        const all = t.places.every((n) => selected.has(n));
-        html.push(
-          row(
-            't' + i,
-            t.name,
-            (t.era ? t.era + ' · ' : '') + t.source + ' · ' + t.places.length + '곳',
-            thumbs[i],
-            all,
-            all ? '표시한 곳 보기' : '지도에 추가',
-          ),
-        );
-      });
-    if (tab === 'places' || (query && tab !== 'mine'))
-      places.forEach((p, i) => {
-        if (
-          query
-            ? ![p.name, p.keywords].some((s) => s.includes(query))
-            : era && p.eras.length && !p.eras.includes(era)
-        )
-          return;
-        html.push(
-          row(
-            'p' + i,
-            p.name,
-            p.kind,
-            icon('pin'),
-            selected.has(p.id),
-            mode === 'route' ? '경로에 추가' : selected.has(p.id) ? '위치 보기' : '지도에 추가',
-          ),
-        );
-      });
-    if (tab === 'mine') {
-      for (const [prefix, items, label] of [
-        ['m', doc.points, '지점'],
-        ['n', doc.notes, '메모'],
-        ['r', doc.routes, '경로'],
-      ]) {
-        items.forEach((p, i) => {
-          const name = prefix === 'r' ? '경로 ' + (i + 1) : p.name;
-          if (!query || name.includes(query))
-            html.push(
-              row(
-                prefix + i,
-                name,
-                prefix === 'r' ? p.length + '곳' : label,
-                icon({ m: 'pin', n: 'note', r: 'route' }[prefix]),
-                false,
-                '삭제',
-              ),
-            );
-        });
-      }
-    }
-    $('results').innerHTML =
-      html.join('') ||
-      '<p class="empty">' +
-        (query
-          ? '검색 결과가 없습니다.'
-          : tab === 'mine'
-            ? '지도에 지점이나 경로를 추가하세요.'
-            : '이 시대에 등록된 자료가 없습니다.') +
-        '</p>';
+    $('pins').innerHTML = rows.join('') || '<p class="empty">지명을 추가하세요.</p>';
   }
+  function inspector() {
+    const item = selected && doc[selected.kind]?.[selected.index];
+    if (!item) {
+      $('inspect').innerHTML = '<h3>지점 편집</h3><p class="empty">지도나 목록에서 지점을 선택하세요.</p>';
+      return;
+    }
+    const { kind, index } = selected;
+    const isRoute = kind === 'routes',
+      name = isRoute ? '경로 ' + (index + 1) : item.sourceName || item.name;
+    const coord = isRoute
+      ? item.length + '곳'
+      : Math.abs(item.lat).toFixed(4) +
+        '° ' +
+        (item.lat < 0 ? 'S' : 'N') +
+        '  ' +
+        Math.abs(item.lon).toFixed(4) +
+        '° ' +
+        (item.lon < 0 ? 'W' : 'E');
+    $('inspect').innerHTML =
+      '<h3>선택한 ' +
+      kindNames[kind] +
+      '</h3><div class="edit-head"><i>' +
+      icon(kindIcons[kind]) +
+      '</i><strong>' +
+      esc(name) +
+      '</strong><button id="remove" title="지도에서 빼기" aria-label="지도에서 빼기">' +
+      icon('trash') +
+      '</button></div><p class="coord">' +
+      coord +
+      '</p>' +
+      (isRoute
+        ? ''
+        : '<label>' +
+          (kind === 'notes' ? '메모 내용' : '지도에 표시할 이름') +
+          '<input class="name-input" id="label" maxlength="48"></label>');
+    $('remove').onclick = () =>
+      change(() => {
+        doc[kind].splice(index, 1);
+        selected = null;
+        activeRoute = routeStart = null;
+      });
+    if (isRoute) return;
+    const input = $('label');
+    input.value = item.name;
+    let original = item.name,
+      edited = false;
+    input.onfocus = () => {
+      edited = false;
+      original = item.name;
+    };
+    input.oninput = () => {
+      if (!edited) {
+        checkpoint(structuredClone(doc));
+        edited = true;
+      }
+      item.name = input.value.trim() || original;
+      list();
+      paint();
+      persist();
+      $('undo').disabled = false;
+      $('redo').disabled = true;
+    };
+    input.onblur = () => {
+      input.value = item.name;
+    };
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.isComposing) input.blur();
+    };
+  }
+  function pick(kind, index, center = false) {
+    const item = doc[kind][index];
+    if (!item) return;
+    if (mode === 'route' && kind === 'points') {
+      routeTo(item.lon, item.lat);
+      return;
+    }
+    selected = { kind, index };
+    if (center) {
+      const coords = kind === 'routes' ? item.map(([lon, lat]) => ({ lon, lat })) : [item];
+      fit(coords);
+    }
+    render();
+  }
+  $('pins').onclick = (e) => {
+    const row = e.target.closest('[data-kind]');
+    if (row) pick(row.dataset.kind, Number(row.dataset.index), true);
+  };
   function paint() {
-    scene.innerHTML = draw(doc, bases, Math.max(1, Math.min(2.2, W / (svg.clientWidth || W))));
+    const height = mapHeight(doc.view);
+    svg.dataset.layout = doc.view.base === 'korea' ? 'portrait' : 'wide';
+    const unit = W / (svg.clientWidth || W);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + height);
+    scene.innerHTML = draw(doc, bases, unit, selected);
     if (mode === 'route' && routeStart) {
       const [x, y] = xy(doc.view, ...routeStart);
       scene.insertAdjacentHTML(
         'beforeend',
-        '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#bc553e" stroke="white" stroke-width="2"/>',
+        '<circle cx="' + x + '" cy="' + y + '" r="' + 4 * unit + '" fill="#444" stroke="white"/>',
       );
     }
     svg.setAttribute('aria-label', doc.title + ' 지도');
@@ -316,28 +321,116 @@ async function start() {
   function render() {
     paint();
     list();
+    inspector();
     $('map-name').textContent = doc.title;
+    document.querySelector('.category').textContent =
+      periods.get(doc.title) || themes.find((t) => t.name === doc.title)?.era || '';
     $('base').value = doc.view.base;
-    svg.dataset.tool = mode;
+    svg.dataset.mode = mode;
     document
       .querySelectorAll('[data-mode]')
       .forEach((b) => b.setAttribute('aria-pressed', String(mode === b.dataset.mode)));
     $('finish').hidden = mode !== 'route' || activeRoute === null;
     $('undo').disabled = !past.length;
     $('redo').disabled = !future.length;
-    $('counts').textContent =
-      '지점 ' + doc.points.length + ' · 경로 ' + doc.routes.length + ' · 메모 ' + doc.notes.length;
+    $('labels').setAttribute('aria-pressed', String(doc.labels !== false));
     message(modes[mode][1]);
   }
-  function switchTab(key) {
-    tab = key;
-    query = '';
-    $('search').value = '';
-    list();
-    $('results').scrollTop = 0;
+  $('labels').onclick = () =>
+    change(() => {
+      doc.labels = doc.labels === false;
+    });
+  function pickerList() {
+    const topic = pickerMode === 'themes',
+      rows = topic ? themes : places;
+    const query = $('query').value.trim(),
+      era = $('era').value;
+    const results = rows.flatMap((r, i) => {
+      if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) return [];
+      if (![r.name, r.keywords || ''].some((s) => s.includes(query))) return [];
+      const caption = topic
+        ? r.source + ' · ' + r.places.length + '곳'
+        : mode === 'route'
+          ? '경로에 추가'
+          : doc.points.some((p) => samePlace(p, r))
+            ? '지도에서 선택'
+            : '추가 ＋';
+      const button =
+        '<button class="choice" data-index="' +
+        i +
+        '"><span>' +
+        esc(r.name) +
+        '</span><small>' +
+        esc(caption) +
+        '</small></button>';
+      return topic
+        ? '<div class="topic-choice">' +
+            button +
+            '<button data-index="' +
+            i +
+            '" data-append aria-label="' +
+            esc(r.name) +
+            ' 지점만 추가">지점만 추가</button></div>'
+        : button;
+    });
+    $('choices').innerHTML = results.join('') || '<p class="empty">검색 결과가 없습니다.</p>';
   }
+  function openPicker(which) {
+    pickerMode = which;
+    const topic = which === 'themes';
+    $('picker-title').textContent = topic ? '지도 주제 변경' : '시트에서 지명 추가';
+    $('query').placeholder = topic ? '주제 검색' : '지명 또는 옛 이름 검색';
+    $('query').value = '';
+    $('era').value = '';
+    pickerList();
+    routePicker.showModal();
+    $('query').focus();
+  }
+  $('browse').onclick = () => openPicker('places');
+  $('themes').onclick = () => openPicker('themes');
+  $('query').oninput = pickerList;
+  $('era').onchange = pickerList;
+  $('close').onclick = () => routePicker.close();
+  $('choices').onclick = (e) => {
+    const b = e.target.closest('[data-index]');
+    if (!b) return;
+    const i = Number(b.dataset.index);
+    routePicker.close();
+    if (pickerMode === 'themes') {
+      const t = themes[i],
+        locations = t.places.map((id) => byId.get(id));
+      change(() => {
+        if (!b.hasAttribute('data-append')) {
+          doc.points = [];
+          doc.notes = [];
+          doc.routes = [];
+          doc.title = t.name;
+          doc.view = camera('korea');
+        }
+        doc.points.push(...locations.filter((p) => !doc.points.some((m) => samePlace(m, p))).map(sheetPoint));
+        mode = 'move';
+        activeRoute = routeStart = null;
+        selected = doc.points.length ? { kind: 'points', index: 0 } : null;
+        fit(locations);
+      });
+      return;
+    }
+    const p = places[i];
+    if (mode === 'route') {
+      routeTo(p.lon, p.lat);
+      return;
+    }
+    change(() => {
+      let index = doc.points.findIndex((m) => samePlace(m, p));
+      if (index < 0) index = doc.points.push(sheetPoint(p)) - 1;
+      selected = { kind: 'points', index };
+      mode = 'move';
+      fit([p]);
+    });
+  };
   function fit(points) {
     if (!points.length) return;
+    const H = mapHeight(doc.view);
     if (
       points.every((p) => {
         const [x, y] = xy(doc.view, p.lon, p.lat);
@@ -349,29 +442,20 @@ async function start() {
       ys = points.map((p) => p.lat);
     const lon = (Math.min(...xs) + Math.max(...xs)) / 2,
       lat = (Math.min(...ys) + Math.max(...ys)) / 2;
-    const probe = { lon, lat, span: 1 };
+    const base =
+      ['korea', 'east', 'world', 'globe'].find((key) => {
+        const [w, e, s, n] = bases[key].bbox;
+        return points.every((p) => p.lon >= w && p.lon <= e && p.lat >= s && p.lat <= n);
+      }) || 'globe';
+    const probe = { lon, lat, span: 1, base },
+      height = mapHeight(probe);
     const span = Math.max(
       points.length === 1 ? doc.view.span : 5,
       ...points.map((p) => {
         const [x, y] = xy(probe, p.lon, p.lat);
-        return Math.max(Math.abs(x - W / 2) / (W / 2 - 70), Math.abs(y - H / 2) / (H / 2 - 85));
+        return Math.max(Math.abs(x - W / 2) / (W / 2 - 70), Math.abs(y - height / 2) / (height / 2 - 85));
       }),
     );
-    const base = points.some(
-      (p) =>
-        p.lon < bases.world.bbox[0] ||
-        p.lon > bases.world.bbox[1] ||
-        p.lat < bases.world.bbox[2] ||
-        p.lat > bases.world.bbox[3],
-    )
-      ? 'globe'
-      : span > 55
-        ? 'world'
-        : span > 22
-          ? 'east'
-          : lon > 122 && lon < 133 && lat > 31 && lat < 44
-            ? 'korea'
-            : 'east';
     doc.view = { lon, lat, span, base };
   }
   function routeTo(lon, lat) {
@@ -390,55 +474,6 @@ async function start() {
       doc.routes[activeRoute].push([lon, lat]);
     });
   }
-  $('results').onclick = (e) => {
-    const key = e.target.closest('[data-row]')?.dataset.row;
-    if (!key) return;
-    const i = Number(key.slice(1));
-    if (key[0] === 't') {
-      const t = themes[i],
-        missing = t.places.filter((n) => !doc.points.some((mark) => samePlace(mark, byId.get(n))));
-      if (!missing.length) {
-        switchTab('mine');
-        return;
-      }
-      change(() => {
-        if (!doc.points.length && doc.title === '제목 없는 지도') doc.title = t.name;
-        doc.points.push(...missing.map((n) => sheetPoint(byId.get(n))));
-        fit(t.places.map((n) => byId.get(n)));
-      });
-      message(t.name + ' 지점 ' + missing.length + '곳을 추가했습니다.');
-    } else if (key[0] === 'p') {
-      const p = places[i];
-      if (mode === 'route') {
-        routeTo(p.lon, p.lat);
-        return;
-      }
-      change(() => {
-        if (!doc.points.some((mark) => samePlace(mark, p))) doc.points.push(sheetPoint(p));
-        fit([p]);
-      });
-    } else {
-      change(() => {
-        doc[{ m: 'points', n: 'notes', r: 'routes' }[key[0]]].splice(i, 1);
-        activeRoute = null;
-        routeStart = null;
-      });
-    }
-  };
-  $('tabs').onclick = (e) => {
-    const b = e.target.closest('[data-tab]');
-    if (b) switchTab(b.dataset.tab);
-  };
-  $('search').oninput = (e) => {
-    query = e.target.value.trim();
-    list();
-    $('results').scrollTop = 0;
-  };
-  $('era').onchange = (e) => {
-    era = e.target.value;
-    list();
-    $('results').scrollTop = 0;
-  };
   $('tools').onclick = (e) => {
     const b = e.target.closest('[data-mode]');
     if (b) setMode(b.dataset.mode);
@@ -457,7 +492,16 @@ async function start() {
   }
   $('plus').onclick = () => zoom(0.75);
   $('minus').onclick = () => zoom(1 / 0.75);
-  $('reset').onclick = () => change(() => (doc.view = camera(doc.view.base)));
+  $('reset').onclick = () =>
+    change(() => {
+      const coordinates = [
+        ...doc.points,
+        ...doc.notes,
+        ...doc.routes.flat().map(([lon, lat]) => ({ lon, lat })),
+      ];
+      doc.view = camera(coordinates.length ? 'korea' : doc.view.base);
+      fit(coordinates);
+    });
   $('undo').onclick = () => history(past, future);
   $('redo').onclick = () => history(future, past);
 
@@ -500,7 +544,8 @@ async function start() {
         doc = fresh();
         doc.title = name;
       });
-      switchTab('themes');
+      selected = null;
+      render();
     });
   function save() {
     try {
@@ -533,7 +578,8 @@ async function start() {
           mode = 'move';
           activeRoute = null;
           routeStart = null;
-          change(() => (doc = refreshDrawing(structuredClone(maps[Number(b.dataset.open)]), byId)));
+          selected = null;
+          change(() => (doc = openDrawing(structuredClone(maps[Number(b.dataset.open)]))));
         }),
     );
   };
@@ -543,13 +589,13 @@ async function start() {
     return [pt.x, pt.y];
   }
   function shift(view, dx, dy) {
-    const [lon, lat] = ll(view, W / 2 - dx, H / 2 - dy);
+    const [lon, lat] = ll(view, W / 2 - dx, mapHeight(view) / 2 - dy);
     return { ...view, lon: Math.max(-180, Math.min(180, lon)), lat: Math.min(78, Math.max(-70, lat)) };
   }
   svg.onpointerdown = (e) => {
     if (e.button !== 0 || drag) return;
     const [x, y] = locationOf(e);
-    if (x < 0 || x > W || y < 0 || y > H) return;
+    if (x < 0 || x > W || y < 0 || y > mapHeight(doc.view)) return;
     const label = e.target.closest('[data-point],[data-note]');
     const kind = label?.hasAttribute('data-point') ? 'points' : 'notes';
     const item =
@@ -559,7 +605,7 @@ async function start() {
       y,
       kind,
       item,
-      index: item ? doc[kind].indexOf(item) : -1,
+      index: label ? Number(label.dataset.point ?? label.dataset.note) : -1,
       before: item ? structuredClone(doc) : null,
       view: { ...doc.view },
       id: e.pointerId,
@@ -599,13 +645,7 @@ async function start() {
         persist();
       } else if (d.item) {
         doc = d.before;
-        paint();
-        const items = doc[d.kind];
-        const index = d.index;
-        if (index >= 0)
-          ask(d.kind === 'notes' ? '메모 수정' : '지점 이름 수정', items[index].name, '적용', (name) =>
-            change(() => (items[index].name = name)),
-          );
+        pick(d.kind, d.index);
       } else {
         doc.view = d.view;
         paint();
@@ -615,15 +655,32 @@ async function start() {
     if (Math.hypot(x - d.x, y - d.y) > 8) return;
     const [lon, lat] = ll(doc.view, x, y);
     if (mode === 'route') {
-      routeTo(lon, lat);
+      const pin = d.kind === 'points' ? doc.points[d.index] : null;
+      routeTo(pin?.lon ?? lon, pin?.lat ?? lat);
       return;
     }
-    const isNote = mode === 'note';
-    ask(isNote ? '메모 추가' : '지점 추가', '', '추가', (name) =>
-      change(() => doc[isNote ? 'notes' : 'points'].push({ name, lon, lat })),
-    );
+    addAt(lon, lat);
   };
+  function addAt(lon, lat) {
+    const kind = mode === 'note' ? 'notes' : 'points';
+    change(() => {
+      const index = doc[kind].push({ lon, lat, name: kind === 'notes' ? '새 메모' : '새 지점' }) - 1;
+      selected = { kind, index };
+      mode = 'move';
+    });
+    $('label').focus();
+    $('label').select();
+  }
   svg.onkeydown = (e) => {
+    const item = e.target.closest('[data-point],[data-note]');
+    if (mode === 'move' && item && ['Enter', ' '].includes(e.key)) {
+      e.preventDefault();
+      pick(
+        item.hasAttribute('data-point') ? 'points' : 'notes',
+        Number(item.dataset.point ?? item.dataset.note),
+      );
+      return;
+    }
     if (e.key === '+' || e.key === '=') {
       e.preventDefault();
       zoom(0.75);
@@ -639,14 +696,17 @@ async function start() {
     } else if (e.key === 'Enter' && mode !== 'move') {
       const { lon, lat } = doc.view;
       if (mode === 'route') routeTo(lon, lat);
-      else
-        ask(mode === 'note' ? '중심에 메모 추가' : '중심에 지점 추가', '', '추가', (name) =>
-          change(() => doc[mode === 'note' ? 'notes' : 'points'].push({ lon, lat, name })),
-        );
+      else addAt(lon, lat);
     }
   };
   document.addEventListener('keydown', (e) => {
-    if (dialog.open || e.target.matches('input,select,textarea') || !(e.ctrlKey || e.metaKey)) return;
+    if (
+      dialog.open ||
+      routePicker.open ||
+      e.target.matches('input,select,textarea') ||
+      !(e.ctrlKey || e.metaKey)
+    )
+      return;
     if (e.key.toLowerCase() === 's') {
       e.preventDefault();
       save();
@@ -667,7 +727,12 @@ async function start() {
   }
   async function exportMap(format) {
     const copy = svg.cloneNode(false);
-    copy.innerHTML = definitions(bases) + draw(doc, bases);
+    const H = mapHeight(doc.view);
+    copy.innerHTML = definitions(bases) + draw(doc, bases, W / (svg.clientWidth || W));
+    const title = document.createElementNS(svg.namespaceURI, 'title');
+    title.textContent = doc.title;
+    copy.prepend(title);
+    copy.setAttribute('font-family', 'Apple SD Gothic Neo,Malgun Gothic,sans-serif');
     copy.setAttribute('width', W * 2);
     copy.setAttribute('height', H * 2);
     const blob = new Blob([new XMLSerializer().serializeToString(copy)], {
@@ -715,5 +780,5 @@ async function start() {
   new ResizeObserver(paint).observe(svg);
 }
 start().catch(() => {
-  $('hint').textContent = '지도 자료를 불러오지 못했습니다. 페이지를 새로 고쳐 주세요.';
+  $('status').textContent = '지도 자료를 불러오지 못했습니다. 페이지를 새로 고쳐 주세요.';
 });

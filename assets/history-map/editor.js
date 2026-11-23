@@ -1112,6 +1112,7 @@ async function start() {
     dialog.classList.remove('map-library');
     $('new').hidden = true;
     $('gallery-tools').hidden = true;
+    $('themes').hidden = true;
     $('dialog-title').textContent = title;
     body.innerHTML = html;
     dialog.returnValue = '';
@@ -1150,11 +1151,16 @@ async function start() {
       selected = null;
       render();
     });
+    $('themes').hidden = false;
   };
+  const saveDate = new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
   function save() {
     try {
       const lib = read(libraryKey, {});
-      lib[doc.id] = structuredClone(doc);
+      lib[doc.id] = { ...doc, savedAt: Date.now() };
+      delete lib[doc.id].removedFromGallery;
       localStorage.setItem(libraryKey, JSON.stringify(lib));
       message('이 브라우저의 내 지도에 저장했습니다.');
     } catch {
@@ -1165,9 +1171,9 @@ async function start() {
   function showGallery(removed = false) {
     const maps = Object.values(read(libraryKey, {})).filter(valid);
     const removedCount = maps.filter((m) => m.removedFromGallery).length;
-    const visible = maps.filter((m) => !!m.removedFromGallery === removed);
     const activeSaved = maps.some((m) => m.id === doc.id && !m.removedFromGallery);
-    const rows = visible.map((map) => {
+    const rows = maps.flatMap((map, index) => {
+      if (!!map.removedFromGallery !== removed) return [];
       const name = esc(map.title);
       const id = esc(map.id);
       const height = mapHeight(map.view);
@@ -1187,8 +1193,15 @@ async function start() {
       const entry = removed ? '<div class="saved">' + content + '</div>' :
         '<button type="button" class="saved" data-open="' + id + '" aria-label="' + name + ' 열기">' + content + '</button>';
       const action = removed ? '복원' : '빼기';
-      return '<li class="saved-row">' + entry + '<button type="button" data-shelve="' + id +
-        '" aria-label="' + name + (removed ? ' 내 지도에 복원' : ' 내 지도에서 빼기') + '">' + action + '</button></li>';
+      const savedTime = Number.isFinite(map.savedAt)
+        ? '<time datetime="' + new Date(map.savedAt).toISOString() + '">' + saveDate.format(map.savedAt) + ' 저장</time>'
+        : '저장 시각 미기록';
+      const rename = removed ? '' : '<button type="button" data-rename="' + id +
+        '" aria-label="' + name + ' 이름 수정">' + icon('pencil') + '이름 수정</button>';
+      return '<li class="saved-row"><div class="map-record"><strong>지도 ' + (index + 1) + '번</strong><span>' +
+        savedTime + '</span></div>' + entry + '<div class="card-actions">' + rename +
+        '<button type="button" data-shelve="' + id + '" aria-label="' + name +
+        (removed ? ' 내 지도에 복원' : ' 내 지도에서 빼기') + '">' + action + '</button></div></li>';
     });
     const empty = removed ? '뺀 지도가 없습니다.' : '아직 저장한 지도가 없습니다.';
     const add = !activeSaved && !removed ? '<button type="button" id="add-current">' +
@@ -1197,8 +1210,8 @@ async function start() {
       '<p class="library-empty">' + icon('atlas') + empty + '</p>') + add;
     modal(removed ? '뺀 지도' : '내 지도', html);
     dialog.classList.add('map-library');
-    $('gallery-tools').hidden = false;
-    $('new').hidden = $('themes').hidden = removed;
+    $('gallery-tools').hidden = !removed && !removedCount;
+    $('new').hidden = removed;
     const switchButton = $('gallery-switch'), addButton = $('add-current');
     switchButton.hidden = !removed && !removedCount;
     switchButton.textContent = removed ? '내 지도로 돌아가기' : '뺀 지도 (' + removedCount + ')';
@@ -1212,6 +1225,65 @@ async function start() {
         showGallery();
         (body.querySelector('[data-open]') || $('add-current'))?.focus();
       };
+    body.querySelectorAll('[data-rename]').forEach((button) => {
+      button.onclick = () => {
+        const id = button.dataset.rename;
+        const map = maps.find((m) => m.id === id);
+        const row = button.closest('.saved-row');
+        const actions = button.parentElement;
+        const dismiss = () => {
+          editor.remove();
+          actions.hidden = false;
+          button.focus();
+        };
+        body.querySelector('[data-cancel-name]')?.click();
+        const editor = document.createElement('div');
+        editor.className = 'saved-name-editor';
+        editor.innerHTML = '<label>지도 이름<input maxlength="48" required></label><div class="card-actions">' +
+          '<button type="button" data-cancel-name>취소</button><button class="primary" type="button">저장</button></div>';
+        actions.hidden = true;
+        row.append(editor);
+        const input = editor.querySelector('input');
+        input.value = map.title;
+        input.select();
+        editor.querySelector('[data-cancel-name]').onclick = dismiss;
+        const commit = () => {
+          const title = input.value.trim();
+          if (!title) {
+            input.setCustomValidity('지도 이름을 입력하세요.');
+            input.reportValidity();
+            return;
+          }
+          if (title === map.title) return dismiss();
+          const lib = read(libraryKey, {});
+          if (!lib[id]) return showGallery();
+          try {
+            lib[id].title = title;
+            lib[id].savedAt = Date.now();
+            localStorage.setItem(libraryKey, JSON.stringify(lib));
+          } catch {
+            input.setCustomValidity('이름을 저장하지 못했습니다. 다시 시도하세요.');
+            input.reportValidity();
+            return;
+          }
+          if (doc.id === id) change(() => (doc.title = title));
+          showGallery();
+          body.querySelector('[data-rename="' + CSS.escape(id) + '"]').focus();
+        };
+        input.oninput = () => input.setCustomValidity('');
+        editor.querySelector('.primary').onclick = commit;
+        editor.onkeydown = (event) => {
+          if (event.isComposing) return;
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            dismiss();
+          } else if (event.key === 'Enter' && event.target === input) {
+            event.preventDefault();
+            commit();
+          }
+        };
+      };
+    });
     body.querySelectorAll('[data-shelve]').forEach((button, index) => {
       button.onclick = () => {
         try {

@@ -1169,11 +1169,27 @@ button:is(.dark, .add):not(:disabled):hover {
 .map-library #dialog-body {
   overflow: auto;
   overscroll-behavior: contain;
-  padding: 8px 16px;
+  padding: 16px;
+  background: var(--chronicle-paper);
 }
-.map-list { list-style: none; padding: 0; margin: 0; }
-.saved-row { display: flex; align-items: center; gap: 4px; padding: 6px 0; }
-.saved-row + .saved-row { border-top: 1px solid var(--line); }
+.map-list { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
+.saved-row {
+  min-width: 0;
+  padding: 12px 14px 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--chronicle-surface);
+}
+.map-record, .card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.map-record { justify-content: space-between; color: var(--muted); font-size: 13px; }
+.map-record strong { color: var(--chronicle-green); }
+.saved-row > .saved { width: 100%; margin: 8px 0; padding: 4px 0; }
+.card-actions { justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 3px; }
+.card-actions button { min-height: 36px; padding-inline: 9px; }
+.saved-name-editor input { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 5px; }
+.saved-name-editor .card-actions { border: 0; }
+#themes { margin-top: 16px; }
+
 .saved {
   flex: 1;
   min-width: 0;
@@ -1198,7 +1214,7 @@ button:is(.dark, .add):not(:disabled):hover {
 .map-caption { display: grid; gap: 5px; overflow-wrap: anywhere; }
 .map-caption strong { font-size: 18px; letter-spacing: -.035em; line-height: 1.3; }
 .map-caption small { color: var(--muted); font-size: 13px; font-weight: 400; }
-.saved-row [data-shelve], #gallery-tools button, #add-current {
+.saved-row [data-shelve], .saved-row [data-rename], #gallery-tools button, #add-current {
   min-height: 40px;
   border: 0;
   background: transparent;
@@ -1206,7 +1222,7 @@ button:is(.dark, .add):not(:disabled):hover {
   font-size: 13px;
 }
 .saved-row [data-shelve] { flex: none; padding-inline: 10px; }
-.saved-row [data-shelve]:hover, #gallery-tools button:hover, #add-current:hover {
+.saved-row [data-shelve]:hover, .saved-row [data-rename]:hover, #gallery-tools button:hover, #add-current:hover {
   background: var(--chronicle-tint);
   color: var(--ink);
 }

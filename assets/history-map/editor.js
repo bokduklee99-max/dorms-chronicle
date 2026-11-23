@@ -1109,6 +1109,8 @@ async function start() {
     body = $('dialog-body');
   $('close-dialog').onclick = () => dialog.close('cancel');
   function modal(title, html) {
+    dialog.classList.remove('map-library');
+    $('new').hidden = true;
     $('gallery-tools').hidden = true;
     $('dialog-title').textContent = title;
     body.innerHTML = html;
@@ -1165,47 +1167,45 @@ async function start() {
     const removedCount = maps.filter((m) => m.removedFromGallery).length;
     const visible = maps.filter((m) => !!m.removedFromGallery === removed);
     const activeSaved = maps.some((m) => m.id === doc.id && !m.removedFromGallery);
-    const actions =
-      '<div class="gallery-actions">' +
-      (!activeSaved && !removed ? '<button type="button" id="add-current">＋ 현재 지도 추가</button>' : '') +
-      (removed || removedCount
-        ? '<button type="button" id="gallery-switch">' +
-          (removed ? '내 지도로 돌아가기' : '뺀 지도 (' + removedCount + ')') +
-          '</button>'
-        : '') +
-      '</div>';
-    const html =
-      actions +
-      (visible.length
-        ? visible
-            .map((m) => {
-              const name = esc(m.title),
-                id = esc(m.id);
-              return (
-                '<div class="saved-row">' +
-                (removed
-                  ? '<strong>' + name + '</strong>'
-                  : '<button type="button" data-open="' + id + '" class="saved">' + name + '</button>') +
-                '<button type="button" data-shelve="' +
-                id +
-                '" aria-label="' +
-                name +
-                (removed ? ' 내 지도에 복원">복원' : ' 내 지도에서 빼기">빼기') +
-                '</button></div>'
-              );
-            })
-            .join('')
-        : '<p class="empty">' + (removed ? '뺀 지도가 없습니다.' : '저장한 지도가 없습니다.') + '</p>');
-    const title = removed ? '뺀 지도' : '내 지도';
-    modal(title, html);
-    $('gallery-tools').hidden = removed;
-    const switchButton = $('gallery-switch'),
-      addButton = $('add-current');
-    if (switchButton)
-      switchButton.onclick = () => {
-        showGallery(!removed);
-        ($('gallery-switch') || $('close-dialog')).focus();
-      };
+    const rows = visible.map((map) => {
+      const name = esc(map.title);
+      const id = esc(map.id);
+      const height = mapHeight(map.view);
+      // Share the editor's coastline definitions while keeping the thumbnail noninteractive.
+      const outline = draw({ ...map, points: [], notes: [] }, bases);
+      const dots = map.points.map((point) => {
+        const [x, y] = xy(map.view, point.lon, point.lat);
+        return '<circle cx="' + x + '" cy="' + y + '" r="12" fill="currentColor"/>';
+      }).join('');
+      const preview = '<svg class="map-thumb" aria-hidden="true" focusable="false" viewBox="0 0 ' +
+        W + ' ' + height + '" preserveAspectRatio="xMidYMid slice">' + outline + dots + '</svg>';
+      const details = [bases[map.view.base].name, '지점 ' + map.points.length + '곳'];
+      if (map.routes.length) details.push('경로 ' + map.routes.length + '개');
+      if (map.notes.length) details.push('메모 ' + map.notes.length + '개');
+      const content = preview + '<span class="map-caption"><strong>' + name + '</strong><small>' +
+        esc(details.join(' · ')) + '</small></span>';
+      const entry = removed ? '<div class="saved">' + content + '</div>' :
+        '<button type="button" class="saved" data-open="' + id + '" aria-label="' + name + ' 열기">' + content + '</button>';
+      const action = removed ? '복원' : '빼기';
+      return '<li class="saved-row">' + entry + '<button type="button" data-shelve="' + id +
+        '" aria-label="' + name + (removed ? ' 내 지도에 복원' : ' 내 지도에서 빼기') + '">' + action + '</button></li>';
+    });
+    const empty = removed ? '뺀 지도가 없습니다.' : '아직 저장한 지도가 없습니다.';
+    const add = !activeSaved && !removed ? '<button type="button" id="add-current">' +
+      icon('plus') + '현재 지도 추가</button>' : '';
+    const html = (rows.length ? '<ul class="map-list">' + rows.join('') + '</ul>' :
+      '<p class="library-empty">' + icon('atlas') + empty + '</p>') + add;
+    modal(removed ? '뺀 지도' : '내 지도', html);
+    dialog.classList.add('map-library');
+    $('gallery-tools').hidden = false;
+    $('new').hidden = $('themes').hidden = removed;
+    const switchButton = $('gallery-switch'), addButton = $('add-current');
+    switchButton.hidden = !removed && !removedCount;
+    switchButton.textContent = removed ? '내 지도로 돌아가기' : '뺀 지도 (' + removedCount + ')';
+    switchButton.onclick = () => {
+      showGallery(!removed);
+      (switchButton.hidden ? $('close-dialog') : switchButton).focus();
+    };
     if (addButton)
       addButton.onclick = () => {
         save();
@@ -1227,7 +1227,7 @@ async function start() {
         }
         showGallery(removed);
         const rows = body.querySelectorAll('[data-shelve]');
-        (rows[Math.min(index, rows.length - 1)] || $('gallery-switch') || $('close-dialog')).focus();
+        (rows[Math.min(index, rows.length - 1)] || (switchButton.hidden ? $('close-dialog') : switchButton)).focus();
       };
     });
     body.querySelectorAll('[data-open]').forEach((button) => {

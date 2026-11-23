@@ -6,7 +6,7 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=editing-2" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=gallery-1" />
   </head>
   <body>
     <header class="top">
@@ -175,20 +175,22 @@
         ><button type="button" id="picker-done" class="primary">완료</button>
       </div>
     </dialog>
-    <dialog id="dialog">
+    <dialog id="dialog" aria-labelledby="dialog-title">
       <form method="dialog">
         <div class="dialog-head">
           <h2 id="dialog-title"></h2>
+          <button type="button" id="new" class="primary" hidden><i data-icon="plus"></i>새 지도</button>
           <button type="button" id="close-dialog" aria-label="닫기">×</button>
         </div>
-        <div id="gallery-tools" hidden>
-          <button type="button" id="new">새 지도</button><button type="button" id="themes">예시 지도</button>
-        </div>
         <div id="dialog-body"></div>
+        <div id="gallery-tools" hidden>
+          <button type="button" id="themes"><i data-icon="atlas"></i>예시 지도</button>
+          <button type="button" id="gallery-switch" hidden></button>
+        </div>
       </form>
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=editing-2"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=gallery-1"></script>
   </body>
 </html>

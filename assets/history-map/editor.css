@@ -1343,15 +1343,17 @@ button:is(.dark, .add):not(:disabled):hover {
   .paper-desk { --paper-height: clamp(355px, 58dvh, 640px); }
 }
 
-#toggle-points {
-  margin-left: auto;
-  padding: 4px 7px;
+#toggle-points { margin-left: auto; }
+#toggle-points, #clear-items {
+  white-space: nowrap;
+  padding: 4px;
   border: 0;
   background: transparent;
   color: var(--chronicle-green);
   font-size: 13px;
 }
-.side-head { gap: 5px; }
+#clear-items { color: var(--chronicle-accent-hover); }
+.side-head { gap: 4px; flex-wrap: wrap; }
 #place-catalog {
   flex: none;
   padding: 12px 14px;

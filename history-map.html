@@ -6,7 +6,7 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=place-columns-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=clear-items-1" />
   </head>
   <body>
     <header class="top">
@@ -23,6 +23,7 @@
         <div class="side-head">
           <h2 id="items-title">지도 항목 <span id="count"></span></h2>
           <button id="toggle-points" type="button" disabled>전체 해제</button>
+          <button id="clear-items" type="button" title="이 지도의 지점·경로·메모 모두 삭제" disabled>전체 삭제</button>
           <button class="mobile-only" id="close-items" aria-label="지도 항목 닫기">닫기</button>
         </div>
         <section class="pins">
@@ -194,6 +195,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=inline-catalog-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=clear-items-1"></script>
   </body>
 </html>

@@ -153,7 +153,7 @@ async function start() {
       drawing.edition = t.edition;
       drawing.layerKeys = t.layers;
       drawing.topic = { id: t.id };
-      if (!drawing.points.length && !drawing.notes.length && !drawing.routes.length) {
+      if (!drawing.itemsCleared && !drawing.points.length && !drawing.notes.length && !drawing.routes.length) {
         drawing.points = t.places.map((id) => sheetPoint(byId.get(id)));
         if (t.frame) drawing.view = historyCamera(t.frame.bounds);
       }
@@ -165,7 +165,7 @@ async function start() {
   const resume = valid(doc) && (!requested.length || reloading || (linked && doc.topic?.id === linked.id));
   if (resume) {
     openDrawing(doc);
-    if (library.recoveredEmptyLibrary && !doc.points.length && !doc.notes.length && !doc.routes.length) {
+    if (library.recoveredEmptyLibrary && !doc.itemsCleared && !doc.points.length && !doc.notes.length && !doc.routes.length) {
       const theme = currentTheme();
       if (theme?.places.length) {
         beforeRecovery = structuredClone(doc);
@@ -179,6 +179,7 @@ async function start() {
     if (initial) setTheme(initial);
   }
   function setTheme(theme) {
+    delete doc.itemsCleared;
     doc.title = theme.name;
     doc.topic = theme.source === '편집기 주제' ? { example: theme.name } : { id: theme.id };
     doc.view = camera('korea');
@@ -643,6 +644,7 @@ async function start() {
       }),
     );
     $('count').textContent = $('mobile-count').textContent = rows.length;
+    $('clear-items').disabled = !rows.length;
     $('toggle-points').disabled = !doc.points.length;
     $('toggle-points').textContent = !doc.points.length || doc.points.some((p) => !p.hidden) ? '전체 해제' : '전체 선택';
     const theme = currentTheme();
@@ -766,6 +768,15 @@ async function start() {
       for (const point of doc.points) point.hidden = hide;
       if (hide && selected?.kind === 'points') selected = null;
     });
+  };
+  $('clear-items').onclick = () => {
+    change(() => {
+      for (const kind of Object.keys(kindNames)) doc[kind] = [];
+      doc.itemsCleared = true;
+      selected = activeRoute = routeStart = null;
+      mode = 'move';
+    });
+    (itemsDialog.open ? $('query') : $('undo')).focus({ preventScroll: true });
   };
   $('pins').onchange = (event) => {
     const input = event.target.closest('[data-visible-point]');

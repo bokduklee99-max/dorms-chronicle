@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>역사 지도 제작실 · DoRms' Chronicle</title>
+    <link rel="stylesheet" href="./assets/history-map/editor.css" />
+  </head>
+  <body>
+    <header class="mast">
+      <div class="identity">
+        <a class="brand" href="/" aria-label="DoRms' Chronicle 홈"
+          ><span class="brandmark" data-icon="atlas"></span>Chronicle</a
+        ><span class="divider"></span>
+        <h1>역사 지도 제작실</h1>
+      </div>
+      <nav aria-label="지도 파일">
+        <button id="gallery"><i data-icon="folder"></i>내 지도</button
+        ><button id="save"><i data-icon="save"></i>저장</button
+        ><button id="export" class="primary"><i data-icon="download"></i>내보내기</button>
+      </nav>
+    </header>
+    <main>
+      <aside class="library" aria-labelledby="library-title">
+        <div class="library-head">
+          <h2 id="library-title">지도 라이브러리</h2>
+          <label class="search"
+            ><i data-icon="search"></i
+            ><input
+              id="search"
+              type="search"
+              placeholder="주제 또는 지명 검색"
+              aria-label="주제 또는 지명 검색"
+          /></label>
+          <div id="tabs" class="tabs" role="group" aria-label="자료 보기">
+            <button data-tab="themes" aria-pressed="true">주제</button
+            ><button data-tab="places" aria-pressed="false">지명</button
+            ><button data-tab="mine" aria-pressed="false">표시한 곳</button>
+          </div>
+        </div>
+        <div class="filters">
+          <label for="era">시대</label
+          ><select id="era">
+            <option value="">모든 시대</option>
+          </select>
+        </div>
+        <div id="results" class="results" aria-label="지도 자료 목록"></div>
+        <footer class="source">
+          <a href="https://history-map-maker.vercel.app/" target="_blank" rel="noreferrer"
+            >옛 지명은 근사 좌표 · 자료 출처 ↗</a
+          >
+        </footer>
+      </aside>
+      <section class="workspace" aria-label="지도 작업 공간">
+        <div class="work-head">
+          <div class="title-wrap">
+            <span class="map-badge" data-icon="map"></span>
+            <h2>
+              <button id="rename" title="지도 제목 수정">
+                <span id="map-name">삼국의 도읍</span><i data-icon="pencil"></i>
+              </button>
+            </h2>
+          </div>
+          <button id="new"><i data-icon="plus"></i>새 지도</button>
+        </div>
+        <div class="workboard">
+          <div class="tools">
+            <div id="tools" role="group" aria-label="지도 도구"></div>
+            <div class="history">
+              <button id="undo" aria-label="되돌리기" title="되돌리기 (Ctrl+Z)">
+                <i data-icon="undo"></i></button
+              ><button id="redo" aria-label="다시 실행" title="다시 실행 (Ctrl+Shift+Z)">
+                <i data-icon="redo"></i>
+              </button>
+            </div>
+          </div>
+          <div class="viewport">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              id="map"
+              viewBox="0 0 900 610"
+              role="img"
+              aria-label="편집 중인 역사 지도"
+              tabindex="0"
+            ></svg>
+          </div>
+          <div class="view-controls">
+            <div class="base">
+              <i data-icon="globe"></i
+              ><select id="base" aria-label="지도 범위"></select>
+            </div>
+            <div class="zoom">
+              <button id="minus" aria-label="축소">−</button
+              ><button id="reset" title="기본 배율과 위치로">100%</button
+              ><button id="plus" aria-label="확대">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="under"><span id="hint" role="status"></span><span id="counts"></span></div>
+      </section>
+    </main>
+    <dialog id="dialog">
+      <form method="dialog">
+        <div class="dialog-head">
+          <h2 id="dialog-title"></h2>
+          <button type="button" id="close-dialog" aria-label="닫기">×</button>
+        </div>
+        <div id="dialog-body"></div>
+      </form>
+    </dialog>
+    <script type="module" src="./assets/history-map/editor.js"></script>
+  </body>
+</html>

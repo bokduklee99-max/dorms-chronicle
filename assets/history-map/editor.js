@@ -953,7 +953,7 @@ async function start() {
     const sections = [...groups].map(([kind, buttons]) =>
       '<section class="place-kind"><h5>' + esc(kind) + '</h5>' + buttons.join('') + '</section>');
     return '<section class="geometry-column" aria-label="' + label + '"><h4>' + label + '</h4>' +
-      '<div class="kind-places" data-kind="' + type + '">' +
+      '<div class="kind-places" data-scroll-key="' + type + '">' +
       (sections.join('') || '<p class="empty">결과 없음</p>') + '</div></section>';
   }
   function shapeChoice(entry) {
@@ -978,31 +978,34 @@ async function start() {
   })).filter(pkg => pkg.categories.length);
   let catalogPackage = Math.max(0, packageLessons.findIndex(pkg => pkg.id === currentTheme()?.packageId));
 
-  function lessonChoice(category, query) {
-    const { theme, index, points, shapes } = category;
-    const matching = entry => theme.name.includes(query) || entry.name.includes(query) || entry.keywords?.includes(query);
-    const listedPoints = points.filter(matching), listedShapes = shapes.filter(matching);
-    const total = listedPoints.length + listedShapes.length;
-    if (!total) return '';
-    const open = expandedLesson === index;
-    const panel = 'lesson-places-' + index;
-    const header = '<button class="choice lesson-toggle" id="choice-lesson-' + index + '" data-lesson="' + index +
-      '" aria-expanded="' + open + '" aria-controls="' + panel + '"><span>' + esc(theme.name) +
-      '</span><small>' + total + '곳</small><span class="caret" aria-hidden="true"></span></button>';
-    const addAll = points.length && listedPoints.length === points.length
-      ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
-        '" aria-label="' + esc(theme.name) + ' 지점 전체 추가">지점 전체 추가</button>' : '';
-    const members = open ? '<h5>지역</h5>' + listedPoints.map(placeChoice).join('') +
-      listedShapes.map(shapeChoice).join('') : '';
-    return '<div class="lesson-heading">' + header + addAll + '</div><div class="lesson-places" id="' + panel + '"' + (open ? '' : ' hidden') + '>' + members + '</div>';
-  }
   function packageChoices(query) {
     const buttons = packageLessons.map((pkg, i) => '<button type="button" id="catalog-package-' + i +
       '" data-catalog-package="' + i + '" aria-pressed="' + (i === catalogPackage) + '">' + esc(pkg.name) + '</button>');
-    const categories = packageLessons[catalogPackage].categories.map(category => lessonChoice(category, query)).join('');
-    return '<div class="catalog-packages" role="group" aria-label="패키지"><h4>패키지</h4>' +
-      buttons.join('') + '</div><h4 class="catalog-section-title">카테고리</h4>' +
-      (categories || '<p class="empty">이 패키지에 검색 결과가 없습니다.</p>');
+    const packages = '<div class="catalog-packages" role="group" aria-label="패키지"><h4>패키지</h4>' +
+      buttons.join('') + '</div>';
+    const matches = packageLessons[catalogPackage].categories.map(category => {
+      const matching = entry => category.theme.name.includes(query) || entry.name.includes(query) || entry.keywords?.includes(query);
+      return { category, points: category.points.filter(matching), shapes: category.shapes.filter(matching) };
+    }).filter(row => row.points.length || row.shapes.length);
+    if (!matches.length) return packages + '<p class="empty">이 패키지에 검색 결과가 없습니다.</p>';
+
+    const active = matches.find(row => row.category.index === selectedLesson) || matches[0];
+    const headings = matches.map(row => {
+      const { index, theme, points } = row.category;
+      const title = esc(theme.name);
+      const select = '<button class="choice lesson-toggle" id="choice-lesson-' + index + '" data-lesson="' + index +
+        '" aria-pressed="' + (row === active) + '" aria-controls="lesson-regions"><span>' + title +
+        '</span><small>' + (row.points.length + row.shapes.length) + '곳</small></button>';
+      const add = points.length && row.points.length === points.length
+        ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
+          '" aria-label="' + title + ' 지점 전체 추가">지점 전체 추가</button>' : '';
+      return '<div class="lesson-heading">' + select + add + '</div>';
+    });
+    return packages + '<div class="lesson-columns"><section><h4>카테고리</h4>' +
+      '<div class="lesson-list" data-scroll-key="categories-' + catalogPackage + '">' + headings.join('') +
+      '</div></section><section id="lesson-regions"><h4>' + esc(active.category.theme.name) +
+      ' · 지역</h4><div class="lesson-places" data-scroll-key="regions-' + active.category.index + '">' +
+      active.points.map(placeChoice).join('') + active.shapes.map(shapeChoice).join('') + '</div></section></div>';
   }
   function pickerList() {
     const topic = pickerMode !== 'places',
@@ -1060,18 +1063,18 @@ async function start() {
     const filter = JSON.stringify([pickerMode, query, era]);
     const scroll = new Map();
     if (filter === lastFilter) {
-      for (const list of choices.querySelectorAll('.kind-places')) scroll.set(list.dataset.kind, list.scrollTop);
+      for (const list of choices.querySelectorAll('[data-scroll-key]')) scroll.set(list.dataset.scrollKey, list.scrollTop);
     } else {
       choices.scrollTop = 0;
     }
     lastFilter = filter;
     choices.classList.toggle('by-kind', !topic && library.source !== 'unavailable');
     choices.innerHTML = html;
-    for (const list of choices.querySelectorAll('.kind-places')) list.scrollTop = scroll.get(list.dataset.kind) || 0;
+    for (const list of choices.querySelectorAll('[data-scroll-key]')) list.scrollTop = scroll.get(list.dataset.scrollKey) || 0;
     if (focusId) $(focusId)?.focus({ preventScroll: true });
   }
   function setPickerMode(which, query = '', era = '') {
-    expandedLesson = null;
+    selectedLesson = null;
     pickerMode = which;
     $('add-sources').hidden = which === 'examples';
     $('era').closest('label').hidden = which === 'lessons';
@@ -1085,7 +1088,7 @@ async function start() {
     pickerList();
     $('choices').scrollTop = 0;
   }
-  let lastChoices, lastFilter, previousCatalog, expandedLesson = null;
+  let lastChoices, lastFilter, previousCatalog, selectedLesson = null;
   const catalog = $('place-catalog');
   function openCatalog() {
     catalog.classList.add('show-results');
@@ -1103,7 +1106,15 @@ async function start() {
   });
   catalog.addEventListener('keydown', (event) => {
     if (event.isComposing) return;
-    if (event.key === 'Escape' && catalog.classList.contains('show-results')) {
+    if (event.key === 'ArrowRight' && event.target.matches('[data-lesson]')) {
+      event.preventDefault();
+      selectedLesson = Number(event.target.dataset.lesson);
+      pickerList();
+      $('lesson-regions')?.querySelector('button:not(:disabled)')?.focus();
+    } else if (event.key === 'ArrowLeft' && event.target.closest('#lesson-regions')) {
+      event.preventDefault();
+      $('choices').querySelector('[data-lesson][aria-pressed="true"]')?.focus();
+    } else if (event.key === 'Escape' && catalog.classList.contains('show-results')) {
       event.preventDefault();
       event.stopPropagation();
       $('query').focus();
@@ -1159,14 +1170,14 @@ async function start() {
     }
     if (b.hasAttribute('data-catalog-package')) {
       catalogPackage = Number(b.dataset.catalogPackage);
-      expandedLesson = null;
+      selectedLesson = null;
       pickerList();
       $('choices').scrollTop = 0;
       return;
     }
     if (b.hasAttribute('data-lesson')) {
       const index = Number(b.dataset.lesson);
-      expandedLesson = expandedLesson === index ? null : index;
+      selectedLesson = index;
       pickerList();
       $(b.id)?.scrollIntoView({ block: 'nearest' });
       return;

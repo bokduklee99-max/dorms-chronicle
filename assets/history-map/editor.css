@@ -789,6 +789,9 @@ dialog::backdrop {
   .doc-actions button {
     padding: 4px 7px;
   }
+  .stage-foot .display-group {
+    flex-basis: 100%;
+  }
   .legend {
     flex: 1;
   }

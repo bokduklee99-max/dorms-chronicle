@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>역사 지도 제작실 · Chronicle</title>
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=map-zoom-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=boundary-toolbar-1" />
   </head>
   <body>
     <header class="top">
@@ -73,6 +73,11 @@
             ></svg>
           </div>
           <div class="stage-foot">
+            <div class="display-group" role="group" aria-label="경계 표시">
+              <strong>경계</strong>
+              <button id="country-borders" type="button">국경</button>
+              <button id="province-borders" type="button">현대 시·도·주</button>
+            </div>
             <span class="legend"><b></b>표시한 지점 <b></b>선택한 지점</span>
             <div class="zoom">
               <select id="base" aria-label="지도 범위"></select>
@@ -126,11 +131,6 @@
         <select id="background-year" aria-label="시대별 지도 추가">
           <option value="">＋ 시대별 지도 추가</option>
         </select>
-      </div>
-      <div class="display-group" role="group" aria-label="경계 표시">
-        <strong>경계</strong>
-        <button id="country-borders" type="button">국경</button>
-        <button id="province-borders" type="button">현대 시·도·주</button>
       </div>
       <div class="display-group" role="group" aria-label="지명 표시">
         <strong>표기</strong>

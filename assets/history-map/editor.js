@@ -1,4 +1,4 @@
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=point-files-1';
 import {
   W,
   mapHeight,
@@ -87,6 +87,8 @@ async function start() {
       : library.source === 'cached'
         ? '시트 연결 실패 · 저장된 지명 ' + places.length + '곳'
         : '시트 연결 실패 · 원본 확인 ↗';
+  if (library.unresolved)
+    source.querySelector('span').textContent += ' · 좌표 로드 실패 ' + library.unresolved + '곳';
   const fresh = () => ({
     id: crypto.randomUUID(),
     title: '제목 없는 지도',
@@ -119,8 +121,18 @@ async function start() {
     return refreshDrawing(drawing, byId);
   }
   let doc = read(draftKey, null);
-  if (valid(doc)) openDrawing(doc);
-  else {
+  let beforeRecovery = null;
+  if (valid(doc)) {
+    openDrawing(doc);
+    if (library.recoveredEmptyLibrary && !doc.points.length && !doc.notes.length && !doc.routes.length) {
+      const theme = themes.find((t) => t.name === doc.title);
+      if (theme) {
+        beforeRecovery = structuredClone(doc);
+        doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
+        fit(doc.points);
+      }
+    }
+  } else {
     doc = fresh();
     if (example) {
       doc.title = example.name;
@@ -144,7 +156,7 @@ async function start() {
     activeRoute = null,
     routeStart = null,
     routePicker = $('picker');
-  const past = [],
+  const past = beforeRecovery ? [beforeRecovery] : [],
     future = [];
   function message(s) {
     $('status').textContent = s;
@@ -213,7 +225,28 @@ async function start() {
         );
       }),
     );
-    $('pins').innerHTML = rows.join('') || '<p class="empty">지명을 추가하세요.</p>';
+    const theme = themes.find((t) => t.name === doc.title);
+    $('pins').innerHTML =
+      rows.join('') ||
+      (theme
+        ? '<button class="place" id="fill-theme">' +
+          esc(theme.name) +
+          ' 지점 ' +
+          theme.places.length +
+          '곳 불러오기</button>'
+        : '<p class="empty">' +
+          (library.source === 'unavailable'
+            ? '시트의 지점 좌표를 불러오지 못했습니다. 페이지를 새로고침해 주세요.'
+            : '지명을 추가하세요.') +
+          '</p>');
+    const fill = $('fill-theme');
+    if (fill)
+      fill.onclick = () =>
+        change(() => {
+          doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
+          selected = { kind: 'points', index: 0 };
+          fit(doc.points);
+        });
   }
   function inspector() {
     const item = selected && doc[selected.kind]?.[selected.index];
@@ -777,6 +810,7 @@ async function start() {
     );
   };
   render();
+  if (beforeRecovery) persist();
   new ResizeObserver(paint).observe(svg);
 }
 start().catch(() => {

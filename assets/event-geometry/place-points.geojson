@@ -1,29 +1,3841 @@
 {
   "type": "FeatureCollection",
   "features": [
-    {"type":"Feature","id":"geo_seoul","properties":{"name":"서울"},"geometry":{"type":"Point","coordinates":[126.978,37.5665]}},
-    {"type":"Feature","id":"geo_hongkou_park","properties":{"name":"상하이 훙커우 공원"},"geometry":{"type":"Point","coordinates":[121.482,31.2728]}},
-    {"type":"Feature","id":"geo_incheon_station_1899","properties":{"name":"인천역"},"geometry":{"type":"Point","coordinates":[126.6170064800001,37.47688932300008]}},
-    {"type":"Feature","id":"geo_noryangjin_temporary_1899","properties":{"name":"노량진 가설정거장"},"geometry":{"type":"Point","coordinates":[126.9074173890001,37.51571248800008]}},
-    {"type":"Feature","id":"geo_incheon","properties":{"name":"인천"},"geometry":{"type":"Point","coordinates":[126.7052,37.4563]}},
-    {"type":"Feature","id":"geo_panmunjom","properties":{"name":"판문점"},"geometry":{"type":"Point","coordinates":[126.6769,37.9561]}},
-    {"type":"Feature","id":"geo_pyongyang","properties":{"name":"평양"},"geometry":{"type":"Point","coordinates":[125.7625,39.0392]}},
-    {"type":"Feature","id":"geo_shanghai","properties":{"name":"상하이"},"geometry":{"type":"Point","coordinates":[121.4737,31.2304]}},
-    {"type":"Feature","id":"geo_nanjing","properties":{"name":"난징"},"geometry":{"type":"Point","coordinates":[118.7969,32.0603]}},
-    {"type":"Feature","id":"geo_chongqing","properties":{"name":"충칭"},"geometry":{"type":"Point","coordinates":[106.9123,29.4316]}},
-    {"type":"Feature","id":"geo_tokyo","properties":{"name":"도쿄"},"geometry":{"type":"Point","coordinates":[139.6503,35.6762]}},
-    {"type":"Feature","id":"geo_berlin","properties":{"name":"베를린"},"geometry":{"type":"Point","coordinates":[13.405,52.52]}},
-    {"type":"Feature","id":"geo_west_berlin","properties":{"name":"서베를린"},"geometry":{"type":"Point","coordinates":[13.3,52.5]}},
-    {"type":"Feature","id":"geo_moscow","properties":{"name":"모스크바"},"geometry":{"type":"Point","coordinates":[37.6173,55.7558]}},
-    {"type":"Feature","id":"geo_washington_dc","properties":{"name":"워싱턴 D.C."},"geometry":{"type":"Point","coordinates":[-77.0369,38.9072]}},
-    {"type":"Feature","id":"geo_yalta","properties":{"name":"얄타"},"geometry":{"type":"Point","coordinates":[34.1663,44.4952]}},
-    {"type":"Feature","id":"geo_potsdam","properties":{"name":"포츠담"},"geometry":{"type":"Point","coordinates":[13.0645,52.3906]}},
-    {"type":"Feature","id":"geo_geneva","properties":{"name":"제네바"},"geometry":{"type":"Point","coordinates":[6.1432,46.2044]}},
-    {"type":"Feature","id":"geo_bay_of_pigs","properties":{"name":"피그스만"},"geometry":{"type":"Point","coordinates":[-81.0833,22.0833]}},
-    {"type":"Feature","id":"geo_beijing","properties":{"name":"베이징"},"geometry":{"type":"Point","coordinates":[116.4074,39.9042]}},
-    {"type":"Feature","id":"geo_yanan","properties":{"name":"옌안"},"geometry":{"type":"Point","coordinates":[109.4897,36.5854]}},
-    {"type":"Feature","id":"geo_guangzhou","properties":{"name":"광저우"},"geometry":{"type":"Point","coordinates":[113.2644,23.1291]}},
-    {"type":"Feature","id":"geo_brussels","properties":{"name":"브뤼셀"},"geometry":{"type":"Point","coordinates":[4.3517,50.8503]}},
-    {"type":"Feature","id":"geo_new_york","properties":{"name":"뉴욕"},"geometry":{"type":"Point","coordinates":[-74.006,40.7128]}}
+    {
+      "type": "Feature",
+      "id": "geo_seoul",
+      "properties": {
+        "name": "서울"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.978,
+          37.5665
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hongkou_park",
+      "properties": {
+        "name": "상하이 훙커우 공원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.482,
+          31.2728
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_incheon_station_1899",
+      "properties": {
+        "name": "인천역"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.6170064800001,
+          37.47688932300008
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_noryangjin_temporary_1899",
+      "properties": {
+        "name": "노량진 가설정거장"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.9074173890001,
+          37.51571248800008
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_incheon",
+      "properties": {
+        "name": "인천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7052,
+          37.4563
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_panmunjom",
+      "properties": {
+        "name": "판문점"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.6769,
+          37.9561
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_pyongyang",
+      "properties": {
+        "name": "평양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.7625,
+          39.0392
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_shanghai",
+      "properties": {
+        "name": "상하이"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4737,
+          31.2304
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_nanjing",
+      "properties": {
+        "name": "난징"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          118.7969,
+          32.0603
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chongqing",
+      "properties": {
+        "name": "충칭"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.9123,
+          29.4316
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_tokyo",
+      "properties": {
+        "name": "도쿄"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.6503,
+          35.6762
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_berlin",
+      "properties": {
+        "name": "베를린"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.405,
+          52.52
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_west_berlin",
+      "properties": {
+        "name": "서베를린"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.3,
+          52.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_moscow",
+      "properties": {
+        "name": "모스크바"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.6173,
+          55.7558
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_washington_dc",
+      "properties": {
+        "name": "워싱턴 D.C."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.0369,
+          38.9072
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yalta",
+      "properties": {
+        "name": "얄타"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          34.1663,
+          44.4952
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_potsdam",
+      "properties": {
+        "name": "포츠담"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.0645,
+          52.3906
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geneva",
+      "properties": {
+        "name": "제네바"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.1432,
+          46.2044
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_bay_of_pigs",
+      "properties": {
+        "name": "피그스만"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.0833,
+          22.0833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_beijing",
+      "properties": {
+        "name": "베이징"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          116.4074,
+          39.9042
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yanan",
+      "properties": {
+        "name": "옌안"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          109.4897,
+          36.5854
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_guangzhou",
+      "properties": {
+        "name": "광저우"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          113.2644,
+          23.1291
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_brussels",
+      "properties": {
+        "name": "브뤼셀"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.3517,
+          50.8503
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_new_york",
+      "properties": {
+        "name": "뉴욕"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.006,
+          40.7128
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gaeseong",
+      "properties": {
+        "name": "개성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.56,
+          37.97
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_busan",
+      "properties": {
+        "name": "부산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.04,
+          35.1
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_wonsan",
+      "properties": {
+        "name": "원산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.44,
+          39.15
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_daegu",
+      "properties": {
+        "name": "대구"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.6,
+          35.87
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gwangju",
+      "properties": {
+        "name": "광주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.85,
+          35.15
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeonju",
+      "properties": {
+        "name": "전주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.15,
+          35.82
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_naju",
+      "properties": {
+        "name": "나주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.71,
+          35.02
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jinju",
+      "properties": {
+        "name": "진주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.08,
+          35.19
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gongju",
+      "properties": {
+        "name": "공주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.12,
+          36.46
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_buyeo",
+      "properties": {
+        "name": "부여"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.91,
+          36.28
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gyeongju",
+      "properties": {
+        "name": "경주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.21,
+          35.84
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gimhae",
+      "properties": {
+        "name": "김해"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.89,
+          35.23
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_goryeong",
+      "properties": {
+        "name": "고령"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.26,
+          35.73
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gangreung",
+      "properties": {
+        "name": "강릉"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.88,
+          37.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_myeongju",
+      "properties": {
+        "name": "명주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.88,
+          37.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_uiju",
+      "properties": {
+        "name": "의주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.53,
+          40.2
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeju",
+      "properties": {
+        "name": "제주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.53,
+          33.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ungjin",
+      "properties": {
+        "name": "웅진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.12,
+          36.46
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sabi",
+      "properties": {
+        "name": "사비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.91,
+          36.28
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hanseong",
+      "properties": {
+        "name": "한성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.12,
+          37.53
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geumseong",
+      "properties": {
+        "name": "금성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.21,
+          35.84
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_guknaeseong",
+      "properties": {
+        "name": "국내성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.19,
+          41.13
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jolbon",
+      "properties": {
+        "name": "졸본"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.36,
+          41.27
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sanggyeongseong",
+      "properties": {
+        "name": "상경성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.12,
+          44.13
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_donggyeongseong",
+      "properties": {
+        "name": "동경성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.55,
+          42.87
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geumgwangaya",
+      "properties": {
+        "name": "금관가야"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.89,
+          35.23
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_daegaya",
+      "properties": {
+        "name": "대가야"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.26,
+          35.73
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_danyang_jeokseongbi",
+      "properties": {
+        "name": "단양 적성비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.37,
+          36.98
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_bukhansanbi",
+      "properties": {
+        "name": "북한산비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.98,
+          37.66
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_changnyeongbi",
+      "properties": {
+        "name": "창녕비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.49,
+          35.54
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hwangchoryeongbi",
+      "properties": {
+        "name": "황초령비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.3,
+          40.15
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_maunryeongbi",
+      "properties": {
+        "name": "마운령비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.65,
+          40.35
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_salsu",
+      "properties": {
+        "name": "살수"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.6,
+          39.62
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ansiseong",
+      "properties": {
+        "name": "안시성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          122.8,
+          40.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_maesoseong",
+      "properties": {
+        "name": "매소성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.07,
+          38.05
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gibeolpo",
+      "properties": {
+        "name": "기벌포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.69,
+          36.02
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheonghaejin",
+      "properties": {
+        "name": "청해진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.75,
+          34.35
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hwangsanbeol",
+      "properties": {
+        "name": "황산벌"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.1,
+          36.18
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_baekgang",
+      "properties": {
+        "name": "백강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.72,
+          35.98
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_juryuseong",
+      "properties": {
+        "name": "주류성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7,
+          36.05
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_imjonseong",
+      "properties": {
+        "name": "임존성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.75,
+          36.61
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gaegyeong",
+      "properties": {
+        "name": "개경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.56,
+          37.97
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_seogyeong",
+      "properties": {
+        "name": "서경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.75,
+          39.02
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_donggyeong",
+      "properties": {
+        "name": "동경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.21,
+          35.84
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ganghwado",
+      "properties": {
+        "name": "강화도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.45,
+          37.72
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jindo",
+      "properties": {
+        "name": "진도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.26,
+          34.48
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hangpaduri",
+      "properties": {
+        "name": "항파두리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.41,
+          33.45
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gwiju",
+      "properties": {
+        "name": "귀주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.25,
+          39.98
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_heunghwajin",
+      "properties": {
+        "name": "흥화진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.7,
+          40.15
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_byeokrando",
+      "properties": {
+        "name": "벽란도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.42,
+          37.93
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheoinseong",
+      "properties": {
+        "name": "처인성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.2,
+          37.17
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chungjuseong",
+      "properties": {
+        "name": "충주성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.93,
+          36.97
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ssangseongchonggwanbu",
+      "properties": {
+        "name": "쌍성총관부"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.25,
+          39.33
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheolryeong",
+      "properties": {
+        "name": "철령"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.6,
+          38.98
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_wihwado",
+      "properties": {
+        "name": "위화도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.4,
+          40.05
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hanyang",
+      "properties": {
+        "name": "한양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.98,
+          37.57
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hansando",
+      "properties": {
+        "name": "한산도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.47,
+          34.77
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_myeongryang",
+      "properties": {
+        "name": "명량"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.31,
+          34.57
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_noryang",
+      "properties": {
+        "name": "노량"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.86,
+          34.93
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_haengjusanseong",
+      "properties": {
+        "name": "행주산성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.82,
+          37.6
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_tangeumdae",
+      "properties": {
+        "name": "탄금대"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.91,
+          37
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_namhansanseong",
+      "properties": {
+        "name": "남한산성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.18,
+          37.48
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_dongrae",
+      "properties": {
+        "name": "동래"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.08,
+          35.2
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sampo",
+      "properties": {
+        "name": "삼포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.7,
+          35.09
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_daemado",
+      "properties": {
+        "name": "대마도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.32,
+          34.4
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gyeongwon",
+      "properties": {
+        "name": "경원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.09,
+          42.81
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hoeryeong",
+      "properties": {
+        "name": "회령"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.75,
+          42.44
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jongseong",
+      "properties": {
+        "name": "종성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.7,
+          42.77
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_onseong",
+      "properties": {
+        "name": "온성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.99,
+          42.95
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gyeongheung",
+      "properties": {
+        "name": "경흥"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.47,
+          42.38
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_buryeong",
+      "properties": {
+        "name": "부령"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.72,
+          42.05
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeoyeon",
+      "properties": {
+        "name": "여연"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127,
+          41.45
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jaseong",
+      "properties": {
+        "name": "자성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.75,
+          41.42
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_muchang",
+      "properties": {
+        "name": "무창"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.65,
+          41.7
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_uye",
+      "properties": {
+        "name": "우예"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.3,
+          41.62
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gasan",
+      "properties": {
+        "name": "가산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.57,
+          39.72
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeongju",
+      "properties": {
+        "name": "정주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.22,
+          39.69
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_seoncheon",
+      "properties": {
+        "name": "선천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.92,
+          39.8
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheolsan",
+      "properties": {
+        "name": "철산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.65,
+          39.76
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yongcheon",
+      "properties": {
+        "name": "용천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.4,
+          39.94
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_deokwon",
+      "properties": {
+        "name": "덕원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.44,
+          39.15
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheongpung",
+      "properties": {
+        "name": "청풍"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.17,
+          36.99
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chojijin",
+      "properties": {
+        "name": "초지진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.52,
+          37.63
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeongjongdo",
+      "properties": {
+        "name": "영종도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.5,
+          37.49
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geomundo",
+      "properties": {
+        "name": "거문도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.31,
+          34.03
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_dokdo",
+      "properties": {
+        "name": "독도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          131.87,
+          37.24
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ulreungdo",
+      "properties": {
+        "name": "울릉도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.87,
+          37.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gobu",
+      "properties": {
+        "name": "고부"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.759,
+          35.604
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hwangtohyeon",
+      "properties": {
+        "name": "황토현"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.84,
+          35.66
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hwangryongchon",
+      "properties": {
+        "name": "황룡촌"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.79,
+          35.3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ugeumchi",
+      "properties": {
+        "name": "우금치"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.16,
+          36.44
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_samrye",
+      "properties": {
+        "name": "삼례"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.088,
+          35.911
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_nonsan",
+      "properties": {
+        "name": "논산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.1,
+          36.19
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeongeup",
+      "properties": {
+        "name": "정읍"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.86,
+          35.57
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jangseong",
+      "properties": {
+        "name": "장성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.78,
+          35.3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeonggwang",
+      "properties": {
+        "name": "영광"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.51,
+          35.28
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hampyeong",
+      "properties": {
+        "name": "함평"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.52,
+          35.07
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gochang",
+      "properties": {
+        "name": "고창"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.7,
+          35.44
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_okcheon",
+      "properties": {
+        "name": "옥천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.57,
+          36.31
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_taein",
+      "properties": {
+        "name": "태인"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.937,
+          35.656
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geojedo",
+      "properties": {
+        "name": "거제도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.62,
+          34.88
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_masan",
+      "properties": {
+        "name": "마산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.57,
+          35.21
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_heungnam",
+      "properties": {
+        "name": "흥남"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.62,
+          39.83
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_amsadong",
+      "properties": {
+        "name": "암사동"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.13,
+          37.56
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_osanri",
+      "properties": {
+        "name": "오산리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.66,
+          38.12
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_dongsamdong",
+      "properties": {
+        "name": "동삼동"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.07,
+          35.08
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jitapri",
+      "properties": {
+        "name": "지탑리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.95,
+          38.53
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeongokri",
+      "properties": {
+        "name": "전곡리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.06,
+          38.01
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_seokjangri",
+      "properties": {
+        "name": "석장리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.08,
+          36.45
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_suyanggae",
+      "properties": {
+        "name": "수양개"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.33,
+          36.93
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_bilremot_donggul",
+      "properties": {
+        "name": "빌레못 동굴"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.27,
+          33.42
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ganghwa_goindol",
+      "properties": {
+        "name": "강화 고인돌"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.43,
+          37.76
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gochang_goindol",
+      "properties": {
+        "name": "고창 고인돌"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.67,
+          35.44
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hwasun_goindol",
+      "properties": {
+        "name": "화순 고인돌"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.93,
+          34.98
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_pungnapdong_toseong",
+      "properties": {
+        "name": "풍납동 토성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.12,
+          37.53
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gongsanseong",
+      "properties": {
+        "name": "공산성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.13,
+          36.46
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeongrimsaji",
+      "properties": {
+        "name": "정림사지"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.91,
+          36.28
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_muryeongwangreung",
+      "properties": {
+        "name": "무령왕릉"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.11,
+          36.46
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_seokchondong_gobun",
+      "properties": {
+        "name": "석촌동 고분"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.1,
+          37.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sosu_seowon",
+      "properties": {
+        "name": "소수 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.58,
+          36.93
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_dosan_seowon",
+      "properties": {
+        "name": "도산 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.85,
+          36.73
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_byeongsan_seowon",
+      "properties": {
+        "name": "병산 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.55,
+          36.54
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_oksan_seowon",
+      "properties": {
+        "name": "옥산 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.17,
+          36
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_dodong_seowon",
+      "properties": {
+        "name": "도동 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.35,
+          35.72
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_namgye_seowon",
+      "properties": {
+        "name": "남계 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.75,
+          35.56
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_pilam_seowon",
+      "properties": {
+        "name": "필암 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.75,
+          35.33
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_museong_seowon",
+      "properties": {
+        "name": "무성 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.96,
+          35.61
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_donam_seowon",
+      "properties": {
+        "name": "돈암 서원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.2,
+          36.22
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ujeongchongguk",
+      "properties": {
+        "name": "우정총국"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.985,
+          37.574
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_manseokbo",
+      "properties": {
+        "name": "만석보"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.8,
+          35.7
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeonbongjun_dongsang",
+      "properties": {
+        "name": "전봉준 동상"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.985,
+          37.569
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_baekdusan",
+      "properties": {
+        "name": "백두산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.06,
+          42
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hanrasan",
+      "properties": {
+        "name": "한라산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.53,
+          33.36
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_aprokgang",
+      "properties": {
+        "name": "압록강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.45,
+          40.05
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_dumangang",
+      "properties": {
+        "name": "두만강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.68,
+          42.3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_daedonggang",
+      "properties": {
+        "name": "대동강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.4,
+          38.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hangang",
+      "properties": {
+        "name": "한강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.65,
+          37.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geumgang",
+      "properties": {
+        "name": "금강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.72,
+          36.02
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_nakdonggang",
+      "properties": {
+        "name": "낙동강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.9,
+          35.08
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheongcheongang",
+      "properties": {
+        "name": "청천강"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.4,
+          39.6
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yodong",
+      "properties": {
+        "name": "요동"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          122.5,
+          41
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sandung",
+      "properties": {
+        "name": "산둥"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          118,
+          36.6
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_manju",
+      "properties": {
+        "name": "만주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126,
+          44
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeonhaeju",
+      "properties": {
+        "name": "연해주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          133,
+          44.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gando",
+      "properties": {
+        "name": "간도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.5,
+          42.9
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_seogando",
+      "properties": {
+        "name": "서간도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126,
+          41.9
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_haeolbin",
+      "properties": {
+        "name": "하얼빈"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.65,
+          45.76
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_rwisun",
+      "properties": {
+        "name": "뤼순"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.26,
+          38.82
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeonchu",
+      "properties": {
+        "name": "연추"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.8,
+          42.65
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_beulradiboseutokeu",
+      "properties": {
+        "name": "블라디보스토크"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          131.89,
+          43.12
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_samwonbo",
+      "properties": {
+        "name": "삼원보"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.75,
+          42.27
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yongjeong",
+      "properties": {
+        "name": "용정"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.42,
+          42.77
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheongsanri",
+      "properties": {
+        "name": "청산리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.85,
+          42.45
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_bongodong",
+      "properties": {
+        "name": "봉오동"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.15,
+          42.97
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sian",
+      "properties": {
+        "name": "시안"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          108.94,
+          34.26
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_deungju",
+      "properties": {
+        "name": "등주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.75,
+          37.81
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yangjeou",
+      "properties": {
+        "name": "양저우"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.41,
+          32.39
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ningbo",
+      "properties": {
+        "name": "닝보"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.54,
+          29.87
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gyoto",
+      "properties": {
+        "name": "교토"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.77,
+          35.01
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_osaka",
+      "properties": {
+        "name": "오사카"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.5,
+          34.69
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hakata",
+      "properties": {
+        "name": "하카타"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.4,
+          33.59
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_nagasaki",
+      "properties": {
+        "name": "나가사키"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.87,
+          32.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_taibei",
+      "properties": {
+        "name": "타이베이"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.56,
+          25.03
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_heigeu",
+      "properties": {
+        "name": "헤이그"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.31,
+          52.08
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sangteupetereubureukeu",
+      "properties": {
+        "name": "상트페테르부르크"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.34,
+          59.93
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_reondeon",
+      "properties": {
+        "name": "런던"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.13,
+          51.51
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_pari",
+      "properties": {
+        "name": "파리"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.35,
+          48.86
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_tasyukenteu",
+      "properties": {
+        "name": "타슈켄트"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          69.24,
+          41.3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_keujeuloreuda",
+      "properties": {
+        "name": "크즐오르다"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          65.5,
+          44.85
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_mujang",
+      "properties": {
+        "name": "무장"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.573,
+          35.412
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_baeksan",
+      "properties": {
+        "name": "백산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.794,
+          35.699
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_eunjin",
+      "properties": {
+        "name": "은진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.117,
+          36.162
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jiksan",
+      "properties": {
+        "name": "직산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.139,
+          36.882
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_seongjin",
+      "properties": {
+        "name": "성진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.2,
+          40.67
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_pyeongsan",
+      "properties": {
+        "name": "평산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.39,
+          38.34
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_edo",
+      "properties": {
+        "name": "에도"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.75,
+          35.69
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hankeou",
+      "properties": {
+        "name": "한커우"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.27,
+          30.58
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gaeryeong",
+      "properties": {
+        "name": "개령"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.181,
+          36.172
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gosan",
+      "properties": {
+        "name": "고산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.233,
+          35.968
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeonghae",
+      "properties": {
+        "name": "영해"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.339,
+          36.527
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chungju",
+      "properties": {
+        "name": "충주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.944,
+          36.966
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sangju",
+      "properties": {
+        "name": "상주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.164,
+          36.404
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jangheung",
+      "properties": {
+        "name": "장흥"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.909,
+          34.678
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_namwon",
+      "properties": {
+        "name": "남원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.389,
+          35.425
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sunchang",
+      "properties": {
+        "name": "순창"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.135,
+          35.367
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_uiryeong",
+      "properties": {
+        "name": "의령"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.267,
+          35.302
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jecheon",
+      "properties": {
+        "name": "제천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.231,
+          37.128
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geumsan",
+      "properties": {
+        "name": "금산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.475,
+          36.092
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_damyang",
+      "properties": {
+        "name": "담양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.986,
+          35.317
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_buan",
+      "properties": {
+        "name": "부안"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.75,
+          35.708
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_milyang",
+      "properties": {
+        "name": "밀양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.779,
+          35.486
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yangyang",
+      "properties": {
+        "name": "양양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.602,
+          38.089
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheonan",
+      "properties": {
+        "name": "천안"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.151,
+          36.81
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geochang",
+      "properties": {
+        "name": "거창"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.913,
+          35.694
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeongcheon",
+      "properties": {
+        "name": "영천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.943,
+          35.968
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gunwi",
+      "properties": {
+        "name": "군위"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.574,
+          36.236
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hamyang",
+      "properties": {
+        "name": "함양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.708,
+          35.496
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gwangseongbo",
+      "properties": {
+        "name": "광성보"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.53,
+          37.665
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_deokjinjin",
+      "properties": {
+        "name": "덕진진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.524,
+          37.649
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_munsusanseong",
+      "properties": {
+        "name": "문수산성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.529,
+          37.731
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ganghwaseong",
+      "properties": {
+        "name": "강화성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.48,
+          37.748
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chungjugoguryeobi",
+      "properties": {
+        "name": "충주고구려비"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.849,
+          37.028
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_changdeokgung",
+      "properties": {
+        "name": "창덕궁"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.991,
+          37.579
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_unhyeongung",
+      "properties": {
+        "name": "운현궁"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.988,
+          37.576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hamheung",
+      "properties": {
+        "name": "함흥"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.54,
+          39.91
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_haeju",
+      "properties": {
+        "name": "해주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.71,
+          38.04
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gilju",
+      "properties": {
+        "name": "길주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.32,
+          40.96
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sinuiju",
+      "properties": {
+        "name": "신의주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          124.42,
+          40.09
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_simonoseki",
+      "properties": {
+        "name": "시모노세키"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.95,
+          33.97
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chosan",
+      "properties": {
+        "name": "초산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.8,
+          40.83
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ryujeou",
+      "properties": {
+        "name": "류저우"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          109.41,
+          24.32
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_changsa",
+      "properties": {
+        "name": "창사"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.97,
+          28.2
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yenji",
+      "properties": {
+        "name": "옌지"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.51,
+          42.88
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheongjin",
+      "properties": {
+        "name": "청진"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.79,
+          41.78
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_hangjeou",
+      "properties": {
+        "name": "항저우"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.17,
+          30.25
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jirin",
+      "properties": {
+        "name": "지린"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.55,
+          43.85
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_rwoyang",
+      "properties": {
+        "name": "뤄양"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          112.44,
+          34.64
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_wonju",
+      "properties": {
+        "name": "원주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.94,
+          37.36
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cheongju",
+      "properties": {
+        "name": "청주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.5,
+          36.64
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_daejeon",
+      "properties": {
+        "name": "대전"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.42,
+          36.34
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ulsan",
+      "properties": {
+        "name": "울산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.32,
+          35.55
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_andong",
+      "properties": {
+        "name": "안동"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.72,
+          36.57
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gunsan",
+      "properties": {
+        "name": "군산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.72,
+          35.98
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_mokpo",
+      "properties": {
+        "name": "목포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.4,
+          34.81
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_chuncheon",
+      "properties": {
+        "name": "춘천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.73,
+          37.87
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_iksan",
+      "properties": {
+        "name": "익산"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.95,
+          35.94
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_suwon",
+      "properties": {
+        "name": "수원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.01,
+          37.26
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_changwon",
+      "properties": {
+        "name": "창원"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.58,
+          35.22
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jangyeon",
+      "properties": {
+        "name": "장연"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.1,
+          38.25
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeoncheon",
+      "properties": {
+        "name": "연천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.118,
+          38.094
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jeonjang",
+      "properties": {
+        "name": "전장"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.43,
+          32.18
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_bakcheon",
+      "properties": {
+        "name": "박천"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.65,
+          39.7
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gyeongseong",
+      "properties": {
+        "name": "경성"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.98,
+          37.57
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_namgyeong",
+      "properties": {
+        "name": "남경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.98,
+          37.57
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_songak",
+      "properties": {
+        "name": "송악"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.56,
+          37.97
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_ungju",
+      "properties": {
+        "name": "웅주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.12,
+          36.46
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_geumgwangyeong",
+      "properties": {
+        "name": "금관경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.89,
+          35.23
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_wansanju",
+      "properties": {
+        "name": "완산주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.15,
+          35.82
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_namwongyeong",
+      "properties": {
+        "name": "남원경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.389,
+          35.425
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jungwongyeong",
+      "properties": {
+        "name": "중원경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.944,
+          36.966
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_bukwongyeong",
+      "properties": {
+        "name": "북원경"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.94,
+          37.36
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_gangju",
+      "properties": {
+        "name": "강주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.08,
+          35.19
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_sakju",
+      "properties": {
+        "name": "삭주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.73,
+          37.87
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_muju",
+      "properties": {
+        "name": "무주"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.85,
+          35.15
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jemulpo",
+      "properties": {
+        "name": "제물포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.62,
+          37.47
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_busanpo",
+      "properties": {
+        "name": "부산포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.04,
+          35.1
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_yeompo",
+      "properties": {
+        "name": "염포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.32,
+          35.55
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_jepo",
+      "properties": {
+        "name": "제포"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          128.58,
+          35.22
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_tamra",
+      "properties": {
+        "name": "탐라"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.53,
+          33.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "geo_cairo",
+      "properties": {
+        "name": "카이로"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          31.2357,
+          30.0444
+        ]
+      }
+    }
   ]
 }

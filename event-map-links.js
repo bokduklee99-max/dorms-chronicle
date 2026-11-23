@@ -70,7 +70,13 @@ function pointGeometry(geometry) {
   return geometry;
 }
 
-export async function loadShape(place) {
+export async function readGeometryFile(path) {
+  const response = await fetch('/'+path,{cache:'no-cache'});
+  if (!response.ok) throw new Error('등록된 지도 파일을 읽지 못했어요.');
+  return response.json();
+}
+
+export async function loadShape(place, readFile = readGeometryFile) {
   const type = place.도형유형;
   if (place.데이터형식 && (place.데이터형식 !== 'geojson' || place.좌표상태 !== 'ready')) {
     throw new Error('경위도 도형이 준비되지 않았습니다.');
@@ -89,9 +95,7 @@ export async function loadShape(place) {
   } else {
     const path = mapAsset(place.파일경로,'geojson');
     if (!path) throw new Error('지도도형 탭의 파일경로를 확인해 주세요.');
-    const response = await fetch('/'+path);
-    if (!response.ok) throw new Error('등록된 지도 파일을 읽지 못했어요.');
-    const data = await response.json();
+    const data = await readFile(path);
     const features = data.type === 'FeatureCollection' ? data.features : [data];
     geometry = features.find(item => String(item.id) === place.외부도형ID)?.geometry;
   }

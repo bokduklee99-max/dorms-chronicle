@@ -1,6 +1,8 @@
+import { loadShape, readGeometryFile } from '../../event-map-links.js?v=point-files-1';
+
 const required = {
   공간: ['공간ID', '공간명', '지도참조키'],
-  지도도형: ['지도참조키', '경도', '위도'],
+  지도도형: ['지도참조키'],
   카테고리: ['카테고리ID', '카테고리명'],
   카테고리_공간: ['카테고리ID', '공간ID'],
 };
@@ -62,25 +64,63 @@ export function sheetLibrary(tables, presets) {
 
 export async function loadSheetLibrary(config, presets, readRecords, storage) {
   const cacheKey = 'chronicle.atlas.sheet.v1.' + config.id;
+  let saved;
+  try {
+    const value = JSON.parse(storage?.getItem(cacheKey) || 'null');
+    if (Array.isArray(value?.places) && Array.isArray(value?.themes) && Array.isArray(value?.eras))
+      saved = value;
+  } catch {
+    /* Storage is optional. */
+  }
   try {
     const entries = await Promise.all(
       Object.entries(required).map(async ([name, fields]) => [name, await readRecords(config, name, fields)]),
     );
-    const library = sheetLibrary(Object.fromEntries(entries), presets);
-    try {
-      storage?.setItem(cacheKey, JSON.stringify(library));
-    } catch {
-      /* Quota or storage access is optional. */
+    const tables = Object.fromEntries(entries);
+    const files = new Map();
+    function readOnce(path) {
+      if (!files.has(path)) files.set(path, readGeometryFile(path));
+      return files.get(path);
     }
-    return { ...library, source: 'live' };
+    const spaceKeys = new Set(tables.공간.map((r) => r.지도참조키));
+    let unresolved = 0;
+    tables.지도도형 = await Promise.all(
+      tables.지도도형.map(async (row) => {
+        if (
+          !spaceKeys.has(row.지도참조키) ||
+          row.도형유형 !== 'point' ||
+          (!row.파일경로 && !row.지도데이터URL)
+        )
+          return row;
+        if (String(row.경도 ?? '').trim() && String(row.위도 ?? '').trim()) return row;
+        try {
+          const {
+            coordinates: [경도, 위도],
+          } = await loadShape(row, readOnce);
+          return { ...row, 경도, 위도 };
+        } catch {
+          unresolved++;
+          return row;
+        }
+      }),
+    );
+    const library = sheetLibrary(tables, presets);
+    if (unresolved && !library.places.length) throw Error('지점 도형을 불러오지 못했습니다.');
+    if (!unresolved) {
+      try {
+        storage?.setItem(cacheKey, JSON.stringify(library));
+      } catch {
+        /* Storage is optional. */
+      }
+    }
+    return {
+      ...library,
+      source: 'live',
+      unresolved,
+      recoveredEmptyLibrary: saved?.places.length === 0 && library.places.length > 0,
+    };
   } catch {
-    try {
-      const saved = JSON.parse(storage?.getItem(cacheKey) || 'null');
-      if (Array.isArray(saved?.places) && Array.isArray(saved?.themes) && Array.isArray(saved?.eras))
-        return { ...saved, source: 'cached' };
-    } catch {
-      /* The editor can still open a saved drawing. */
-    }
+    if (saved?.places.length) return { ...saved, source: 'cached' };
     return { places: [], themes: [], eras: [], source: 'unavailable' };
   }
 }

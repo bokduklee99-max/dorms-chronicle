@@ -79,3 +79,59 @@ test('each visit reads fresh rows and distinguishes offline copies from a succes
   assert.deepEqual(empty.places, []);
   assert.deepEqual((await load(offline)).places, []);
 });
+
+test('resolves point coordinates by the sheet’s external IDs with one request per referenced file', async (t) => {
+  let requests = 0;
+  t.mock.method(globalThis, 'fetch', async (path) => {
+    requests++;
+    assert.equal(path, '/assets/event-geometry/place-points.geojson');
+    return Response.json({
+      type: 'FeatureCollection',
+      features: [
+        { id: 'external-b', geometry: { type: 'Point', coordinates: [127, 37] } },
+        { id: 'external-a', geometry: { type: 'Point', coordinates: [0, 0] } },
+      ],
+    });
+  });
+  const data = {
+    ...tables,
+    지도도형: ['a', 'b'].map((id) => ({
+      지도참조키: 'point_' + id,
+      도형유형: 'point',
+      외부도형ID: 'external-' + id,
+      파일경로: 'assets/event-geometry/place-points.geojson',
+      경도: '',
+      위도: '',
+    })),
+  };
+  const library = await loadSheetLibrary({ id: 'test' }, presets, (_, name) => data[name], null);
+  assert.equal(library.source, 'live');
+  assert.equal(requests, 1);
+  assert.deepEqual(
+    library.places.map((p) => [p.id, p.lon, p.lat]),
+    [
+      ['a', 0, 0],
+      ['b', 127, 37],
+    ],
+  );
+});
+
+test('a missing point file cannot overwrite a good cached library with zero places', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => new Response('Not found', { status: 404 }));
+  const good = sheetLibrary(tables, presets);
+  const storage = { getItem: () => JSON.stringify(good), setItem: () => assert.fail('bad read cached') };
+  const data = {
+    ...tables,
+    지도도형: [
+      {
+        지도참조키: 'point_a',
+        외부도형ID: 'a',
+        도형유형: 'point',
+        파일경로: 'assets/event-geometry/missing.geojson',
+      },
+    ],
+  };
+  const library = await loadSheetLibrary({ id: 'test' }, presets, (_, name) => data[name], storage);
+  assert.equal(library.source, 'cached');
+  assert.deepEqual(library.places, good.places);
+});

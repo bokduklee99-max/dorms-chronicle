@@ -9,9 +9,10 @@ import {
   ll as invert,
   esc,
   definitions,
+  comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=boundaries-2';
+} from './cartography.js?v=map-choices-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -229,6 +230,7 @@ async function start() {
     const available = availableLessons();
     const theme = currentTheme();
     const inPackage = available.filter((t) => t.packageId === activePackage);
+    $('historic-events').hidden = !theme?.events || theme.packageId !== activePackage;
     const empty = inPackage.filter((t) => !t.places.length && !t.edition);
     $('packages').innerHTML =
       packages
@@ -293,17 +295,17 @@ async function start() {
       });
     }
   }
+  const lessonPicker = $('lesson-picker');
+  $('choose-lesson').onclick = () => lessonPicker.showModal();
+  lessonPicker
+    .querySelectorAll('[data-close-lesson]')
+    .forEach((b) => (b.onclick = () => lessonPicker.close()));
   $('packages').onclick = (e) => {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.id === 'all-packages') restrictToLaunch = false;
     else {
       activePackage = packages[Number(b.dataset.package)].id;
-      const first = availableLessons().find(
-        (t) => t.packageId === activePackage && (t.edition || t.places.length),
-      );
-      if (first && activePackage === 'cold-war' && currentTheme()?.packageId !== activePackage)
-        applyTheme(first);
     }
     showEmpty = false;
     showSelectors();
@@ -349,23 +351,48 @@ async function start() {
       .get(label)
       .append(
         new Option(
-          Number.isFinite(year)
-            ? (year < 0 ? '기원전 ' : '') + Math.abs(year).toLocaleString('ko-KR') + '년'
-            : item.name,
+          Number.isFinite(year) ? (year < 0 ? '기원전 ' : '') + Math.abs(year) + '년' : item.name,
           id,
         ),
       );
   }
   yearSelect.options[0].disabled = true;
   yearSelect.disabled = !byEra.size;
+  const yearList = $('year-list');
+  const yearLabels = new Map(Array.from(yearSelect.options, (o) => [o.value, o.text]));
   function setBackground(value) {
-    if ((doc.background || 'outline') !== value)
-      change(() => {
-        doc.background = value;
-      });
+    if ((doc.background || 'outline') === value) return;
+    change(() => {
+      doc.backgroundYears = comparisonYears(doc, historical.editions);
+      if (doc.backgroundYears.includes(doc.background)) doc.previousBackground = doc.background;
+      doc.background = value;
+      if (value !== 'outline' && !doc.backgroundYears.includes(value)) doc.backgroundYears.push(value);
+    });
   }
+  $('compare-year').onclick = (e) => setBackground(e.currentTarget.dataset.target);
   $('background-outline').onclick = () => setBackground('outline');
-  yearSelect.onchange = () => setBackground(yearSelect.value);
+  yearSelect.onchange = () => {
+    setBackground(yearSelect.value);
+    yearSelect.value = '';
+  };
+  yearList.onclick = (e) => {
+    const button = e.target.closest('[data-year]');
+    if (!button) return;
+    const id = button.dataset.year;
+    const years = comparisonYears(doc, historical.editions);
+    const index = years.indexOf(id);
+    const removing = button.hasAttribute('data-remove-year');
+    if (removing) {
+      change(() => {
+        doc.backgroundYears = years.filter((key) => key !== id);
+        if (doc.background === id) doc.background = 'outline';
+      });
+    } else {
+      setBackground(doc.background === id ? 'outline' : id);
+    }
+    const target = yearList.querySelectorAll(removing ? '[data-remove-year]' : '[data-show-year]');
+    (target[Math.min(index, target.length - 1)] || yearSelect).focus({ preventScroll: true });
+  };
   $('country-borders').onclick = () =>
     change(() => {
       doc.countryBorders = doc.countryBorders === false;
@@ -377,9 +404,39 @@ async function start() {
   $('province-borders').disabled = !boundaries?.provinces;
   function backgroundControls() {
     const { edition } = displayDrawing();
+    $('base-summary').textContent = yearLabels.get(edition) || '백지도';
     $('background-outline').setAttribute('aria-pressed', String(!edition));
-    yearSelect.value = edition || '';
-    yearSelect.classList.toggle('active-edition', !!yearSelect.value);
+    const years = comparisonYears(doc, historical.editions);
+    const compare = $('compare-year');
+    const remembered = years.includes(doc.previousBackground) ? doc.previousBackground : years.at(-1);
+    compare.hidden = !years.length;
+    compare.dataset.target = edition ? 'outline' : remembered || '';
+    compare.textContent = (edition ? '백지도' : yearLabels.get(remembered) || '') + ' 보기';
+    const signature = JSON.stringify([edition, years]);
+    if (yearList.dataset.signature !== signature) {
+      yearList.dataset.signature = signature;
+      yearList.innerHTML = years
+        .map((id) => {
+          const name = esc(yearLabels.get(id));
+          const key = esc(id);
+          return (
+            '<span class="year-chip"><button type="button" data-show-year data-year="' +
+            key +
+            '" aria-pressed="' +
+            (id === edition) +
+            '" aria-label="' +
+            name +
+            ' 지도 표시">' +
+            name +
+            '</button><button type="button" data-remove-year data-year="' +
+            key +
+            '" aria-label="' +
+            name +
+            ' 지도 목록에서 빼기" title="목록에서 빼기">×</button></span>'
+          );
+        })
+        .join('');
+    }
     $('country-borders').setAttribute('aria-pressed', String(doc.countryBorders !== false));
     $('country-borders').disabled = !boundaries?.countries && !edition;
     $('province-borders').setAttribute('aria-pressed', String(!!doc.provinceBorders));
@@ -481,8 +538,8 @@ async function start() {
       id = e.target.value,
       event = historical.events[id];
     change(() => {
-      const { background, countryBorders, provinceBorders } = doc;
-      doc = { ...fresh(), background, countryBorders, provinceBorders };
+      const { background, backgroundYears, previousBackground, countryBorders, provinceBorders } = doc;
+      doc = { ...fresh(), background, backgroundYears, previousBackground, countryBorders, provinceBorders };
       doc.topic = { id: theme.id };
       doc.edition = theme.edition;
       const source = event || theme;
@@ -542,13 +599,24 @@ async function start() {
   };
   const kindNames = { points: '지점', notes: '메모', routes: '경로' },
     kindIcons = { points: 'pin', notes: 'note', routes: 'route' };
+  function removeItem(kind, index) {
+    change(() => {
+      doc[kind].splice(index, 1);
+      if (selected?.kind === kind) {
+        if (selected.index === index) selected = null;
+        else if (selected.index > index) selected.index--;
+      }
+      if (kind === 'routes') activeRoute = routeStart = null;
+    });
+  }
   function list() {
     $('count').textContent = doc.points.length;
     const rows = Object.keys(kindNames).flatMap((kind) =>
       doc[kind].map((item, index) => {
         const active = selected?.kind === kind && selected.index === index;
+        const name = esc(kind === 'routes' ? '경로 ' + (index + 1) : item.name);
         return (
-          '<button class="place" data-kind="' +
+          '<div class="pin-row"><button class="place" data-kind="' +
           kind +
           '" data-index="' +
           index +
@@ -557,9 +625,15 @@ async function start() {
           '"><i>' +
           icon(kindIcons[kind]) +
           '</i>' +
-          esc(kind === 'routes' ? '경로 ' + (index + 1) : item.name) +
-          (active ? '<span class="current">선택됨</span>' : '') +
-          '</button>'
+          '<span>' +
+          name +
+          '</span></button><button type="button" class="remove-item" data-remove-kind="' +
+          kind +
+          '" data-index="' +
+          index +
+          '" aria-label="' +
+          name +
+          ' 지도에서 빼기" title="지도에서 빼기">−</button></div>'
         );
       }),
     );
@@ -627,12 +701,7 @@ async function start() {
         : '<label>' +
           (kind === 'notes' ? '메모 내용' : '지도에 표시할 이름') +
           '<input class="name-input" id="label" maxlength="48"></label>');
-    $('remove').onclick = () =>
-      change(() => {
-        doc[kind].splice(index, 1);
-        selected = null;
-        activeRoute = routeStart = null;
-      });
+    $('remove').onclick = () => removeItem(kind, index);
     if (isRoute) return;
     const input = $('label');
     input.value = item.name;
@@ -676,6 +745,14 @@ async function start() {
     render();
   }
   $('pins').onclick = (e) => {
+    const minus = e.target.closest('[data-remove-kind]');
+    if (minus) {
+      const index = Number(minus.dataset.index);
+      removeItem(minus.dataset.removeKind, index);
+      const remaining = $('pins').querySelectorAll('[data-remove-kind="' + minus.dataset.removeKind + '"]');
+      (remaining[Math.min(index, remaining.length - 1)] || $('browse')).focus({ preventScroll: true });
+      return;
+    }
     const row = e.target.closest('[data-kind]');
     if (row) pick(row.dataset.kind, Number(row.dataset.index), true);
   };
@@ -768,16 +845,21 @@ async function start() {
       if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) return [];
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) return [];
       if (![r.name, r.keywords || ''].some((s) => s.includes(query))) return [];
+      const pickingPlaces = !topic && mode !== 'route';
+      const included = pickingPlaces && doc.points.some((p) => samePlace(p, r));
       const caption = topic
         ? r.places.length + '곳'
         : mode === 'route'
           ? '경로에 추가'
-          : doc.points.some((p) => samePlace(p, r))
-            ? '지도에서 선택'
-            : '추가 ＋';
+          : included
+            ? '✓ 표시 중'
+            : '＋ 추가';
       const button =
         '<button class="choice" data-index="' +
         i +
+        (pickingPlaces
+          ? '" aria-pressed="' + included + '" aria-label="' + esc(r.name + ' 지도에 표시')
+          : '') +
         '"><span>' +
         esc(r.name) +
         '</span><small>' +
@@ -808,7 +890,10 @@ async function start() {
     $('add-sources')
       .querySelectorAll('button')
       .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.source === which)));
-    $('picker-title').textContent = which === 'examples' ? '예시 지도' : '지명 추가';
+    $('picker-title').textContent =
+      which === 'examples' ? '예시 지도' : mode === 'route' ? '경로에 지점 추가' : '지명 선택';
+    $('picker-footer').hidden = which !== 'places' || mode === 'route';
+    $('picker-count').textContent = '표시한 지점 ' + doc.points.length + '곳';
     $('query').placeholder = which === 'places' ? '지명 또는 옛 이름 검색' : '이름 검색';
     $('query').value = '';
     $('era').value = '';
@@ -819,35 +904,44 @@ async function start() {
     }
   }
   $('browse').onclick = () => openPicker('places');
-  $('themes').onclick = () => openPicker('examples');
+  $('themes').onclick = () => {
+    dialog.close();
+    openPicker('examples');
+  };
   $('add-sources').onclick = (e) => {
     const button = e.target.closest('[data-source]');
     if (button) openPicker(button.dataset.source);
   };
   $('query').oninput = pickerList;
   $('era').onchange = pickerList;
-  $('close').onclick = () => routePicker.close();
+  $('close').onclick = $('picker-done').onclick = () => routePicker.close();
   $('choices').onclick = (e) => {
     const b = e.target.closest('[data-index]');
     if (!b) return;
     const i = Number(b.dataset.index);
-    routePicker.close();
     if (pickerMode !== 'places') {
+      routePicker.close();
       applyTheme(themes[i], pickerMode === 'lessons' || b.hasAttribute('data-append'));
       return;
     }
     const p = places[i];
     if (mode === 'route') {
+      routePicker.close();
       routeTo(p.lon, p.lat);
       return;
     }
-    change(() => {
-      let index = doc.points.findIndex((m) => samePlace(m, p));
-      if (index < 0) index = doc.points.push(sheetPoint(p)) - 1;
-      selected = { kind: 'points', index };
-      mode = 'move';
-      fit([p]);
-    });
+    const index = doc.points.findIndex((m) => samePlace(m, p));
+    if (index >= 0) removeItem('points', index);
+    else
+      change(() => {
+        selected = { kind: 'points', index: doc.points.push(sheetPoint(p)) - 1 };
+        mode = 'move';
+        fit([p]);
+      });
+    // Retain the search, scroll and keyboard focus across repeated selections.
+    b.setAttribute('aria-pressed', String(index < 0));
+    b.querySelector('small').textContent = index < 0 ? '✓ 표시 중' : '＋ 추가';
+    $('picker-count').textContent = '표시한 지점 ' + doc.points.length + '곳';
   };
   function applyTheme(theme, append = false) {
     change(() => {
@@ -961,10 +1055,11 @@ async function start() {
     body = $('dialog-body');
   $('close-dialog').onclick = () => dialog.close('cancel');
   function modal(title, html) {
+    $('gallery-tools').hidden = true;
     $('dialog-title').textContent = title;
     body.innerHTML = html;
     dialog.returnValue = '';
-    dialog.showModal();
+    if (!dialog.open) dialog.showModal();
   }
   function ask(title, initial, submit, onAccept) {
     modal(
@@ -989,7 +1084,7 @@ async function start() {
   }
   $('rename').onclick = () =>
     ask('지도 제목 수정', doc.title, '적용', (name) => change(() => (doc.title = name)));
-  $('new').onclick = () =>
+  $('new').onclick = () => {
     ask('새 지도', '제목 없는 지도', '만들기', (name) => {
       setMode('move');
       change(() => {
@@ -999,6 +1094,7 @@ async function start() {
       selected = null;
       render();
     });
+  };
   function save() {
     try {
       const lib = read(libraryKey, {});
@@ -1010,31 +1106,87 @@ async function start() {
     }
   }
   $('save').onclick = save;
-  $('gallery').onclick = () => {
+  function showGallery(removed = false) {
     const maps = Object.values(read(libraryKey, {})).filter(valid);
-    modal(
-      '내 지도',
-      maps.length
-        ? maps
-            .map(
-              (m, i) =>
-                '<button type="button" data-open="' + i + '" class="saved">' + esc(m.title) + '</button>',
-            )
+    const removedCount = maps.filter((m) => m.removedFromGallery).length;
+    const visible = maps.filter((m) => !!m.removedFromGallery === removed);
+    const activeSaved = maps.some((m) => m.id === doc.id && !m.removedFromGallery);
+    const actions =
+      '<div class="gallery-actions">' +
+      (!activeSaved && !removed ? '<button type="button" id="add-current">＋ 현재 지도 추가</button>' : '') +
+      (removed || removedCount
+        ? '<button type="button" id="gallery-switch">' +
+          (removed ? '내 지도로 돌아가기' : '뺀 지도 (' + removedCount + ')') +
+          '</button>'
+        : '') +
+      '</div>';
+    const html =
+      actions +
+      (visible.length
+        ? visible
+            .map((m) => {
+              const name = esc(m.title),
+                id = esc(m.id);
+              return (
+                '<div class="saved-row">' +
+                (removed
+                  ? '<strong>' + name + '</strong>'
+                  : '<button type="button" data-open="' + id + '" class="saved">' + name + '</button>') +
+                '<button type="button" data-shelve="' +
+                id +
+                '" aria-label="' +
+                name +
+                (removed ? ' 내 지도에 복원">복원' : ' 내 지도에서 빼기">빼기') +
+                '</button></div>'
+              );
+            })
             .join('')
-        : '<p>편집한 지도에서 저장을 누르면 여기에 모입니다.</p>',
-    );
-    body.querySelectorAll('[data-open]').forEach(
-      (b) =>
-        (b.onclick = () => {
-          dialog.close();
-          mode = 'move';
-          activeRoute = null;
-          routeStart = null;
-          selected = null;
-          change(() => (doc = openDrawing(structuredClone(maps[Number(b.dataset.open)]))));
-        }),
-    );
-  };
+        : '<p class="empty">' + (removed ? '뺀 지도가 없습니다.' : '저장한 지도가 없습니다.') + '</p>');
+    const title = removed ? '뺀 지도' : '내 지도';
+    modal(title, html);
+    $('gallery-tools').hidden = removed;
+    const switchButton = $('gallery-switch'),
+      addButton = $('add-current');
+    if (switchButton)
+      switchButton.onclick = () => {
+        showGallery(!removed);
+        ($('gallery-switch') || $('close-dialog')).focus();
+      };
+    if (addButton)
+      addButton.onclick = () => {
+        save();
+        showGallery();
+        (body.querySelector('[data-open]') || $('add-current'))?.focus();
+      };
+    body.querySelectorAll('[data-shelve]').forEach((button, index) => {
+      button.onclick = () => {
+        try {
+          const lib = read(libraryKey, {});
+          if (lib[button.dataset.shelve]) {
+            if (removed) delete lib[button.dataset.shelve].removedFromGallery;
+            else lib[button.dataset.shelve].removedFromGallery = true;
+            localStorage.setItem(libraryKey, JSON.stringify(lib));
+          }
+        } catch {
+          button.textContent = '저장 실패 · 다시 시도';
+          return;
+        }
+        showGallery(removed);
+        const rows = body.querySelectorAll('[data-shelve]');
+        (rows[Math.min(index, rows.length - 1)] || $('gallery-switch') || $('close-dialog')).focus();
+      };
+    });
+    body.querySelectorAll('[data-open]').forEach((button) => {
+      button.onclick = () => {
+        dialog.close();
+        mode = 'move';
+        activeRoute = routeStart = selected = null;
+        const map = maps.find((m) => m.id === button.dataset.open);
+        change(() => (doc = openDrawing(structuredClone(map))));
+      };
+    });
+  }
+  $('gallery').onclick = () => showGallery();
   let drag = null;
   function locationOf(e) {
     const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
@@ -1155,6 +1307,7 @@ async function start() {
     if (
       dialog.open ||
       routePicker.open ||
+      lessonPicker.open ||
       e.target.matches('input,select,textarea') ||
       !(e.ctrlKey || e.metaKey)
     )

@@ -64,6 +64,11 @@ export function definitions(bases) {
     '</defs>'
   );
 }
+export function comparisonYears(doc, editions) {
+  // Older saved maps only record the active background.
+  const saved = Array.isArray(doc.backgroundYears) ? doc.backgroundYears : [];
+  return [...new Set([...saved, doc.background])].filter((id) => editions[id]?.paths);
+}
 export function historicalDefinitions(history, edition, keys, doc = {}) {
   if (!history) return '';
   const base = history.editions[edition];

@@ -1081,3 +1081,186 @@ dialog::backdrop {
     min-height: 36px;
   }
 }
+
+#year-list,
+.year-chip,
+.pin-row,
+.saved-row,
+.gallery-actions,
+#picker-footer {
+  display: flex;
+  align-items: center;
+}
+#year-list,
+.gallery-actions {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#year-list:empty,
+.gallery-actions:empty,
+#picker-footer[hidden] {
+  display: none;
+}
+#year-list {
+  max-height: 100px;
+  overflow: auto;
+  padding: 2px;
+  max-width: 100%;
+}
+.year-chip button:first-child {
+  border-radius: 5px 0 0 5px;
+}
+.year-chip button:last-child {
+  border-radius: 0 5px 5px 0;
+  border-left: 0;
+  min-width: 32px;
+}
+.display-group button[aria-pressed='true']::before {
+  content: '✓';
+  margin-right: 4px;
+}
+.pin-row,
+.saved-row {
+  gap: 4px;
+}
+.pin-row .place,
+.saved-row > :first-child {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.pin-row .remove-item {
+  color: var(--muted);
+  border: 0;
+  background: transparent;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  font-size: 19px;
+}
+.pin-row .remove-item:hover,
+.year-chip button:last-child:hover {
+  background: #faeee5;
+  color: #873c20;
+}
+.choice[aria-pressed='true'] {
+  background: #e4eff1;
+}
+.choice[aria-pressed='true'] small {
+  color: var(--navy);
+  font-weight: 700;
+}
+#picker-footer {
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 8px;
+}
+#picker-count {
+  color: var(--muted);
+  font-size: 14px;
+}
+#picker-done {
+  min-width: 70px;
+}
+.gallery-actions:not(:empty) {
+  margin-bottom: 10px;
+}
+.saved-row > button:last-child {
+  flex: none;
+}
+
+#lesson-picker {
+  width: min(650px, 94vw);
+  padding: 20px;
+}
+#lesson-picker .historic-events {
+  margin: 16px 0 0;
+}
+#lesson-picker #categories {
+  max-height: min(38dvh, 320px);
+}
+#display-trigger {
+  anchor-name: --display-trigger;
+}
+#base-summary {
+  border-left: 1px solid var(--line);
+  padding-left: 7px;
+  color: var(--muted);
+  font-weight: 400;
+}
+#compare-year {
+  background: transparent;
+  border: 0;
+  padding-inline: 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#display-options {
+  position: fixed;
+  inset: min(18dvh, 125px) 12px auto auto;
+  margin: 0;
+  width: min(375px, calc(100vw - 20px));
+  max-height: 70dvh;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 12px 42px #18364330;
+}
+#display-options:not(:popover-open) {
+  display: none;
+}
+#display-options:popover-open {
+  display: grid;
+  gap: 12px;
+}
+@supports (top: anchor(bottom)) {
+  #display-options {
+    position-anchor: --display-trigger;
+    top: anchor(bottom);
+    right: clamp(10px, anchor(right), max(10px, calc(100vw - 385px)));
+    margin-top: 5px;
+    position-try-fallbacks: flip-block;
+  }
+}
+#display-options .dialog-head {
+  margin: 0;
+}
+#display-options .dialog-head h2 {
+  font-size: 18px;
+}
+#display-options .display-group {
+  gap: 5px;
+}
+#display-options .display-group strong {
+  flex-basis: 100%;
+}
+#display-options .historic-layers {
+  padding: 10px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+#display-options .historic-layers h3 {
+  margin: 0;
+}
+#gallery-tools {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pin-row:not(:hover):not(:focus-within) .remove-item {
+    opacity: 0;
+  }
+}
+@media (max-width: 680px) {
+  .doc-actions {
+    flex-wrap: wrap;
+  }
+  #lesson-picker {
+    padding: 14px;
+  }
+}

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>역사 지도 제작실 · Chronicle</title>
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=backgrounds-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=map-choices-1" />
   </head>
   <body>
     <header class="top">
@@ -18,28 +18,12 @@
         ><button id="export" class="dark"><i data-icon="download"></i>지도 내보내기</button>
       </nav>
     </header>
-    <section class="lesson-selector" aria-label="수업 지도 선택">
-      <div class="selector-row">
-        <h2 id="package-label">패키지</h2>
-        <div id="packages" class="selector-options" role="group" aria-labelledby="package-label"></div>
-      </div>
-      <div class="selector-row">
-        <h2 id="category-label">카테고리</h2>
-        <div id="categories" class="selector-options" role="group" aria-labelledby="category-label">
-          <span role="status">시트에서 불러오는 중…</span>
-        </div>
-      </div>
-      <p id="launch-notice" role="status" hidden></p>
-    </section>
     <main>
       <aside class="side" aria-label="지도 구성">
         <div class="side-head">
-          <h2>지도 구성</h2>
-          <button class="add" id="browse"><i data-icon="plus"></i>지명 추가</button>
+          <h2>지도 항목</h2>
+          <button class="add" id="browse"><i data-icon="pin"></i>지명 선택</button>
         </div>
-        <section class="historic-layers" id="historic-layers" hidden>
-          <h3>지역·경계</h3><div id="layer-list"></div>
-        </section>
         <section class="pins">
           <h3>표시한 지점 <span id="count"></span></h3>
           <div id="pins"></div>
@@ -60,33 +44,21 @@
             </h2>
           </div>
           <div class="doc-actions">
-            <button id="new">새 지도</button><button id="themes"><i data-icon="layers"></i>예시 지도</button>
+            <button id="choose-lesson" type="button" aria-haspopup="dialog">수업 선택</button>
+            <button id="display-trigger" type="button" popovertarget="display-options" aria-label="지도 구성">
+              <i data-icon="layers"></i>지도 구성 <span id="base-summary">백지도</span>
+            </button>
+            <button id="compare-year" type="button" hidden></button>
           </div>
         </div>
-        <label class="historic-events" id="historic-events" hidden>
-          <span>사건 지도</span><select id="event-map"></select>
-        </label>
-        <div class="map-display" aria-label="지도 표시 설정">
-          <div class="display-group" role="group" aria-label="배경지도">
-            <strong>배경</strong>
-            <button id="background-outline" type="button">백지도</button>
-            <select id="background-year" aria-label="시대별 배경지도"><option value="">시대별 지도</option></select>
-          </div>
-          <div class="display-group" role="group" aria-label="경계 표시">
-            <strong>경계</strong>
-            <button id="country-borders" type="button">국경</button>
-            <button id="province-borders" type="button">현대 시·도·주</button>
-          </div>
-        </div>
+        <p id="launch-notice" role="status" hidden></p>
         <div class="stage">
           <div class="stage-tools">
             <div class="modes" id="tools" role="group" aria-label="지도 도구"></div>
             <div class="end-tools">
-              <button id="undo" title="마지막 편집 되돌리기" disabled><i data-icon="undo"></i>되돌리기</button
-              ><button id="redo" aria-label="다시 실행" title="다시 실행"><i data-icon="redo"></i></button
-              ><button id="labels" aria-pressed="true" title="지도 위 지명 표시">
-                <span aria-hidden="true">Aa</span> 지명
-              </button>
+              <button id="undo" aria-label="되돌리기" title="마지막 편집 되돌리기" disabled>
+                <i data-icon="undo"></i></button
+              ><button id="redo" aria-label="다시 실행" title="다시 실행"><i data-icon="redo"></i></button>
             </div>
           </div>
           <div class="paper-desk">
@@ -113,6 +85,64 @@
         <div class="status" role="status" id="status">지도를 불러오는 중입니다.</div>
       </section>
     </main>
+    <dialog id="lesson-picker" class="lesson-selector" aria-labelledby="lesson-title">
+      <div class="dialog-head">
+        <h2 id="lesson-title">수업 선택</h2>
+        <button type="button" data-close-lesson aria-label="닫기">×</button>
+      </div>
+      <div class="selector-row">
+        <h2 id="package-label">패키지</h2>
+        <div id="packages" class="selector-options" role="group" aria-labelledby="package-label"></div>
+      </div>
+      <div class="selector-row">
+        <h2 id="category-label">카테고리</h2>
+        <div id="categories" class="selector-options" role="group" aria-labelledby="category-label">
+          <span role="status">시트에서 불러오는 중…</span>
+        </div>
+      </div>
+      <label class="historic-events" id="historic-events" hidden>
+        <span>사건 지도</span
+        ><select id="event-map"></select>
+      </label>
+      <div class="actions"><button type="button" class="primary" data-close-lesson>지도 보기</button></div>
+    </dialog>
+    <div
+      class="map-display"
+      popover="auto"
+      id="display-options"
+      role="dialog"
+      aria-labelledby="display-title"
+    >
+      <div class="dialog-head">
+        <h2 id="display-title">지도 구성</h2>
+        <button type="button" popovertarget="display-options" popovertargetaction="hide" aria-label="닫기">
+          ×
+        </button>
+      </div>
+      <div class="display-group" role="group" aria-label="배경지도">
+        <strong>배경지도</strong>
+        <button id="background-outline" type="button">백지도</button>
+        <div id="year-list" aria-label="추가한 시대별 지도" role="group"></div>
+        <select id="background-year" aria-label="시대별 지도 추가">
+          <option value="">＋ 시대별 지도 추가</option>
+        </select>
+      </div>
+      <div class="display-group" role="group" aria-label="경계 표시">
+        <strong>경계</strong>
+        <button id="country-borders" type="button">국경</button>
+        <button id="province-borders" type="button">현대 시·도·주</button>
+      </div>
+      <div class="display-group" role="group" aria-label="지명 표시">
+        <strong>표기</strong>
+        <button id="labels" aria-pressed="true" title="지도 위 지명 표시">
+          <span aria-hidden="true">Aa</span> 지명
+        </button>
+      </div>
+      <section class="historic-layers" id="historic-layers" hidden>
+        <h3>지역·경계</h3>
+        <div id="layer-list"></div>
+      </section>
+    </div>
     <dialog id="picker" aria-labelledby="picker-title">
       <div class="dialog-head">
         <h2 id="picker-title"></h2>
@@ -132,6 +162,10 @@
         </select></label
       >
       <div id="choices"></div>
+      <div id="picker-footer" hidden>
+        <span id="picker-count" role="status"></span
+        ><button type="button" id="picker-done" class="primary">완료</button>
+      </div>
     </dialog>
     <dialog id="dialog">
       <form method="dialog">
@@ -139,11 +173,14 @@
           <h2 id="dialog-title"></h2>
           <button type="button" id="close-dialog" aria-label="닫기">×</button>
         </div>
+        <div id="gallery-tools" hidden>
+          <button type="button" id="new">새 지도</button><button type="button" id="themes">예시 지도</button>
+        </div>
         <div id="dialog-body"></div>
       </form>
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=outline-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=map-choices-1"></script>
   </body>
 </html>

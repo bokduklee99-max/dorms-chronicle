@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { camera, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+import { camera, comparisonYears, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
@@ -120,5 +120,16 @@ test('the packaged provincial lines cross the shared borders of neighboring East
       return Math.hypot(lon - x1 - t * dx, y - y1 - t * dy) < 0.015;
     }));
     assert.ok(near, name);
+  }
+});
+
+
+test('switching to an outline retains comparison years and older saved maps recover their active year', () => {
+  const editions = { world_1945: { paths: ['M1,1Z'] }, world_1980: { paths: ['M2,2Z'] } };
+  assert.deepEqual(comparisonYears({}, editions), []);
+  assert.deepEqual(comparisonYears({ background: 'world_1945' }, editions), ['world_1945']);
+  const backgroundYears = ['world_1945', 'missing', 'world_1980', 'world_1945'];
+  for (const background of ['outline', 'world_1945']) {
+    assert.deepEqual(comparisonYears({ background, backgroundYears }, editions), ['world_1945', 'world_1980']);
   }
 });

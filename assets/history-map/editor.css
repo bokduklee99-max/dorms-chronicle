@@ -1391,7 +1391,7 @@ button:is(.dark, .add):not(:disabled):hover {
 #place-catalog.show-results #choices { display: block; }
 #place-catalog.show-results #choices.by-kind {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(195px, 31%)), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px 10px;
   max-height: min(49dvh, 405px);
   padding: 12px;
@@ -1409,26 +1409,20 @@ button:is(.dark, .add):not(:disabled):hover {
   border-left: 2px solid var(--line);
 }
 .lesson-add { grid-column: 1 / -1; justify-self: start; margin-block: 4px; }
-.place-kind { min-width: 0; }
-.place-kind h4 {
-  margin: 0 0 4px;
-  padding: 0 6px 5px;
+.geometry-column { min-width: 0; }
+.geometry-column h4 {
+  margin: 0;
+  padding: 2px 6px 7px;
   border-bottom: 1px solid var(--line);
   color: var(--chronicle-green);
-  font-size: 14px;
+  font-size: 16px;
 }
-.kind-places {
-  max-height: clamp(90px, 16dvh, 144px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
+.place-kind h5 { margin: 9px 6px 3px; color: var(--muted); font-size: 13px; }
+.kind-places { max-height: min(39dvh, 335px); overflow-y: auto; scrollbar-width: thin; }
 #place-catalog .kind-places .choice { padding-inline: 6px; overflow-wrap: anywhere; }
 @media (max-width: 600px) {
-  #place-catalog.show-results #choices.by-kind {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-    gap: 12px 6px;
-    padding: 8px;
-  }
+  #place-catalog.show-results #choices.by-kind { gap: 4px; padding: 6px; }
+  #place-catalog .kind-places .choice { align-items: flex-start; flex-direction: column; gap: 1px; }
 }
 #place-catalog .choice { min-height: 36px; margin: 0; }
 #place-catalog .choice small { flex: none; }

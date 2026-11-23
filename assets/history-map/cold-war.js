@@ -78,6 +78,39 @@ async function readLayer(shape, readOnce, svgPaths) {
   throw Error('등록된 도형 파일 없음');
 }
 
+function svgPathReader() {
+  const xml = new Map();
+  function svgPaths(path) {
+    if (!xml.has(path))
+      xml.set(
+        path,
+        fetch('/' + path).then(async (r) => {
+          if (!r.ok) throw Error(path);
+          const svg = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+          return [...svg.querySelectorAll('path')].map((p) => p.getAttribute('d'));
+        }),
+      );
+    return xml.get(path);
+  }
+  return svgPaths;
+}
+
+export async function loadCatalogLayers(catalog, shapes, layers, readOnce) {
+  const svgPaths = svgPathReader();
+  const byKey = new Map(shapes.map((shape) => [shape.지도참조키, shape]));
+  await Promise.all(catalog.map(async (entry) => {
+    const { key, name } = entry;
+    if (layers[key]?.d || layers[key]?.original) return;
+    const shape = byKey.get(key);
+    if (!shape) return;
+    try {
+      layers[key] = { name, note: shape.기준시점 || '', ...(await readLayer(shape, readOnce, svgPaths)) };
+    } catch {
+      layers[key] = { name, missing: true };
+    }
+  }));
+}
+
 export function historyCamera(bounds) {
   const [west, south, east, north] = bounds;
   const base = west >= 122 && east <= 134 && south >= 30 && north <= 45 ? 'korea' : 'globe';
@@ -128,19 +161,7 @@ export async function coldWarLibrary(tables, library, readOnce) {
     e.places = unique(e.places);
     e.layers = unique(e.layers);
   }
-  const xml = new Map();
-  function svgPaths(path) {
-    if (!xml.has(path))
-      xml.set(
-        path,
-        fetch('/' + path).then(async (r) => {
-          if (!r.ok) throw Error(path);
-          const svg = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
-          return [...svg.querySelectorAll('path')].map((p) => p.getAttribute('d'));
-        }),
-      );
-    return xml.get(path);
-  }
+  const svgPaths = svgPathReader();
   const backgrounds = new Set();
   for (const t of library.themes.filter((t) => t.packageId === 'cold-war')) {
     const category = categories.get(t.id),

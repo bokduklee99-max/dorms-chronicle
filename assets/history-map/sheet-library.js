@@ -1,4 +1,4 @@
-import { coldWarLibrary, historyTables } from './cold-war.js';
+import { coldWarLibrary, historyTables, loadCatalogLayers } from './cold-war.js?v=shape-catalog-1';
 import { loadShape, readGeometryFile } from '../../event-map-links.js?v=point-files-1';
 
 const required = {
@@ -15,13 +15,48 @@ function coordinate(value, limit) {
   return Number.isFinite(n) && Math.abs(n) <= limit ? n : null;
 }
 
+const defaultKindLabels = {
+  point: '지점·도시', line: '경계·선', area: '권역·지역',
+  sovereignty: '주권·국경', occupation: '점령·전선', sphere: '세력권·진영',
+};
+
+function kindLabel(tables, tab, column, value) {
+  return tables.유형설명?.find((row) => row.시트명 === tab && row.컬럼명 === column && row.유형값 === value)?.한글명 ||
+    defaultKindLabels[value] || value;
+}
+
+export function shapeCatalog(tables) {
+  const shapes = new Map(tables.지도도형.map((shape) => [shape.지도참조키, shape]));
+  const catalog = new Map();
+  function register(key, type, name, kind, keywords) {
+    const entry = catalog.get(key) || { key, type, name, kind, keywords: '' };
+    entry.keywords = [entry.keywords, keywords].filter(Boolean).join(' ');
+    catalog.set(key, entry);
+    return entry;
+  }
+  for (const row of tables.공간) {
+    const type = row.공간유형, key = row.지도참조키;
+    if (!key || !['line', 'area'].includes(type) || (shapes.has(key) && shapes.get(key).도형유형 !== type)) continue;
+    register(key, type, row.공간명, kindLabel(tables, '공간', '공간유형', type), [row.시대별칭, row.설명].join(' '));
+  }
+  for (const row of tables.영토변화 || []) {
+    const key = row.지도참조키, shape = shapes.get(key);
+    if (!['line', 'area'].includes(shape?.도형유형) || !row.영토유형) continue;
+    const kind = kindLabel(tables, '영토변화', '영토유형', row.영토유형);
+    const entry = register(key, shape.도형유형, shape.기준시점 || key, kind, row.설명);
+    entry.kind = kind;
+  }
+  return [...catalog.values()];
+}
+
 export function sheetLibrary(tables, presets) {
   const shapes = new Map(tables.지도도형.filter((s) => s.지도참조키).map((s) => [s.지도참조키, s]));
   const byId = new Map();
   for (const row of tables.공간) {
     const id = row.공간ID,
       shape = shapes.get(row.지도참조키);
-    if (!id || !row.공간명 || !shape) continue;
+    if (!id || !row.공간명 || !shape || (row.공간유형 && row.공간유형 !== 'point') ||
+        (shape.도형유형 && shape.도형유형 !== 'point')) continue;
     const lon = coordinate(shape.경도, 180),
       lat = coordinate(shape.위도, 85.05112878);
     if (lon === null || lat === null) continue;
@@ -30,9 +65,9 @@ export function sheetLibrary(tables, presets) {
     const classification = description.split(' (history-map-maker')[0].split(' · ');
     const eras = presets.eras.filter((era) => classification.length === 2 && classification[0].includes(era));
     const kind =
-      classification.length === 2
+      description.includes(' (history-map-maker') && classification.length === 2
         ? classification[1]
-        : { point: '지점', area: '지역', line: '선' }[row.공간유형] || row.공간유형 || '지점';
+        : kindLabel(tables, '공간', '공간유형', 'point');
     byId.set(id, {
       id,
       name: row.공간명,
@@ -69,7 +104,7 @@ export function sheetLibrary(tables, presets) {
   const packages = tables.패키지
     .filter((row) => row.패키지ID && row.패키지명)
     .map((row) => ({ id: row.패키지ID, name: row.패키지명 }));
-  return { packages, places: [...byId.values()], themes, eras: presets.eras };
+  return { shapes: shapeCatalog(tables), packages, places: [...byId.values()], themes, eras: presets.eras };
 }
 
 export async function loadSheetLibrary(config, presets, readRecords, storage) {
@@ -85,10 +120,11 @@ export async function loadSheetLibrary(config, presets, readRecords, storage) {
   try {
     let historyError = false;
     const entries = await Promise.all(
-      Object.entries({ ...required, ...historyTables }).map(async ([name, fields]) => {
+      Object.entries({ ...required, ...historyTables, 유형설명: ['시트명', '컬럼명', '유형값', '한글명'] }).map(async ([name, fields]) => {
         try {
           return [name, await readRecords(config, name, fields)];
         } catch (error) {
+          if (name === '유형설명') return [name, []];
           if (!(name in historyTables) || saved?.history) throw error;
           historyError = true;
           return [name, []];
@@ -142,6 +178,10 @@ export async function loadSheetLibrary(config, presets, readRecords, storage) {
       }
       if (partial) historyError = true;
     }
+    if (library.shapes.length) {
+      library.history ??= { events: {}, editions: {}, layers: {} };
+      await loadCatalogLayers(library.shapes, tables.지도도형, library.history.layers, readOnce);
+    }
     if (unresolved && !library.places.length) throw Error('지점 도형을 불러오지 못했습니다.');
     if (!unresolved && !historyError) {
       try {
@@ -158,7 +198,23 @@ export async function loadSheetLibrary(config, presets, readRecords, storage) {
       recoveredEmptyLibrary: saved?.places.length === 0 && library.places.length > 0,
     };
   } catch {
-    if (saved?.places.length) return { ...saved, source: 'cached' };
+    if (saved?.places.length || saved?.shapes?.length) {
+      // The first cache format stored layer drawings without their sheet types.
+      if (!saved.shapes && config.id === '1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0') {
+        try {
+          const response = await fetch(new URL('./cached-shape-schema.json', import.meta.url));
+          if (response.ok) {
+            const snapshot = await response.json();
+            saved.shapes = snapshot.entries;
+            saved.history ??= { events: {}, editions: {}, layers: {} };
+            await loadCatalogLayers(saved.shapes, snapshot.files, saved.history.layers, readGeometryFile);
+          }
+        } catch {
+          // A point-only cache is still usable offline.
+        }
+      }
+      return { ...saved, source: 'cached' };
+    }
     return { places: [], themes: [], eras: [], source: 'unavailable' };
   }
 }

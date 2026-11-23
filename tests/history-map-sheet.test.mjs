@@ -160,3 +160,25 @@ test('a missing point file cannot overwrite a good cached library with zero plac
   assert.equal(library.source, 'cached');
   assert.deepEqual(library.places, good.places);
 });
+
+test('catalog uses sheet geometry and subtype labels even when a line has a reference coordinate', () => {
+  const data = {
+    ...tables,
+    공간: [...tables.공간,
+      { 공간ID: 'border', 공간명: '경계', 공간유형: 'line', 지도참조키: 'line-key' },
+      { 공간ID: 'region', 공간명: '지역', 공간유형: 'area', 지도참조키: 'area-key' }],
+    지도도형: [...tables.지도도형,
+      { 지도참조키: 'line-key', 도형유형: 'line', 경도: '0', 위도: '0' },
+      { 지도참조키: 'area-key', 도형유형: 'area' },
+      { 지도참조키: 'front-key', 도형유형: 'line', 기준시점: '전선' }],
+    영토변화: [
+      { 지도참조키: 'area-key', 영토유형: 'sovereignty' },
+      { 지도참조키: 'front-key', 영토유형: 'occupation' }],
+    유형설명: [{ 시트명: '영토변화', 컬럼명: '영토유형', 유형값: 'occupation', 한글명: '전선 유형' }],
+  };
+  const { places, shapes } = sheetLibrary(data, presets);
+  assert.deepEqual(places.map(p => p.id), ['a', 'b']);
+  assert.deepEqual(shapes.map(s => [s.name, s.type, s.kind]), [
+    ['경계', 'line', '경계·선'], ['지역', 'area', '주권·국경'], ['전선', 'line', '전선 유형'],
+  ]);
+});

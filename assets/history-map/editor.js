@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=backgrounds-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=shape-catalog-1';
 import {
   W,
   mapHeight,
@@ -900,6 +900,23 @@ async function start() {
       (routing ? '' : ' aria-pressed="' + visible + '" aria-label="' + esc(place.name + ' 지도에 표시') + '"') +
       '><span>' + esc(place.name) + '</span><small>' + caption + '</small></button>';
   }
+  function catalogColumn(type, label, groups) {
+    const sections = [...groups].map(([kind, buttons]) =>
+      '<section class="place-kind"><h5>' + esc(kind) + '</h5>' + buttons.join('') + '</section>');
+    return '<section class="geometry-column" aria-label="' + label + '"><h4>' + label + '</h4>' +
+      '<div class="kind-places" data-kind="' + type + '">' +
+      (sections.join('') || '<p class="empty">결과 없음</p>') + '</div></section>';
+  }
+  function shapeChoice(entry) {
+    const layer = historical.layers[entry.key];
+    const available = layer?.d || layer?.original;
+    const visible = doc.layerKeys?.includes(entry.key) && !doc.hiddenLayers?.includes(entry.key);
+    const key = esc(entry.key);
+    const caption = !available ? '도형 미등록' : visible ? '✓ 표시 중' : layer.original ? '원도 표시' : '＋ 추가';
+    return '<button class="choice" id="choice-shape-' + key + '" data-shape="' + key +
+      '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') + '><span>' +
+      esc(entry.name) + '</span><small>' + caption + '</small></button>';
+  }
   function lessonChoice(theme, index) {
     const open = expandedLesson === index;
     const panel = 'lesson-places-' + index;
@@ -916,16 +933,19 @@ async function start() {
       rows = topic ? themes : places;
     const query = $('query').value.trim(),
       era = $('era').value;
-    const groups = new Map();
+    const groups = { point: new Map(), line: new Map(), area: new Map() };
+    function addResult(type, kind, button) {
+      if (!groups[type].has(kind)) groups[type].set(kind, []);
+      groups[type].get(kind).push(button);
+    }
     const results = [];
     for (const [i, r] of rows.entries()) {
       if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) continue;
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) continue;
-      if (![r.name, r.keywords || ''].some((s) => s.includes(query))) continue;
+      if (![r.name, r.keywords || '', r.kind || ''].some((s) => s.includes(query))) continue;
       if (!topic) {
-        const kind = r.kind?.trim() || '지점';
-        if (!groups.has(kind)) groups.set(kind, []);
-        groups.get(kind).push(placeChoice(r));
+        const kind = !r.kind || r.kind === '지점' ? '지점·도시' : r.kind;
+        addResult('point', kind, placeChoice(r));
         continue;
       }
       if (pickerMode === 'lessons') {
@@ -951,13 +971,13 @@ async function start() {
           ? '지점이 연결된 수업 주제가 없습니다.'
           : '검색 결과가 없습니다.';
     const choices = $('choices');
-    // Keep each type in the same relative position as filters narrow the list.
-    for (const kind of placeKinds) {
-      const buttons = groups.get(kind);
-      if (!buttons) continue;
-      const label = esc(kind);
-      results.push('<section class="place-kind" aria-label="' + label + '"><h4>' + label +
-        '</h4><div class="kind-places" data-kind="' + label + '">' + buttons.join('') + '</div></section>');
+    if (!topic && library.source !== 'unavailable') {
+      for (const entry of library.shapes || []) {
+        if (![entry.name, entry.keywords, entry.kind].some((value) => value?.includes(query))) continue;
+        addResult(entry.type, entry.kind, shapeChoice(entry));
+      }
+      results.push(catalogColumn('point', '점', groups.point), catalogColumn('line', '선', groups.line),
+        catalogColumn('area', '면', groups.area));
     }
     const html = results.join('') || '<p class="empty">' + empty + '</p>';
     if (html === lastChoices) return;
@@ -972,7 +992,7 @@ async function start() {
       choices.scrollTop = 0;
     }
     lastFilter = filter;
-    choices.classList.toggle('by-kind', groups.size > 0);
+    choices.classList.toggle('by-kind', !topic && library.source !== 'unavailable');
     choices.innerHTML = html;
     for (const list of choices.querySelectorAll('.kind-places')) list.scrollTop = scroll.get(list.dataset.kind) || 0;
     if (focusId) $(focusId)?.focus({ preventScroll: true });
@@ -991,7 +1011,6 @@ async function start() {
     pickerList();
     $('choices').scrollTop = 0;
   }
-  const placeKinds = [...new Set(places.map((place) => place.kind?.trim() || '지점'))];
   let lastChoices, lastFilter, previousCatalog, expandedLesson = null;
   const catalog = $('place-catalog');
   function openCatalog() {
@@ -1018,7 +1037,7 @@ async function start() {
     } else if (event.key === 'ArrowDown' && event.target === $('query')) {
       event.preventDefault();
       openCatalog();
-      $('choices').querySelector('button')?.focus();
+      $('choices').querySelector('button:not(:disabled)')?.focus();
     }
   });
   $('themes').onclick = () => {
@@ -1048,6 +1067,21 @@ async function start() {
   $('choices').onclick = (e) => {
     const b = e.target.closest('button');
     if (!b) return;
+    if (b.hasAttribute('data-shape')) {
+      const key = b.dataset.shape;
+      const layer = historical.layers[key];
+      if (!layer?.d && !layer?.original) return;
+      change(() => {
+        const visible = doc.layerKeys?.includes(key) && !doc.hiddenLayers?.includes(key);
+        doc.layerKeys = (doc.layerKeys || []).filter((k) => k !== key);
+        doc.hiddenLayers = (doc.hiddenLayers || []).filter((k) => k !== key);
+        if (!visible) {
+          doc.layerKeys.push(key);
+          if (layer.bounds) doc.view = historyCamera(layer.bounds);
+        }
+      });
+      return;
+    }
     if (b.hasAttribute('data-lesson')) {
       const index = Number(b.dataset.lesson);
       expandedLesson = expandedLesson === index ? null : index;
@@ -1780,6 +1814,7 @@ async function start() {
   };
   showSelectors();
   setPickerMode('places');
+  if (catalog.contains(document.activeElement)) openCatalog();
   render();
   if (!editions || !boundaries) {
     const missing = [!editions && '시대별 배경', !boundaries && '현대 경계'].filter(Boolean).join('·');

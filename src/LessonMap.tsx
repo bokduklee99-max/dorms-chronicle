@@ -1,5 +1,5 @@
 import {useEffect,useId,useMemo,useRef,useState,type ReactNode} from 'react';
-import {mapAsset} from '../event-map-links.js';
+import {loadShape,mapAsset} from '../event-map-links.js';
 import {registeredSvgFrame,renderSpaceMap} from '../assets/space-preview-map.js';
 import {geographicSvgLines,mapCamera,projectedPath} from './map-view.js';
 import {historicalMapPath,readBasemap} from './map-layers';
@@ -26,27 +26,28 @@ export function useLessonMaps(){
 }
 export type LessonMaps = ReturnType<typeof useLessonMaps>;
 
-function categoryExtent(spaces:WorkspaceSpace[],maps:LessonMaps){
+type CategoryExtent = {box:number[];points:{name:string;x:number;y:number}[]};
+
+async function loadCategoryExtent(spaces:WorkspaceSpace[],shapes?:Shapes|null):Promise<CategoryExtent|undefined>{
+ if(!shapes||!spaces.length)return;
  const bounds:number[][]=[];
  const points:{name:string;x:number;y:number}[]=[];
- for(const space of spaces){
-  const shape=maps.shapes?.get(space.mapKey);
-  if(!shape)continue;
+ await Promise.all(spaces.map(async space=>{
+  const shape=shapes.get(space.mapKey);
+  if(!shape)return;
   try{
-   const url=shape.지도데이터URL;
    if(shape.도형유형==='point'){
-    const [x,lat]=shape.경도&&shape.위도
-     ?[Number(shape.경도),Number(shape.위도)]
-     :JSON.parse(decodeURIComponent(url.slice(url.indexOf(',')+1))).coordinates;
-    if(!Number.isFinite(x)||!Number.isFinite(lat))continue;
+    const geometry=await loadShape(shape);
+    const [x,lat]=geometry.coordinates as [number,number];
+    if(!Number.isFinite(x)||!Number.isFinite(lat))return;
     points.push({name:space.name,x,y:-lat});
     bounds.push([x-8,-lat-5,16,10]);
    }else if(shape.도형유형==='svg-area'||(shape.도형유형==='area'&&shape.데이터형식==='svg_legacy')){
-    const {box,geographic}=registeredSvgFrame(url);
+    const {box,geographic}=registeredSvgFrame(shape.지도데이터URL);
     if(geographic)bounds.push(box);
    }
-  }catch{continue;}
- }
+  }catch{/* Skip shapes that cannot be projected into the category frame. */}
+ }));
  if(!bounds.length)return;
  const west=Math.min(...bounds.map(b=>b[0])), east=Math.max(...bounds.map(b=>b[0]+b[2]));
  const north=Math.min(...bounds.map(b=>b[1])), south=Math.max(...bounds.map(b=>b[1]+b[3]));
@@ -63,7 +64,13 @@ export function CategoryMap({meta,maps,box,focus,label,children}:{meta?:Category
   const legacyNames=meta?.places?.split(',').map(name=>name.trim())??[];
   return (maps.geography?.spaces??[]).filter(space=>meta?.spaceIds?meta.spaceIds.includes(space.id):legacyNames.includes(space.name));
  },[meta,maps.geography]);
- const extent=useMemo(()=>categoryExtent(spaces,maps),[spaces,maps.shapes]);
+ const [extent,setExtent]=useState<CategoryExtent>();
+ useEffect(()=>{
+  let active=true;
+  setExtent(undefined);
+  void loadCategoryExtent(spaces,maps.shapes).then(v=>{if(active)setExtent(v);});
+  return ()=>{active=false;};
+ },[spaces,maps.shapes]);
  const places=spaces.map(space=>space.name).join(', ')||meta?.places;
  const path=mapAsset(shape?.파일경로??'','svg');
  const view=meta?.viewId&&maps.views?.get(meta.viewId);

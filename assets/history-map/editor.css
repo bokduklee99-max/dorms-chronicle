@@ -966,3 +966,69 @@ dialog::backdrop {
     margin-left: auto;
   }
 }
+.historic-events {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.historic-events select {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: white;
+  font: inherit;
+}
+.historic-events span {
+  flex: none;
+}
+.historic-layers {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 16px;
+}
+.historic-layers h3 {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+#layer-list {
+  display: grid;
+  max-height: 145px;
+  overflow: auto;
+  gap: 3px;
+  font-size: 14px;
+}
+#layer-list label {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 4px 0;
+  cursor: pointer;
+}
+#layer-list input {
+  accent-color: var(--navy);
+}
+#layer-list button {
+  justify-self: start;
+  text-align: left;
+}
+.original-shape {
+  width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  background: #eef1f2;
+}
+@media (max-width: 680px) {
+  .historic-layers {
+    grid-column: 1/-1;
+  }
+  .historic-events {
+    margin: 6px 2px;
+  }
+}

@@ -1,4 +1,5 @@
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=package-bar-1';
+import { historyCamera } from './cold-war.js';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=cold-war-1';
 import {
   W,
   mapHeight,
@@ -8,8 +9,9 @@ import {
   ll as invert,
   esc,
   definitions,
+  historicalDefinitions,
   draw,
-} from './cartography.js';
+} from './cartography.js?v=cold-war-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -69,7 +71,7 @@ async function start() {
     ),
     json('bases.json'),
   ]);
-  const { places, themes, eras } = library;
+  const { places, themes, eras, history: historical } = library;
   const byId = new Map(places.map((p) => [p.id, p]));
   const requested = [...new Set(new URLSearchParams(location.search).getAll('topic').filter(Boolean))];
   const linked =
@@ -91,6 +93,7 @@ async function start() {
       : library.source === 'cached'
         ? '시트 연결 실패 · 저장된 지명 ' + places.length + '곳'
         : '시트 연결 실패 · 원본 확인 ↗';
+  if (library.historyError) source.querySelector('span').textContent += ' · 냉전 자료 일부 연결 실패';
   if (library.unresolved)
     source.querySelector('span').textContent += ' · 좌표 로드 실패 ' + library.unresolved + '곳';
   const fresh = () => ({
@@ -122,6 +125,17 @@ async function start() {
     const { base, lon, lat, span } = drawing.view;
     // Migrate the old default framing; keep custom pans and zooms.
     if (base === 'korea' && lon === 127.6 && lat === 38.25 && span === 19) drawing.view = camera('korea');
+    let t = themes.find((t) => t.id && t.id === drawing.topic?.id);
+    if (!drawing.topic) t = themes.find((t) => t.name === drawing.title);
+    if (t?.edition && !drawing.edition) {
+      drawing.edition = t.edition;
+      drawing.layerKeys = t.layers;
+      drawing.topic = { id: t.id };
+      if (!drawing.points.length && !drawing.notes.length && !drawing.routes.length) {
+        drawing.points = t.places.map((id) => sheetPoint(byId.get(id)));
+        if (t.frame) drawing.view = historyCamera(t.frame.bounds);
+      }
+    }
     return refreshDrawing(drawing, byId);
   }
   let doc = read(draftKey, null);
@@ -149,7 +163,12 @@ async function start() {
     doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
     doc.notes = [];
     doc.routes = [];
-    fit(doc.points);
+    doc.edition = theme.edition;
+    doc.layerKeys = theme.layers || [];
+    doc.hiddenLayers =
+      doc.layerKeys.length > 1 ? doc.layerKeys.filter((k) => historical?.layers[k]?.original) : [];
+    if (theme.frame) doc.view = historyCamera(theme.frame.bounds);
+    else fit(doc.points);
   }
   function currentTheme() {
     if (doc.topic?.id) return themes.find((t) => t.id === doc.topic.id);
@@ -189,7 +208,7 @@ async function start() {
     const available = availableLessons();
     const theme = currentTheme();
     const inPackage = available.filter((t) => t.packageId === activePackage);
-    const empty = inPackage.filter((t) => !t.places.length);
+    const empty = inPackage.filter((t) => !t.places.length && !t.edition);
     $('packages').innerHTML =
       packages
         .map((p, i) =>
@@ -209,7 +228,7 @@ async function start() {
         'beforeend',
         '<button class="extra-choice" id="all-packages">모든 수업 보기</button>',
       );
-    const visible = inPackage.filter((t) => t.places.length || showEmpty || t === theme);
+    const visible = inPackage.filter((t) => t.places.length || t.edition || showEmpty || t === theme);
     $('categories').innerHTML =
       visible
         .map(
@@ -221,8 +240,8 @@ async function start() {
             '"><span>' +
             esc(t.name) +
             '</span><small>' +
-            t.places.length +
-            '곳</small></button>',
+            (t.events ? '사건 ' + t.events.length + '개' : t.places.length + '곳') +
+            '</small></button>',
         )
         .join('') ||
       '<span>' +
@@ -257,7 +276,14 @@ async function start() {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.id === 'all-packages') restrictToLaunch = false;
-    else activePackage = packages[Number(b.dataset.package)].id;
+    else {
+      activePackage = packages[Number(b.dataset.package)].id;
+      const first = availableLessons().find(
+        (t) => t.packageId === activePackage && (t.edition || t.places.length),
+      );
+      if (first && activePackage === 'cold-war' && currentTheme()?.packageId !== activePackage)
+        applyTheme(first);
+    }
     showEmpty = false;
     showSelectors();
   };
@@ -270,7 +296,7 @@ async function start() {
       return;
     }
     const t = themes[Number(b.dataset.category)];
-    if (t !== currentTheme()) applyTheme(t);
+    if (t !== currentTheme() || doc.eventId) applyTheme(t);
   };
   const past = beforeRecovery ? [beforeRecovery] : [],
     future = [];
@@ -318,6 +344,115 @@ async function start() {
   const svg = $('atlas');
   svg.innerHTML = definitions(bases) + '<g id="scene"></g>';
   const scene = $('scene');
+  let definitionKey, eventTheme;
+  function historyControls(theme) {
+    $('historic-events').hidden = !theme?.events;
+    if (eventTheme !== theme) {
+      eventTheme = theme;
+      $('event-map').innerHTML =
+        '<option value="">카테고리 전체</option>' +
+        (theme?.events || [])
+          .map((id) => {
+            const e = historical.events[id];
+            return '<option value="' + esc(id) + '">' + esc(e.date + ' · ' + e.name) + '</option>';
+          })
+          .join('');
+    }
+    $('event-map').value = doc.eventId || '';
+    const keys = doc.layerKeys || [];
+    $('historic-layers').hidden = !keys.length;
+    $('layer-list').innerHTML = keys
+      .map((key, index) => {
+        const layer = historical?.layers[key];
+        if (!layer) return '';
+        const territory = historical.events[doc.eventId]?.territories.find((t) => t.key === key);
+        const period = territory?.from
+          ? ' (' + territory.from + (territory.to ? ' ~ ' + territory.to : '부터') + ')'
+          : '';
+        const label = esc(layer.name + period),
+          note = esc([layer.note, territory?.note].filter(Boolean).join(' · '));
+        if (!layer.d && !layer.original) return '<span>' + label + ' · 도형 미등록</span>';
+        return (
+          '<label title="' +
+          note +
+          '"><input type="checkbox" data-layer-index="' +
+          index +
+          '" ' +
+          (doc.hiddenLayers?.includes(key) ? '' : 'checked') +
+          '>' +
+          label +
+          (layer.original ? ' · 원도' : '') +
+          '</label>' +
+          (layer.original
+            ? '<button type="button" data-original="' + index + '">원도 크게 보기</button>'
+            : '')
+        );
+      })
+      .join('');
+  }
+  $('event-map').onchange = (e) => {
+    const theme = currentTheme(),
+      id = e.target.value,
+      event = historical.events[id];
+    change(() => {
+      doc = fresh();
+      doc.topic = { id: theme.id };
+      doc.edition = theme.edition;
+      const source = event || theme;
+      doc.eventId = id;
+      doc.title = event?.name || theme.name;
+      doc.points = source.places.map((id) => sheetPoint(byId.get(id)));
+      doc.layerKeys = [...new Set([...source.layers, ...(event?.territories || []).map((r) => r.key)])];
+      doc.hiddenLayers = [];
+      if (theme.frame) doc.view = historyCamera(theme.frame.bounds);
+      // Frame the event's own linked geography independently of the category overview.
+      if (event) {
+        const coords = doc.points.map((p) => [p.lon, p.lat]);
+        for (const key of doc.layerKeys) {
+          const b = historical.layers[key]?.bounds;
+          if (b) coords.push([b[0], b[1]], [b[2], b[3]]);
+        }
+        if (coords.length) {
+          const xs = coords.map((c) => c[0]),
+            ys = coords.map((c) => c[1]);
+          const bounds = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+          if (bounds[0] === bounds[2]) {
+            bounds[0] -= 1;
+            bounds[2] += 1;
+          }
+          if (bounds[1] === bounds[3]) {
+            bounds[1] -= 0.7;
+            bounds[3] += 0.7;
+          }
+          doc.view = historyCamera(bounds);
+        }
+      }
+      selected = null;
+      activeRoute = routeStart = null;
+      mode = 'move';
+    });
+  };
+  $('layer-list').onchange = (e) => {
+    const key = doc.layerKeys[e.target.dataset.layerIndex];
+    change(() => {
+      doc.hiddenLayers = e.target.checked
+        ? (doc.hiddenLayers || []).filter((k) => k !== key)
+        : [...(doc.hiddenLayers || []), key];
+    });
+    $('layer-list')
+      .querySelector('[data-layer-index="' + e.target.dataset.layerIndex + '"]')
+      ?.focus({ preventScroll: true });
+  };
+  $('layer-list').onclick = (e) => {
+    const b = e.target.closest('[data-original]');
+    if (!b) return;
+    const layer = historical.layers[doc.layerKeys[b.dataset.original]];
+    modal(
+      layer.name,
+      '<img class="original-shape" alt="' + esc(layer.name) + ' 등록 도형"><p>' + esc(layer.note) + '</p>',
+    );
+    body.querySelector('img').src = layer.original;
+  };
   const kindNames = { points: '지점', notes: '메모', routes: '경로' },
     kindIcons = { points: 'pin', notes: 'note', routes: 'route' };
   function list() {
@@ -344,7 +479,7 @@ async function start() {
     const theme = currentTheme();
     $('pins').innerHTML =
       rows.join('') ||
-      (theme?.places.length
+      (theme?.places.length && !doc.eventId
         ? '<button class="place" id="fill-theme">' +
           esc(theme.name) +
           ' 지점 ' +
@@ -353,9 +488,13 @@ async function start() {
         : '<p class="empty">' +
           (library.source === 'unavailable'
             ? '시트의 지점 좌표를 불러오지 못했습니다. 페이지를 새로고침해 주세요.'
-            : theme?.id
-              ? '이 주제에 좌표가 연결된 지점이 없습니다.'
-              : '지명을 추가하세요.') +
+            : doc.edition
+              ? doc.layerKeys?.length
+                ? '이 지도는 지역·경계로 표시됩니다.'
+                : '이 사건에 연결된 지점이 없습니다.'
+              : theme?.id
+                ? '이 주제에 좌표가 연결된 지점이 없습니다.'
+                : '지명을 추가하세요.') +
           '</p>');
     const fill = $('fill-theme');
     if (fill)
@@ -458,7 +597,18 @@ async function start() {
     svg.dataset.layout = doc.view.base === 'korea' ? 'portrait' : 'wide';
     const unit = W / (svg.clientWidth || W);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + height);
-    scene.innerHTML = draw(doc, bases, unit, selected);
+    const signature = JSON.stringify([doc.edition, doc.layerKeys]);
+    if (signature !== definitionKey) {
+      definitionKey = signature;
+      svg.querySelector('#historic-defs')?.remove();
+      scene.insertAdjacentHTML(
+        'beforebegin',
+        '<g id="historic-defs">' +
+          historicalDefinitions(historical, doc.edition, doc.layerKeys || []) +
+          '</g>',
+      );
+    }
+    scene.innerHTML = draw(doc, bases, unit, selected, historical);
     if (mode === 'route' && routeStart) {
       const [x, y] = xy(doc.view, ...routeStart);
       scene.insertAdjacentHTML(
@@ -467,7 +617,11 @@ async function start() {
       );
     }
     svg.setAttribute('aria-label', doc.title + ' 지도');
-    $('reset').textContent = Math.round((100 * presets[doc.view.base][2]) / doc.view.span) + '%';
+    const frame = currentTheme()?.frame;
+    $('reset').textContent =
+      Math.round(
+        (100 * (frame ? historyCamera(frame.bounds).span : presets[doc.view.base][2])) / doc.view.span,
+      ) + '%';
   }
   function render() {
     paint();
@@ -475,6 +629,7 @@ async function start() {
     inspector();
     $('map-name').textContent = doc.title;
     const theme = currentTheme();
+    historyControls(theme);
     if (theme !== lastTheme) {
       if (theme?.source === '시트 주제') {
         activePackage = theme.packageId;
@@ -484,8 +639,18 @@ async function start() {
       lastTheme = theme;
       showSelectors();
     }
-    document.querySelector('.category').textContent = theme?.era || '';
-    $('base').value = doc.view.base;
+    document.querySelector('.category').textContent =
+      doc.eventId && historical?.events[doc.eventId]
+        ? theme.name + ' · ' + historical.events[doc.eventId].date
+        : theme?.era || '';
+    $('base').querySelector('[value="category"]')?.remove();
+    if (theme?.frame) $('base').add(new Option(theme.frame.name + ' (수업 범위)', 'category'), 0);
+    $('base').value =
+      theme?.frame &&
+      !doc.eventId &&
+      JSON.stringify(doc.view) === JSON.stringify(historyCamera(theme.frame.bounds))
+        ? 'category'
+        : doc.view.base;
     svg.dataset.mode = mode;
     document
       .querySelectorAll('[data-mode]')
@@ -662,7 +827,14 @@ async function start() {
     }
     setMode('move');
   };
-  $('base').onchange = (e) => change(() => (doc.view = camera(e.target.value)));
+  $('base').onchange = (e) =>
+    change(
+      () =>
+        (doc.view =
+          e.target.value === 'category'
+            ? historyCamera(currentTheme().frame.bounds)
+            : camera(e.target.value)),
+    );
   function zoom(factor) {
     const span = Math.max(0.5, Math.min(360, doc.view.span * factor));
     if (span !== doc.view.span) change(() => (doc.view.span = span));
@@ -676,6 +848,15 @@ async function start() {
         ...doc.notes,
         ...doc.routes.flat().map(([lon, lat]) => ({ lon, lat })),
       ];
+      if (currentTheme()?.frame && !doc.eventId) {
+        doc.view = historyCamera(currentTheme().frame.bounds);
+        return;
+      }
+      for (const key of doc.layerKeys || []) {
+        const b = historical?.layers[key]?.bounds;
+        if (b && !doc.hiddenLayers?.includes(key))
+          coordinates.push({ lon: b[0], lat: b[1] }, { lon: b[2], lat: b[3] });
+      }
       doc.view = camera(coordinates.length ? 'korea' : doc.view.base);
       fit(coordinates);
     });
@@ -905,10 +1086,26 @@ async function start() {
   async function exportMap(format) {
     const copy = svg.cloneNode(false);
     const H = mapHeight(doc.view);
-    copy.innerHTML = definitions(bases) + draw(doc, bases, W / (svg.clientWidth || W));
+    copy.innerHTML =
+      definitions(bases) +
+      historicalDefinitions(historical, doc.edition, doc.layerKeys || []) +
+      draw(doc, bases, W / (svg.clientWidth || W), null, historical);
     const title = document.createElementNS(svg.namespaceURI, 'title');
     title.textContent = doc.title;
     copy.prepend(title);
+    if (doc.edition) {
+      const desc = document.createElementNS(svg.namespaceURI, 'desc');
+      desc.textContent = [
+        historical?.editions[doc.edition]?.name,
+        ...(doc.layerKeys || [])
+          .filter((k) => !doc.hiddenLayers?.includes(k))
+          .map((k) => historical?.layers[k]?.note),
+        'CShapes · Schvitz et al. CC BY-NC-SA 4.0 · https://icr.ethz.ch/data/cshapes/',
+      ]
+        .filter(Boolean)
+        .join(' / ');
+      copy.prepend(desc);
+    }
     copy.setAttribute('font-family', 'Apple SD Gothic Neo,Malgun Gothic,sans-serif');
     copy.setAttribute('width', W * 2);
     copy.setAttribute('height', H * 2);

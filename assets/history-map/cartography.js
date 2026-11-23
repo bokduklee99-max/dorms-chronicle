@@ -70,7 +70,33 @@ export function definitions(bases) {
     '</defs>'
   );
 }
-export function draw(doc, bases, unit = 1, selected = null) {
+export function historicalDefinitions(history, edition, keys) {
+  if (!history) return '';
+  const base = history.editions[edition];
+  const countryPaths = (base?.paths || [])
+    .map((d) => elPath(d, 'vector-effect="non-scaling-stroke"'))
+    .join('');
+  const layers = keys
+    .map((key) => {
+      const layer = history.layers[key];
+      return layer?.d
+        ? '<path id="layer-' +
+            esc(key) +
+            '" d="' +
+            layer.d +
+            '" fill-rule="evenodd" vector-effect="non-scaling-stroke"/>'
+        : '';
+    })
+    .join('');
+  return (
+    '<defs><g id="historic-land" fill="#fff" fill-rule="evenodd" stroke="#576367" stroke-width=".65">' +
+    countryPaths +
+    '</g>' +
+    layers +
+    '</defs>'
+  );
+}
+export function draw(doc, bases, unit = 1, selected = null, history) {
   const camera = doc.view,
     H = mapHeight(camera),
     labels = doc.labels !== false;
@@ -183,6 +209,40 @@ export function draw(doc, bases, unit = 1, selected = null) {
       ((hi - lo) * W) / camera.span / b.w +
       ')"/>';
   }
+  const origin = project(0, 0);
+  const transform = 'translate(' + origin.join(' ') + ') scale(' + W / camera.span + ')';
+  const edition = history?.editions[doc.edition];
+  if (edition?.paths) map = '<g transform="' + transform + '"><use href="#historic-land"/></g>';
+  if (history && doc.layerKeys?.length) {
+    const colors = ['#498079', '#9c6941', '#646c9a', '#8b626c'];
+    map +=
+      '<g transform="' +
+      transform +
+      '">' +
+      doc.layerKeys
+        .map((key, i) => {
+          const layer = history.layers[key];
+          if (!layer?.d || doc.hiddenLayers?.includes(key)) return '';
+          const color = colors[i % colors.length];
+          return (
+            '<use data-layer="' +
+            esc(key) +
+            '" href="#layer-' +
+            esc(key) +
+            '" stroke="' +
+            color +
+            '" fill="' +
+            (layer.line ? 'none' : color) +
+            '" fill-opacity=".24" stroke-width="' +
+            (layer.line ? 2 : 1.1) +
+            '"><title>' +
+            esc(layer.name) +
+            '</title></use>'
+          );
+        })
+        .join('') +
+      '</g>';
+  }
   const seaNames = isKorea
     ? [
         ['동해', 130.4, 38.7],
@@ -224,6 +284,46 @@ export function draw(doc, bases, unit = 1, selected = null) {
       0.8 * unit +
       '"/>'
     : '';
+  const originals = (doc.layerKeys || []).filter(
+    (key) => history?.layers[key]?.original && !doc.hiddenLayers?.includes(key),
+  );
+  const insets = originals
+    .map((key, i) => {
+      const { name, original } = history.layers[key];
+      const width = Math.min(W * 0.28, 150 * unit),
+        height = width * 0.72,
+        x = 8 * unit + i * (width + 5 * unit),
+        y = 8 * unit;
+      return (
+        '<g data-original-layer="' +
+        esc(key) +
+        '">' +
+        rect(x, y, width, height, 'fill="white" stroke="#566a70" stroke-width="' + unit + '"') +
+        '<image href="' +
+        esc(original) +
+        '" x="' +
+        (x + 3 * unit) +
+        '" y="' +
+        (y + 16 * unit) +
+        '" width="' +
+        (width - 6 * unit) +
+        '" height="' +
+        Math.max(unit, height - 19 * unit) +
+        '"/>' +
+        '<svg x="' +
+        (x + 3 * unit) +
+        '" y="' +
+        y +
+        '" width="' +
+        (width - 6 * unit) +
+        '" height="' +
+        16 * unit +
+        '">' +
+        text(0, 12 * unit, '원도 · ' + name, 'font-size="' + 10 * unit + '"') +
+        '</svg></g>'
+      );
+    })
+    .join('');
   const routes = doc.routes
     .map(
       (route) =>
@@ -269,6 +369,19 @@ export function draw(doc, bases, unit = 1, selected = null) {
     routes +
     placeMarks(unit) +
     notes +
+    insets +
+    (edition
+      ? text(
+          7 * unit,
+          H - 7 * unit,
+          edition.name,
+          'font-size="' +
+            10 * unit +
+            '" fill="#35464a" stroke="white" stroke-width="' +
+            2 * unit +
+            '" paint-order="stroke"',
+        )
+      : '') +
     rect(
       unit / 2,
       unit / 2,

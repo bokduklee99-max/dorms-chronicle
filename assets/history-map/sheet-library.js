@@ -1,3 +1,4 @@
+import { coldWarLibrary, historyTables } from './cold-war.js';
 import { loadShape, readGeometryFile } from '../../event-map-links.js?v=point-files-1';
 
 const required = {
@@ -82,8 +83,17 @@ export async function loadSheetLibrary(config, presets, readRecords, storage) {
     /* Storage is optional. */
   }
   try {
+    let historyError = false;
     const entries = await Promise.all(
-      Object.entries(required).map(async ([name, fields]) => [name, await readRecords(config, name, fields)]),
+      Object.entries({ ...required, ...historyTables }).map(async ([name, fields]) => {
+        try {
+          return [name, await readRecords(config, name, fields)];
+        } catch (error) {
+          if (!(name in historyTables) || saved?.history) throw error;
+          historyError = true;
+          return [name, []];
+        }
+      }),
     );
     const tables = Object.fromEntries(entries);
     const files = new Map();
@@ -114,8 +124,26 @@ export async function loadSheetLibrary(config, presets, readRecords, storage) {
       }),
     );
     const library = sheetLibrary(tables, presets);
+    if (!historyError && library.themes.some((t) => t.packageId === 'cold-war')) {
+      library.history = await coldWarLibrary(tables, library, readOnce);
+      const partial =
+        Object.values(library.history.editions).some((e) => !e.paths) ||
+        Object.values(library.history.layers).some((layer) => layer.missing);
+      if (partial && saved?.history) {
+        const previous = saved.history;
+        for (const [key, layer] of Object.entries(library.history.layers)) {
+          if (layer.missing && previous.layers[key]?.d && layer.note === previous.layers[key].note)
+            library.history.layers[key] = previous.layers[key];
+        }
+        for (const [key, e] of Object.entries(library.history.editions)) {
+          if (!e.paths && previous.editions[key]?.paths)
+            library.history.editions[key] = previous.editions[key];
+        }
+      }
+      if (partial) historyError = true;
+    }
     if (unresolved && !library.places.length) throw Error('지점 도형을 불러오지 못했습니다.');
-    if (!unresolved) {
+    if (!unresolved && !historyError) {
       try {
         storage?.setItem(cacheKey, JSON.stringify(library));
       } catch {
@@ -126,6 +154,7 @@ export async function loadSheetLibrary(config, presets, readRecords, storage) {
       ...library,
       source: 'live',
       unresolved,
+      historyError,
       recoveredEmptyLibrary: saved?.places.length === 0 && library.places.length > 0,
     };
   } catch {

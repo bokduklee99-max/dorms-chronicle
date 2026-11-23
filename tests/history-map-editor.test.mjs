@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { camera, comparisonYears, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+import { camera, comparisonYears, zoomView, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
@@ -131,5 +131,22 @@ test('switching to an outline retains comparison years and older saved maps reco
   const backgroundYears = ['world_1945', 'missing', 'world_1980', 'world_1945'];
   for (const background of ['outline', 'world_1945']) {
     assert.deepEqual(comparisonYears({ background, backgroundYears }, editions), ['world_1945', 'world_1980']);
+  }
+});
+
+
+test('zoom keeps the same geography under a pointer or moving pinch center across map layouts', () => {
+  for (const base of ['east', 'korea']) {
+    const view = camera(base), h = mapHeight(view);
+    const from = [205, h * 0.61];
+    for (const to of [from, [295, h * 0.58]]) {
+      const point = ll(view, ...from, h);
+      const next = zoomView(view, 0.6, from, to);
+      const result = xy(next, ...point, h);
+      assert.equal(next.span, view.span * 0.6);
+      assert.ok(Math.hypot(result[0] - to[0], result[1] - to[1]) < 1e-8);
+    }
+    assert.equal(zoomView(view, 0.0001, from).span, 0.5);
+    assert.equal(zoomView(view, 1000, from).span, 360);
   }
 });

@@ -409,6 +409,7 @@ main {
   min-height: 16px;
 }
 .paper-desk {
+  touch-action: none;
   --paper-height: clamp(390px, calc(100dvh - 296px), 840px);
   display: grid;
   place-items: center;

@@ -3,6 +3,7 @@ import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js
 import {
   W,
   mapHeight,
+  zoomView,
   camera,
   presets,
   xy as project,
@@ -12,7 +13,7 @@ import {
   comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=map-choices-1';
+} from './cartography.js?v=map-zoom-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -44,7 +45,7 @@ const icon = (k) =>
   '"/></svg>';
 document.querySelectorAll('[data-icon]').forEach((el) => (el.innerHTML = icon(el.dataset.icon)));
 const modes = {
-  move: ['선택·이동', '지도를 끌어 이동하고, 이름이나 메모를 끌어 배치하세요.'],
+  move: ['선택·이동', '지도를 끌어 이동하고, 휠이나 두 손가락으로 확대·축소하세요.'],
   pin: ['직접 찍기', '지도를 눌러 새 지점을 표시하세요.'],
   route: ['경로', '지도나 지명 목록에서 두 곳 이상을 차례로 선택하세요.'],
   note: ['메모', '메모를 놓을 위치를 선택하세요.'],
@@ -453,7 +454,9 @@ async function start() {
       message('브라우저에 변경 내용을 저장할 수 없습니다. 지도를 내보내세요.');
     }
   }
+  let lastZoomGesture;
   function checkpoint(previous) {
+    lastZoomGesture = null;
     past.push(previous);
     if (past.length > 60) past.shift();
     future.length = 0;
@@ -466,6 +469,7 @@ async function start() {
   }
   function history(from, to) {
     if (!from.length) return;
+    lastZoomGesture = null;
     to.push(doc);
     doc = from.pop();
     selected = null;
@@ -1023,9 +1027,9 @@ async function start() {
             ? historyCamera(currentTheme().frame.bounds)
             : camera(e.target.value)),
     );
-  function zoom(factor) {
-    const span = Math.max(0.5, Math.min(360, doc.view.span * factor));
-    if (span !== doc.view.span) change(() => (doc.view.span = span));
+  function zoom(factor, anchor = [W / 2, mapHeight(doc.view) / 2]) {
+    const view = zoomView(doc.view, factor, anchor);
+    if (view !== doc.view) change(() => (doc.view = view));
   }
   $('plus').onclick = () => zoom(0.75);
   $('minus').onclick = () => zoom(1 / 0.75);
@@ -1196,8 +1200,139 @@ async function start() {
     const [lon, lat] = ll(view, W / 2 - dx, mapHeight(view) / 2 - dy);
     return { ...view, lon: Math.max(-180, Math.min(180, lon)), lat: Math.min(78, Math.max(-70, lat)) };
   }
+  const desk = svg.closest('.paper-desk');
+  let frame = 0,
+    saveTimer = 0;
+  function finishZoom() {
+    clearTimeout(saveTimer);
+    saveTimer = 0;
+    if (frame) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      paint();
+    }
+    persist();
+  }
+  function gestureView(view, gesture) {
+    if (view.span === doc.view.span && view.lon === doc.view.lon && view.lat === doc.view.lat) return;
+    if (lastZoomGesture !== gesture) {
+      checkpoint(structuredClone(doc));
+      lastZoomGesture = gesture;
+      $('undo').disabled = false;
+      $('redo').disabled = true;
+    }
+    doc.view = view;
+    $('base').value = view.base;
+    if (!frame)
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        paint();
+      });
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(finishZoom, 180);
+  }
+  window.addEventListener('pagehide', () => {
+    if (saveTimer) finishZoom();
+  });
+  function anchorAt(e) {
+    if (!Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return [W / 2, mapHeight(doc.view) / 2];
+    const [x, y] = locationOf(e);
+    return [Math.max(0, Math.min(W, x)), Math.max(0, Math.min(mapHeight(doc.view), y))];
+  }
+  let wheelGesture,
+    wheelTime = -Infinity,
+    pinch,
+    nativePinch;
+  desk.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      if (drag || pinch || nativePinch || !e.deltaY) return;
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? desk.clientHeight : 1;
+      const delta = Math.max(-300, Math.min(300, e.deltaY * unit));
+      if (e.timeStamp - wheelTime > 200) wheelGesture = {};
+      wheelTime = e.timeStamp;
+      gestureView(
+        zoomView(doc.view, Math.exp(delta * (e.ctrlKey ? 0.009 : 0.002)), anchorAt(e)),
+        wheelGesture,
+      );
+    },
+    { passive: false },
+  );
+  desk.addEventListener('dblclick', (e) => {
+    if (mode !== 'move' || e.target.closest('[data-point],[data-note]')) return;
+    e.preventDefault();
+    zoom(e.shiftKey ? 2 : 0.5, anchorAt(e));
+  });
+
+  function cancelDrag() {
+    if (!drag) return;
+    if (drag.before) doc = drag.before;
+    else doc.view = drag.view;
+    drag = null;
+    paint();
+  }
+  const contacts = new Map();
+  function touchPair() {
+    const [a, b] = contacts.values();
+    return {
+      center: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2],
+      distance: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])),
+    };
+  }
+  function beginPinch() {
+    cancelDrag();
+    pinch = { ...touchPair(), view: doc.view, gesture: pinch?.gesture || {} };
+  }
+  // Capture on a stable element: the SVG features are redrawn during the gesture.
+  desk.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType !== 'touch') return;
+      contacts.set(e.pointerId, locationOf(e));
+      desk.setPointerCapture(e.pointerId);
+      if (contacts.size === 2) beginPinch();
+    },
+    true,
+  );
+  desk.addEventListener(
+    'pointermove',
+    (e) => {
+      if (!contacts.has(e.pointerId)) return;
+      contacts.set(e.pointerId, locationOf(e));
+      if (!pinch || contacts.size < 2) return;
+      const { center, distance } = touchPair();
+      gestureView(zoomView(pinch.view, pinch.distance / distance, pinch.center, center), pinch.gesture);
+    },
+    true,
+  );
+  function endContact(e) {
+    if (!contacts.delete(e.pointerId) || !pinch) return;
+    if (!contacts.size) pinch = null;
+    else if (contacts.size >= 2) beginPinch();
+    // A remaining finger must lift before it can place a point or start a drag.
+  }
+  desk.addEventListener('pointerup', endContact, true);
+  desk.addEventListener('pointercancel', endContact, true);
+  desk.addEventListener('lostpointercapture', endContact);
+
+  // Safari trackpads can send gesture events in place of Ctrl+wheel.
+  desk.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+    if (!contacts.size && !drag) nativePinch = { view: doc.view, center: anchorAt(e) };
+  });
+  desk.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+    if (nativePinch && !contacts.size && e.scale > 0)
+      gestureView(zoomView(nativePinch.view, 1 / e.scale, nativePinch.center, anchorAt(e)), nativePinch);
+  });
+  desk.addEventListener('gestureend', (e) => {
+    e.preventDefault();
+    nativePinch = null;
+  });
   svg.onpointerdown = (e) => {
-    if (e.button !== 0 || drag) return;
+    if (e.button !== 0 || drag || pinch || nativePinch) return;
+    if (saveTimer) finishZoom();
     const [x, y] = locationOf(e);
     if (x < 0 || x > W || y < 0 || y > mapHeight(doc.view)) return;
     const label = e.target.closest('[data-point],[data-note]');
@@ -1219,6 +1354,8 @@ async function start() {
   svg.onpointermove = (e) => {
     if (drag?.id !== e.pointerId || mode !== 'move') return;
     const [x, y] = locationOf(e);
+    if (!drag.moved && Math.hypot(x - drag.x, y - drag.y) <= 2) return;
+    drag.moved = true;
     if (drag.item) {
       const [lon, lat] = ll(drag.view, x, y);
       if (drag.kind === 'notes') Object.assign(drag.item, { lon, lat });
@@ -1229,13 +1366,8 @@ async function start() {
     } else doc.view = shift(drag.view, x - drag.x, y - drag.y);
     paint();
   };
-  svg.onpointercancel = () => {
-    if (drag) {
-      if (drag.before) doc = drag.before;
-      else doc.view = drag.view;
-      drag = null;
-      paint();
-    }
+  svg.onpointercancel = (e) => {
+    if (drag?.id === e.pointerId) cancelDrag();
   };
   svg.onpointerup = (e) => {
     if (drag?.id !== e.pointerId) return;
@@ -1250,7 +1382,7 @@ async function start() {
       } else if (d.item) {
         doc = d.before;
         pick(d.kind, d.index);
-      } else {
+      } else if (d.moved) {
         doc.view = d.view;
         paint();
       }

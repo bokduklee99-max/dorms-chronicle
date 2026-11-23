@@ -37,6 +37,20 @@ const elPath = (d, attrs) => (d ? '<path d="' + d + '" ' + attrs + '/>' : '');
 const rect = (x, y, w, h, attrs) =>
   '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" ' + attrs + '/>';
 export const mapHeight = (view) => (view.base === 'korea' ? (W * 907) / 600 : H);
+// Keep the geographic point under the cursor (or the moving pinch midpoint) fixed.
+export function zoomView(view, factor, from, to = from) {
+  const height = mapHeight(view);
+  const span = Math.max(0.5, Math.min(360, view.span * factor));
+  const ratio = span / view.span;
+  if (ratio === 1 && from[0] === to[0] && from[1] === to[1]) return view;
+  const [lon, lat] = ll(
+    view,
+    from[0] + (W / 2 - to[0]) * ratio,
+    from[1] + (height / 2 - to[1]) * ratio,
+    height,
+  );
+  return { ...view, span, lon: Math.max(-180, Math.min(180, lon)), lat: Math.max(-85, Math.min(85, lat)) };
+}
 export function definitions(bases) {
   // All outline maps use white land and gray water under the optional boundary layers.
   const defs = Object.entries(bases)
@@ -103,7 +117,9 @@ export function historicalDefinitions(history, edition, keys, doc = {}) {
       : '') +
     '<g id="historic-land" fill="#fff" fill-rule="evenodd" stroke="' +
     (doc.countryBorders === false ? 'none' : '#576367') +
-    '" stroke-width="' + (doc.provinceBorders ? 1.35 : 0.65) + '">' +
+    '" stroke-width="' +
+    (doc.provinceBorders ? 1.35 : 0.65) +
+    '">' +
     countryPaths +
     '</g>' +
     layers +

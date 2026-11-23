@@ -8,10 +8,13 @@ import re
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
+from collections import defaultdict
+from itertools import combinations
 from pathlib import Path
 
 import shapefile
 from shapely.geometry import shape
+from shapely.ops import linemerge
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets/history-map"
@@ -74,12 +77,21 @@ def edition(year):
     return key, {"year": year, "name": label + " 세계지도 · " + credit, "paths": paths}
 
 
-def boundary_lines(name):
+EAST_ASIA = {"CHN", "JPN", "KOR", "MNG", "PRK", "TWN"}
+
+
+def natural_earth(name):
     base = "ne_10m_" + name
     archive = zipfile.ZipFile(io.BytesIO(download("https://naturalearth.s3.amazonaws.com/10m_cultural/" + base + ".zip")))
-    reader = shapefile.Reader(shp=io.BytesIO(archive.read(base+".shp")), dbf=io.BytesIO(archive.read(base+".dbf")))
+    return shapefile.Reader(shp=io.BytesIO(archive.read(base+".shp")), dbf=io.BytesIO(archive.read(base+".dbf")))
+
+
+def boundary_lines(name, exclude=()):
+    reader = natural_earth(name)
     parts = []
     for record in reader.iterShapeRecords():
+        if exclude and record.record["ADM0_A3"] in exclude:
+            continue
         kind = record.record["FEATURECLA"]
         if name.startswith("admin_1") and kind not in {"Admin-1 boundary", "Admin-1 region boundary"}:
             continue
@@ -88,6 +100,27 @@ def boundary_lines(name):
         geom = shape(record.shape.__geo_interface__).simplify(.018, preserve_topology=False)
         lines = geom.geoms if geom.geom_type == "MultiLineString" else [geom]
         parts.extend(path(line.coords) for line in lines if line.geom_type == "LineString" and not line.is_empty)
+    return "".join(parts)
+
+
+def province_boundaries():
+    parts = [boundary_lines("admin_1_states_provinces_lines", exclude=EAST_ASIA)]
+    # Some actual province borders are classified as statistical lines. Use the
+    # shared polygon edges so adjacent provinces meet without outlining coasts.
+    reader = natural_earth("admin_1_states_provinces")
+    countries = defaultdict(list)
+    for record in reader.iterRecords(fields=["adm0_a3"]):
+        if record.adm0_a3 in EAST_ASIA:
+            countries[record.adm0_a3].append(shape(reader.shape(record.oid).__geo_interface__).boundary)
+    for borders in countries.values():
+        for left, right in combinations(borders, 2):
+            shared = left.intersection(right)
+            if shared.length == 0:
+                continue
+            if shared.geom_type != "LineString":
+                shared = linemerge([line for line in shared.geoms if line.geom_type == "LineString"])
+            lines = shared.geoms if shared.geom_type == "MultiLineString" else [shared]
+            parts.extend(path(line.simplify(.008).coords) for line in lines)
     return "".join(parts)
 
 
@@ -101,4 +134,4 @@ if __name__ == "__main__":
         editions = dict(pool.map(edition, YEARS))
     write("editions.json.gz", editions)
     write("boundaries.json.gz", {"countries": boundary_lines("admin_0_boundary_lines_land"),
-                                 "provinces": boundary_lines("admin_1_states_provinces_lines")})
+                                 "provinces": province_boundaries()})

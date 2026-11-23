@@ -6,6 +6,8 @@ import { camera, draw, historicalDefinitions, presets, xy, ll, mapHeight } from 
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
+const packed = (file) =>
+  JSON.parse(gunzipSync(readFileSync(new URL('../assets/history-map/' + file, import.meta.url))));
 const places = [
   { lon: 126.978, lat: 37.5665 },
   { lon: -77.0369, lat: 38.9072 },
@@ -57,8 +59,6 @@ test('portrait editing and export share geography but only the editor marks the 
 
 
 test('packaged backgrounds contain every registered edition and both modern boundary levels', () => {
-  const packed = (file) =>
-    JSON.parse(gunzipSync(readFileSync(new URL('../assets/history-map/' + file, import.meta.url))));
   const editions = packed('editions.json.gz');
   const boundaries = packed('boundaries.json.gz');
   assert.equal(Object.keys(editions).length, 55);
@@ -97,5 +97,28 @@ test('historical borders and modern first-level boundaries can be selected indep
         if (edition) assert.equal(/id="historic-land"[^>]*stroke="none"/.test(image), !countryBorders);
       }
     }
+  }
+});
+
+test('the packaged provincial lines cross the shared borders of neighboring East Asian regions', () => {
+  // Midpoints sampled from the unsimplified shared edges in Natural Earth Admin 1.
+  const samples = [
+    ['Hebei–Shandong', 116.27883, 37.55013],
+    ['Guangdong–Fujian', 116.75625, 24.59404],
+    ['Tokyo–Saitama', 139.39163, 35.75415],
+    ['Seoul–Gyeonggi', 127.17641, 37.55766],
+  ];
+  const lines = packed('boundaries.json.gz').provinces.split('M').slice(1)
+    .map((line) => line.split('L').map((vertex) => vertex.split(',').map(Number)));
+  for (const [name, lon, lat] of samples) {
+    const y = -Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * 180 / Math.PI;
+    const near = lines.some((line) => line.some(([x2, y2], i) => {
+      if (!i) return false;
+      const [x1, y1] = line[i - 1];
+      const dx = x2 - x1, dy = y2 - y1;
+      const t = Math.max(0, Math.min(1, ((lon - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy || 1)));
+      return Math.hypot(lon - x1 - t * dx, y - y1 - t * dy) < 0.015;
+    }));
+    assert.ok(near, name);
   }
 });

@@ -43,4 +43,4 @@
 
 지도 제작실의 시대별 배경은 시트의 세계지도 판본에 맞춘 André Ourednik의 Historical Basemaps(커밋 4b5039e50d8d2464b065bd76ad6086cd4597108d)와 위의 CShapes 1980년 판본을 사용한다. 편집기에 맞춰 경로를 단순화하고 메르카토르 좌표로 투영했다. 고대 판본에는 문화권의 범위도 포함된다. [Historical Basemaps 원본](https://github.com/aourednik/historical-basemaps) · [GPL-3.0](historical-basemaps-license.txt)
 
-현대 국경과 시·도·주 표시는 Natural Earth 1:10m Admin 0 육상 경계 및 Admin 1 주·도 경계선(v5.1.0)을 0.018도 허용 오차로 단순화한 자료다. 시간별 배경을 사용할 때는 그 판본의 영역선을 국경으로 사용한다. 현대 행정경계는 별도로 켤 수 있다. [Natural Earth](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/) · [퍼블릭 도메인](https://www.naturalearthdata.com/about/terms-of-use/)
+현대 국경과 시·도·주 표시는 Natural Earth 1:10m Admin 0 육상 경계 및 Admin 1 주·도 경계선(v5.1.0)을 0.018도 허용 오차로 단순화한 자료다. 한국·북한·중국·일본·몽골·대만의 내부 경계는 같은 자료의 Admin 1 폴리곤(v5.1.1)에서 인접한 두 구역이 공유하는 선만 추출하여 0.008도 허용 오차로 단순화했다. 시대별 배경을 사용할 때는 그 판본의 영역선을 국경으로 사용한다. 현대 행정경계는 별도로 켤 수 있다. [Natural Earth](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/) · [퍼블릭 도메인](https://www.naturalearthdata.com/about/terms-of-use/)

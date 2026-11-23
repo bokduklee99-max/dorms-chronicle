@@ -11,7 +11,7 @@ import {
   definitions,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=backgrounds-1';
+} from './cartography.js?v=boundaries-2';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -80,7 +80,7 @@ async function start() {
     ),
     json('bases.json'),
     packedMapData('editions.json.gz').catch(() => null),
-    packedMapData('boundaries.json.gz').catch(() => null),
+    packedMapData('boundaries.json.gz?v=2').catch(() => null),
   ]);
   const { places, themes, eras } = library;
   const historical = {

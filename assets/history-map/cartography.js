@@ -87,18 +87,18 @@ export function historicalDefinitions(history, edition, keys, doc = {}) {
     (!base?.paths && doc.countryBorders !== false
       ? elPath(
           history.boundaries?.countries,
-          'id="modern-borders" fill="none" stroke="#444" stroke-width=".8" vector-effect="non-scaling-stroke"',
+          'id="modern-borders" fill="none" stroke="#323b40" stroke-width="1.4" vector-effect="non-scaling-stroke"',
         )
       : '') +
     (doc.provinceBorders
       ? elPath(
           history.boundaries?.provinces,
-          'id="modern-provinces" fill="none" stroke="#60778b" stroke-width=".7" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"',
+          'id="modern-provinces" fill="none" stroke="#536e80" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"',
         )
       : '') +
     '<g id="historic-land" fill="#fff" fill-rule="evenodd" stroke="' +
     (doc.countryBorders === false ? 'none' : '#576367') +
-    '" stroke-width=".65">' +
+    '" stroke-width="' + (doc.provinceBorders ? 1.35 : 0.65) + '">' +
     countryPaths +
     '</g>' +
     layers +
@@ -223,9 +223,9 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
   const edition = history?.editions[doc.edition];
   if (edition?.paths) map = '<g transform="' + transform + '"><use href="#historic-land"/></g>';
   let boundaries = '';
+  if (doc.provinceBorders && history?.boundaries?.provinces) boundaries += '<use href="#modern-provinces"/>';
   if (!edition?.paths && doc.countryBorders !== false && history?.boundaries?.countries)
     boundaries += '<use href="#modern-borders"/>';
-  if (doc.provinceBorders && history?.boundaries?.provinces) boundaries += '<use href="#modern-provinces"/>';
   const boundaryOverlay = boundaries ? '<g transform="' + transform + '">' + boundaries + '</g>' : '';
   if (history && doc.layerKeys?.length) {
     const colors = ['#498079', '#9c6941', '#646c9a', '#8b626c'];

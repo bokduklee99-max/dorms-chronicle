@@ -1,0 +1,580 @@
+{
+  "eras": [
+    "선사·고조선",
+    "삼국·남북국",
+    "고려",
+    "조선",
+    "근현대"
+  ],
+  "themes": [
+    {
+      "name": "구석기·신석기 유적",
+      "era": "선사·고조선",
+      "places": [
+        "geo_seokjangri",
+        "geo_jeongokri",
+        "geo_suyanggae",
+        "geo_bilremot_donggul",
+        "geo_amsadong",
+        "geo_osanri",
+        "geo_dongsamdong",
+        "geo_jitapri"
+      ]
+    },
+    {
+      "name": "고인돌 (세계유산)",
+      "era": "선사·고조선",
+      "places": [
+        "geo_ganghwa_goindol",
+        "geo_gochang_goindol",
+        "geo_hwasun_goindol"
+      ]
+    },
+    {
+      "name": "삼국의 도읍",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_jolbon",
+        "geo_guknaeseong",
+        "geo_pyongyang",
+        "geo_hanseong",
+        "geo_ungjin",
+        "geo_sabi",
+        "geo_geumseong"
+      ]
+    },
+    {
+      "name": "백제의 도읍과 유적",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_hanseong",
+        "geo_pungnapdong_toseong",
+        "geo_seokchondong_gobun",
+        "geo_ungjin",
+        "geo_gongsanseong",
+        "geo_muryeongwangreung",
+        "geo_sabi",
+        "geo_jeongrimsaji"
+      ]
+    },
+    {
+      "name": "가야",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_gimhae",
+        "geo_geumgwangaya",
+        "geo_goryeong",
+        "geo_daegaya"
+      ]
+    },
+    {
+      "name": "진흥왕 순수비",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_danyang_jeokseongbi",
+        "geo_bukhansanbi",
+        "geo_changnyeongbi",
+        "geo_hwangchoryeongbi",
+        "geo_maunryeongbi"
+      ]
+    },
+    {
+      "name": "고구려와 수·당의 전쟁",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_guknaeseong",
+        "geo_yodong",
+        "geo_aprokgang",
+        "geo_salsu",
+        "geo_pyongyang",
+        "geo_ansiseong"
+      ]
+    },
+    {
+      "name": "삼국 통일 전쟁 (나당 전쟁)",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_hwangsanbeol",
+        "geo_sabi",
+        "geo_ungjin",
+        "geo_baekgang",
+        "geo_juryuseong",
+        "geo_imjonseong",
+        "geo_pyongyang",
+        "geo_maesoseong",
+        "geo_gibeolpo",
+        "geo_geumseong"
+      ]
+    },
+    {
+      "name": "통일 신라 9주 5소경",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_geumseong",
+        "geo_ungju",
+        "geo_jeonju",
+        "geo_muju",
+        "geo_sangju",
+        "geo_gangju",
+        "geo_myeongju",
+        "geo_sakju",
+        "geo_bukwongyeong",
+        "geo_jungwongyeong",
+        "geo_namwongyeong",
+        "geo_geumgwangyeong"
+      ]
+    },
+    {
+      "name": "발해",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_sanggyeongseong",
+        "geo_donggyeongseong",
+        "geo_deungju"
+      ]
+    },
+    {
+      "name": "신라·발해의 대외 교류",
+      "era": "삼국·남북국",
+      "places": [
+        "geo_cheonghaejin",
+        "geo_deungju",
+        "geo_ningbo",
+        "geo_geumseong",
+        "geo_sanggyeongseong",
+        "geo_donggyeongseong"
+      ]
+    },
+    {
+      "name": "후삼국 통일",
+      "era": "고려",
+      "places": [
+        "geo_songak",
+        "geo_wansanju",
+        "geo_naju",
+        "geo_gongju",
+        "geo_geumseong"
+      ]
+    },
+    {
+      "name": "고려의 3경과 개경",
+      "era": "고려",
+      "places": [
+        "geo_gaegyeong",
+        "geo_byeokrando",
+        "geo_seogyeong",
+        "geo_donggyeong",
+        "geo_namgyeong"
+      ]
+    },
+    {
+      "name": "거란·여진 침입",
+      "era": "고려",
+      "places": [
+        "geo_heunghwajin",
+        "geo_gwiju",
+        "geo_gaegyeong",
+        "geo_seogyeong"
+      ]
+    },
+    {
+      "name": "몽골 침입·삼별초 항쟁",
+      "era": "고려",
+      "places": [
+        "geo_gwiju",
+        "geo_ganghwado",
+        "geo_cheoinseong",
+        "geo_chungjuseong",
+        "geo_jindo",
+        "geo_hangpaduri",
+        "geo_jeju"
+      ]
+    },
+    {
+      "name": "공민왕 영토 수복·위화도 회군",
+      "era": "고려",
+      "places": [
+        "geo_ssangseongchonggwanbu",
+        "geo_cheolryeong",
+        "geo_wihwado",
+        "geo_uiju",
+        "geo_gilju"
+      ]
+    },
+    {
+      "name": "4군 6진",
+      "era": "조선",
+      "places": [
+        "geo_yeoyeon",
+        "geo_jaseong",
+        "geo_muchang",
+        "geo_uye",
+        "geo_gyeongwon",
+        "geo_jongseong",
+        "geo_hoeryeong",
+        "geo_onseong",
+        "geo_gyeongheung",
+        "geo_buryeong"
+      ]
+    },
+    {
+      "name": "3포 개항",
+      "era": "조선",
+      "places": [
+        "geo_busanpo",
+        "geo_yeompo",
+        "geo_jepo",
+        "geo_sampo",
+        "geo_daemado"
+      ]
+    },
+    {
+      "name": "서원 (세계유산)",
+      "era": "조선",
+      "places": [
+        "geo_sosu_seowon",
+        "geo_dosan_seowon",
+        "geo_byeongsan_seowon",
+        "geo_oksan_seowon",
+        "geo_dodong_seowon",
+        "geo_namgye_seowon",
+        "geo_pilam_seowon",
+        "geo_museong_seowon",
+        "geo_donam_seowon"
+      ]
+    },
+    {
+      "name": "임진왜란",
+      "era": "조선",
+      "places": [
+        "geo_dongrae",
+        "geo_tangeumdae",
+        "geo_hanseong",
+        "geo_pyongyang",
+        "geo_uiju",
+        "geo_hansando",
+        "geo_jinju",
+        "geo_haengjusanseong",
+        "geo_uiryeong",
+        "geo_geumsan",
+        "geo_myeongryang",
+        "geo_jiksan",
+        "geo_noryang"
+      ]
+    },
+    {
+      "name": "정묘·병자호란",
+      "era": "조선",
+      "places": [
+        "geo_uiju",
+        "geo_yongcheon",
+        "geo_cheolsan",
+        "geo_pyeongsan",
+        "geo_hanseong",
+        "geo_namhansanseong",
+        "geo_ganghwado"
+      ]
+    },
+    {
+      "name": "통신사 길",
+      "era": "조선",
+      "places": [
+        "geo_hanseong",
+        "geo_chungju",
+        "geo_dongrae",
+        "geo_busan",
+        "geo_daemado",
+        "geo_hakata",
+        "geo_simonoseki",
+        "geo_osaka",
+        "geo_gyoto",
+        "geo_edo"
+      ]
+    },
+    {
+      "name": "조선 후기 상업·무역 (개시·후시)",
+      "era": "조선",
+      "places": [
+        "geo_hanseong",
+        "geo_gaeseong",
+        "geo_pyongyang",
+        "geo_uiju",
+        "geo_hoeryeong",
+        "geo_gyeongwon",
+        "geo_dongrae"
+      ]
+    },
+    {
+      "name": "홍경래의 난 (1811)",
+      "era": "조선",
+      "places": [
+        "geo_gasan",
+        "geo_bakcheon",
+        "geo_jeongju",
+        "geo_seoncheon",
+        "geo_cheolsan",
+        "geo_yongcheon"
+      ]
+    },
+    {
+      "name": "임술 농민 봉기 (1862)",
+      "era": "조선",
+      "places": [
+        "geo_jinju",
+        "geo_gaeryeong",
+        "geo_hamyang",
+        "geo_geochang",
+        "geo_gunwi",
+        "geo_gosan",
+        "geo_jangheung",
+        "geo_hampyeong",
+        "geo_buan",
+        "geo_changwon",
+        "geo_iksan",
+        "geo_ulsan",
+        "geo_sangju",
+        "geo_gongju",
+        "geo_jeju",
+        "geo_gwangju",
+        "geo_andong",
+        "geo_jeonju"
+      ]
+    },
+    {
+      "name": "병인·신미양요, 운요호 사건",
+      "era": "근현대",
+      "places": [
+        "geo_munsusanseong",
+        "geo_ganghwaseong",
+        "geo_chojijin",
+        "geo_deokjinjin",
+        "geo_gwangseongbo",
+        "geo_yeongjongdo",
+        "geo_jemulpo",
+        "geo_ganghwado"
+      ]
+    },
+    {
+      "name": "개항장",
+      "era": "근현대",
+      "places": [
+        "geo_busan",
+        "geo_wonsan",
+        "geo_jemulpo",
+        "geo_mokpo",
+        "geo_gunsan",
+        "geo_masan",
+        "geo_seongjin",
+        "geo_cheongjin"
+      ]
+    },
+    {
+      "name": "갑신정변·임오군란",
+      "era": "근현대",
+      "places": [
+        "geo_hanseong",
+        "geo_changdeokgung",
+        "geo_unhyeongung",
+        "geo_ujeongchongguk"
+      ]
+    },
+    {
+      "name": "동학 농민 운동",
+      "era": "근현대",
+      "places": [
+        "geo_gobu",
+        "geo_manseokbo",
+        "geo_mujang",
+        "geo_baeksan",
+        "geo_jeongeup",
+        "geo_hwangtohyeon",
+        "geo_taein",
+        "geo_yeonggwang",
+        "geo_hampyeong",
+        "geo_jangseong",
+        "geo_hwangryongchon",
+        "geo_jeonju",
+        "geo_samrye",
+        "geo_nonsan",
+        "geo_gongju",
+        "geo_ugeumchi",
+        "geo_sunchang",
+        "geo_jangheung"
+      ]
+    },
+    {
+      "name": "청일·러일 전쟁",
+      "era": "근현대",
+      "places": [
+        "geo_jemulpo",
+        "geo_hanseong",
+        "geo_pyongyang",
+        "geo_uiju",
+        "geo_rwisun",
+        "geo_simonoseki",
+        "geo_beulradiboseutokeu",
+        "geo_wonsan",
+        "geo_busan",
+        "geo_hoeryeong",
+        "geo_hamheung"
+      ]
+    },
+    {
+      "name": "의병 전쟁",
+      "era": "근현대",
+      "places": [
+        "geo_wonju",
+        "geo_jecheon",
+        "geo_chuncheon",
+        "geo_gangreung",
+        "geo_yangyang",
+        "geo_yeonghae",
+        "geo_andong",
+        "geo_yeongcheon",
+        "geo_gyeongju",
+        "geo_sunchang",
+        "geo_taein",
+        "geo_naju",
+        "geo_haeju",
+        "geo_chosan",
+        "geo_gilju",
+        "geo_hamheung"
+      ]
+    },
+    {
+      "name": "영토·국경 (독도·간도)",
+      "era": "근현대",
+      "places": [
+        "geo_baekdusan",
+        "geo_aprokgang",
+        "geo_dumangang",
+        "geo_gando",
+        "geo_seogando",
+        "geo_dokdo",
+        "geo_ulreungdo",
+        "geo_geomundo"
+      ]
+    },
+    {
+      "name": "일제 강점기 철도·항만",
+      "era": "근현대",
+      "places": [
+        "geo_gyeongseong",
+        "geo_incheon",
+        "geo_daejeon",
+        "geo_daegu",
+        "geo_busan",
+        "geo_gunsan",
+        "geo_mokpo",
+        "geo_gwangju",
+        "geo_gaeseong",
+        "geo_pyongyang",
+        "geo_sinuiju",
+        "geo_wonsan",
+        "geo_cheongjin",
+        "geo_hoeryeong"
+      ]
+    },
+    {
+      "name": "독립운동 기지",
+      "era": "근현대",
+      "places": [
+        "geo_samwonbo",
+        "geo_seogando",
+        "geo_gando",
+        "geo_yongjeong",
+        "geo_yenji",
+        "geo_jirin",
+        "geo_haeolbin",
+        "geo_yeonhaeju",
+        "geo_beulradiboseutokeu",
+        "geo_yeonchu",
+        "geo_manju"
+      ]
+    },
+    {
+      "name": "봉오동·청산리 전투",
+      "era": "근현대",
+      "places": [
+        "geo_bongodong",
+        "geo_cheongsanri",
+        "geo_yongjeong",
+        "geo_yenji",
+        "geo_gando",
+        "geo_beulradiboseutokeu"
+      ]
+    },
+    {
+      "name": "임시 정부 이동 경로",
+      "era": "근현대",
+      "places": [
+        "geo_shanghai",
+        "geo_hangjeou",
+        "geo_jeonjang",
+        "geo_changsa",
+        "geo_guangzhou",
+        "geo_ryujeou",
+        "geo_chongqing"
+      ]
+    },
+    {
+      "name": "한국광복군·조선 의용대",
+      "era": "근현대",
+      "places": [
+        "geo_nanjing",
+        "geo_hankeou",
+        "geo_chongqing",
+        "geo_sian",
+        "geo_yanan",
+        "geo_rwoyang"
+      ]
+    },
+    {
+      "name": "해외 외교 (헤이그 특사·강화 회의)",
+      "era": "근현대",
+      "places": [
+        "geo_heigeu",
+        "geo_sangteupetereubureukeu",
+        "geo_pari",
+        "geo_reondeon",
+        "geo_moscow",
+        "geo_tokyo"
+      ]
+    },
+    {
+      "name": "고려인 강제 이주",
+      "era": "근현대",
+      "places": [
+        "geo_yeonhaeju",
+        "geo_beulradiboseutokeu",
+        "geo_tasyukenteu",
+        "geo_keujeuloreuda"
+      ]
+    },
+    {
+      "name": "6·25 전쟁",
+      "era": "근현대",
+      "places": [
+        "geo_seoul",
+        "geo_nakdonggang",
+        "geo_daegu",
+        "geo_busan",
+        "geo_daejeon",
+        "geo_heungnam",
+        "geo_wonsan",
+        "geo_pyongyang",
+        "geo_panmunjom",
+        "geo_geojedo"
+      ]
+    },
+    {
+      "name": "현대사 사건지 (4·3, 민주화)",
+      "era": "근현대",
+      "places": [
+        "geo_masan",
+        "geo_gwangju",
+        "geo_panmunjom"
+      ]
+    }
+  ]
+}

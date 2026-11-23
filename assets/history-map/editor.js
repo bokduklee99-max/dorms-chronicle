@@ -1,3 +1,4 @@
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js';
 import { W, H, camera, presets, xy, ll, esc, definitions, draw } from './cartography.js';
 
 const $ = (id) => document.getElementById(id);
@@ -40,10 +41,31 @@ async function json(file) {
   return r.json();
 }
 async function start() {
-  const [{ places, themes, eras }, bases] = await Promise.all([json('places.json'), json('bases.json')]);
-  const byName = new Map(places.map((p) => [p.name, p]));
-  const point = (p) => ({ name: p.name, lon: p.lon, lat: p.lat });
-  const example = themes.find((t) => t.name === '삼국의 도읍');
+  let storage;
+  try {
+    storage = window.localStorage;
+  } catch {
+    /* Storage may be disabled. */
+  }
+  const [library, bases] = await Promise.all([
+    json('presets.json').then((presets) =>
+      loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
+    ),
+    json('bases.json'),
+  ]);
+  const { places, themes, eras } = library;
+  const byId = new Map(places.map((p) => [p.id, p]));
+  const example = themes.find((t) => t.source === '시트 주제' && t.name === '한국전쟁') ?? themes[0];
+  const source = $('source-sheet');
+  const sheetUrl = new URL(SHEET_CONFIG.url);
+  sheetUrl.hash = 'gid=' + SHEET_CONFIG.spaceSheetId;
+  source.href = sheetUrl;
+  source.textContent =
+    library.source === 'live'
+      ? '구글 시트 · 지명 ' + places.length + '곳 ↗'
+      : library.source === 'cached'
+        ? '시트 연결 실패 · 저장된 지명 ' + places.length + '곳 ↗'
+        : '시트 연결 실패 · 원본 확인 ↗';
   const fresh = () => ({
     id: crypto.randomUUID(),
     title: '제목 없는 지도',
@@ -70,13 +92,22 @@ async function start() {
     }
   }
   let doc = read(draftKey, null);
-  if (!valid(doc))
-    doc = { ...fresh(), title: example.name, points: example.places.map((n) => point(byName.get(n))) };
-  let tab = 'themes',
+  if (valid(doc)) refreshDrawing(doc, byId);
+  else {
+    doc = fresh();
+    if (example) {
+      doc.title = example.name;
+      doc.points = example.places.map((id) => sheetPoint(byId.get(id)));
+      fit(doc.points);
+    }
+  }
+  const samePlace = (mark, p) =>
+    mark.spaceId ? mark.spaceId === p.id : mark.name === p.name && mark.lon === p.lon && mark.lat === p.lat;
+  let tab = themes.length ? 'themes' : 'places',
     mode = 'move',
     activeRoute = null,
     routeStart = null,
-    era = doc.title === example.name ? example.era : '',
+    era = '',
     query = '';
   const past = [],
     future = [];
@@ -130,15 +161,25 @@ async function start() {
   mini.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
   mini.innerHTML =
     '<defs>' +
-    ['east', 'world'].map((key) => '<path id="mini-' + key + '" d="' + bases[key].land + '"/>').join('') +
+    ['east', 'world', 'globe']
+      .map((key) => '<path id="mini-' + key + '" d="' + bases[key].land + '"/>')
+      .join('') +
     '</defs>';
   document.body.append(mini);
   function thumb(theme) {
-    const locations = theme.places.map((n) => byName.get(n));
+    const locations = theme.places.map((n) => byId.get(n));
     const [west, east, south, north] = bases.east.bbox;
     const key = locations.every((p) => p.lon >= west && p.lon <= east && p.lat >= south && p.lat <= north)
       ? 'east'
-      : 'world';
+      : locations.every(
+            (p) =>
+              p.lon >= bases.world.bbox[0] &&
+              p.lon <= bases.world.bbox[1] &&
+              p.lat >= bases.world.bbox[2] &&
+              p.lat <= bases.world.bbox[3],
+          )
+        ? 'world'
+        : 'globe';
     const b = bases[key];
     const coords = locations.map((p) => {
       const v = { lon: b.bbox[0], lat: b.bbox[3], span: ((b.bbox[1] - b.bbox[0]) * W) / b.w };
@@ -186,7 +227,9 @@ async function start() {
     );
   }
   function list() {
-    const selected = new Set(doc.points.map((p) => p.name));
+    const selected = new Set(
+      places.filter((p) => doc.points.some((mark) => samePlace(mark, p))).map((p) => p.id),
+    );
     document
       .querySelectorAll('[data-tab]')
       .forEach((b) => b.setAttribute('aria-pressed', String(tab === b.dataset.tab)));
@@ -200,7 +243,7 @@ async function start() {
           row(
             't' + i,
             t.name,
-            t.era + ' · ' + t.places.length + '곳',
+            (t.era ? t.era + ' · ' : '') + t.source + ' · ' + t.places.length + '곳',
             thumbs[i],
             all,
             all ? '표시한 곳 보기' : '지도에 추가',
@@ -221,8 +264,8 @@ async function start() {
             p.name,
             p.kind,
             icon('pin'),
-            selected.has(p.name),
-            mode === 'route' ? '경로에 추가' : selected.has(p.name) ? '위치 보기' : '지도에 추가',
+            selected.has(p.id),
+            mode === 'route' ? '경로에 추가' : selected.has(p.id) ? '위치 보기' : '지도에 추가',
           ),
         );
       });
@@ -314,8 +357,15 @@ async function start() {
         return Math.max(Math.abs(x - W / 2) / (W / 2 - 70), Math.abs(y - H / 2) / (H / 2 - 85));
       }),
     );
-    const base =
-      span > 55
+    const base = points.some(
+      (p) =>
+        p.lon < bases.world.bbox[0] ||
+        p.lon > bases.world.bbox[1] ||
+        p.lat < bases.world.bbox[2] ||
+        p.lat > bases.world.bbox[3],
+    )
+      ? 'globe'
+      : span > 55
         ? 'world'
         : span > 22
           ? 'east'
@@ -346,15 +396,15 @@ async function start() {
     const i = Number(key.slice(1));
     if (key[0] === 't') {
       const t = themes[i],
-        missing = t.places.filter((n) => !doc.points.some((p) => p.name === n));
+        missing = t.places.filter((n) => !doc.points.some((mark) => samePlace(mark, byId.get(n))));
       if (!missing.length) {
         switchTab('mine');
         return;
       }
       change(() => {
         if (!doc.points.length && doc.title === '제목 없는 지도') doc.title = t.name;
-        doc.points.push(...missing.map((n) => point(byName.get(n))));
-        fit(t.places.map((n) => byName.get(n)));
+        doc.points.push(...missing.map((n) => sheetPoint(byId.get(n))));
+        fit(t.places.map((n) => byId.get(n)));
       });
       message(t.name + ' 지점 ' + missing.length + '곳을 추가했습니다.');
     } else if (key[0] === 'p') {
@@ -364,7 +414,7 @@ async function start() {
         return;
       }
       change(() => {
-        if (!doc.points.some((q) => q.name === p.name)) doc.points.push(point(p));
+        if (!doc.points.some((mark) => samePlace(mark, p))) doc.points.push(sheetPoint(p));
         fit([p]);
       });
     } else {
@@ -402,7 +452,7 @@ async function start() {
   };
   $('base').onchange = (e) => change(() => (doc.view = camera(e.target.value)));
   function zoom(factor) {
-    const span = Math.max(0.5, Math.min(200, doc.view.span * factor));
+    const span = Math.max(0.5, Math.min(360, doc.view.span * factor));
     if (span !== doc.view.span) change(() => (doc.view.span = span));
   }
   $('plus').onclick = () => zoom(0.75);
@@ -483,7 +533,7 @@ async function start() {
           mode = 'move';
           activeRoute = null;
           routeStart = null;
-          change(() => (doc = structuredClone(maps[Number(b.dataset.open)])));
+          change(() => (doc = refreshDrawing(structuredClone(maps[Number(b.dataset.open)]), byId)));
         }),
     );
   };

@@ -9,6 +9,7 @@ export const presets = {
   north: [126.5, 41.5, 19],
   east: [125, 36.9, 48],
   world: [69, 50, 162],
+  globe: [0, 20, 360],
 };
 export const esc = (value) =>
   String(value).replace(
@@ -84,7 +85,12 @@ function caption(x, y, t, size, attrs = '') {
 export function draw(doc, bases, labelScale = 1) {
   const view = doc.view,
     k = W / view.span;
-  const layers = ['world', 'east', ...(['korea', 'south', 'north'].includes(view.base) ? [view.base] : [])]
+  const layers = [
+    'globe',
+    'world',
+    'east',
+    ...(['korea', 'south', 'north'].includes(view.base) ? [view.base] : []),
+  ]
     .map((key) => {
       const b = bases[key],
         [lo, hi, , top] = b.bbox,

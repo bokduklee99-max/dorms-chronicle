@@ -320,8 +320,8 @@ async function start() {
     if (t !== currentTheme() || doc.eventId) applyTheme(t);
   };
   function displayDrawing() {
-    const choice = doc.background || doc.edition || currentTheme()?.defaultEdition;
-    return { ...doc, edition: choice === 'outline' ? undefined : choice };
+    const edition = historical.editions[doc.background]?.paths ? doc.background : undefined;
+    return { ...doc, edition };
   }
   const yearSelect = $('background-year');
   const byEra = new Map();
@@ -359,12 +359,11 @@ async function start() {
   yearSelect.options[0].disabled = true;
   yearSelect.disabled = !byEra.size;
   function setBackground(value) {
-    if ((doc.background || '') !== value)
+    if ((doc.background || 'outline') !== value)
       change(() => {
         doc.background = value;
       });
   }
-  $('background-auto').onclick = () => setBackground('');
   $('background-outline').onclick = () => setBackground('outline');
   yearSelect.onchange = () => setBackground(yearSelect.value);
   $('country-borders').onclick = () =>
@@ -377,14 +376,12 @@ async function start() {
     });
   $('province-borders').disabled = !boundaries?.provinces;
   function backgroundControls() {
-    const background = doc.background || '';
-    $('background-auto').setAttribute('aria-pressed', String(!background));
-    $('background-outline').setAttribute('aria-pressed', String(background === 'outline'));
-    yearSelect.value = historical.editions[background]?.paths ? background : '';
+    const { edition } = displayDrawing();
+    $('background-outline').setAttribute('aria-pressed', String(!edition));
+    yearSelect.value = edition || '';
     yearSelect.classList.toggle('active-edition', !!yearSelect.value);
     $('country-borders').setAttribute('aria-pressed', String(doc.countryBorders !== false));
-    $('country-borders').disabled =
-      !boundaries?.countries && !historical.editions[displayDrawing().edition]?.paths;
+    $('country-borders').disabled = !boundaries?.countries && !edition;
     $('province-borders').setAttribute('aria-pressed', String(!!doc.provinceBorders));
   }
   const past = beforeRecovery ? [beforeRecovery] : [],

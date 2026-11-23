@@ -1001,11 +1001,19 @@ async function start() {
           '" aria-label="' + title + ' 지점 전체 추가">지점 전체 추가</button>' : '';
       return '<div class="lesson-heading">' + select + add + '</div>';
     });
+    const regionRows = ['point', 'line', 'area'].map(type => {
+      const buttons = type === 'point' ? active.points.map(placeChoice)
+        : active.shapes.filter(shape => shape.type === type).map(shapeChoice);
+      if (!buttons.length) return '';
+      const labelId = 'lesson-region-' + type;
+      return '<div class="lesson-region-row" role="group" aria-labelledby="' + labelId + '"><h5 id="' +
+        labelId + '">' + itemLabels[type] + '</h5><div class="lesson-region-items">' + buttons.join('') + '</div></div>';
+    });
     return packages + '<div class="lesson-columns"><section><h4>카테고리</h4>' +
       '<div class="lesson-list" data-scroll-key="categories-' + catalogPackage + '">' + headings.join('') +
       '</div></section><section id="lesson-regions"><h4>' + esc(active.category.theme.name) +
       ' · 지역</h4><div class="lesson-places" data-scroll-key="regions-' + active.category.index + '">' +
-      active.points.map(placeChoice).join('') + active.shapes.map(shapeChoice).join('') + '</div></section></div>';
+      regionRows.join('') + '</div></section></div>';
   }
   function pickerList() {
     const topic = pickerMode !== 'places',

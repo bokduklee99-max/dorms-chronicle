@@ -1924,7 +1924,7 @@ async function start() {
     message(missing + ' 자료를 모두 불러오지 못했습니다. 새로 고쳐 주세요.');
   }
   if (library.source !== 'live' || library.historyError || library.unresolved)
-    $('show-items').setAttribute('aria-label', '지도 항목과 시트 연결 상태 보기');
+    $('show-items').setAttribute('aria-label', '작업대 열기 및 시트 연결 상태 보기');
   if (beforeRecovery) persist();
   if (requested.length === 1 && !linked) {
     $('launch-notice').textContent = '연표에서 선택한 카테고리를 시트에서 찾을 수 없습니다.';

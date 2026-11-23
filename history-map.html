@@ -40,10 +40,10 @@
     <main>
       <aside class="side" id="items" aria-labelledby="items-title">
         <div class="side-head">
-          <h2 id="items-title">지도 항목 <span id="count"></span></h2>
+          <h2 id="items-title">작업대 <span id="count"></span></h2>
           <button id="toggle-points" type="button" disabled>전체 해제</button>
           <button id="delete-checked" type="button" title="현재 유형에서 체크한 항목 삭제" disabled>선택 삭제</button>
-          <button class="mobile-only" id="close-items" aria-label="지도 항목 닫기">닫기</button>
+          <button class="mobile-only" id="close-items" aria-label="작업대 닫기">닫기</button>
         </div>
         <section class="pins">
           <div id="item-types" role="group" aria-label="지도 항목 유형">
@@ -78,7 +78,7 @@
         <div class="stage">
           <div class="stage-tools">
             <div class="modes" role="group" aria-label="지도 도구">
-              <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">항목 <span id="mobile-count"></span></button>
+              <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">작업대 <span id="mobile-count"></span></button>
               <button id="display-trigger" type="button" popovertarget="display-options" aria-label="지도 구성">
                 <i data-icon="layers"></i>지도 구성 <span id="base-summary">백지도</span>
               </button>
@@ -200,6 +200,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=editor-actions-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=workbench-name-1"></script>
   </body>
 </html>

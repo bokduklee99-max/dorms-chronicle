@@ -6,7 +6,7 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=chronicle-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=editing-2" />
   </head>
   <body>
     <header class="top">
@@ -19,16 +19,15 @@
       </nav>
     </header>
     <main>
-      <aside class="side" aria-label="지도 구성">
+      <aside class="side" id="items" aria-labelledby="items-title">
         <div class="side-head">
-          <h2>지도 항목</h2>
-          <button class="add" id="browse"><i data-icon="pin"></i>지명 선택</button>
+          <h2 id="items-title">지도 항목 <span id="count"></span></h2>
+          <button class="mobile-only" id="close-items" aria-label="지도 항목 닫기">닫기</button>
         </div>
         <section class="pins">
-          <h3>표시한 지점 <span id="count"></span></h3>
           <div id="pins"></div>
         </section>
-        <section class="inspector" id="inspect" aria-label="선택한 지점"></section>
+        <section class="inspector" id="inspect" tabindex="-1" aria-label="선택한 항목 편집" hidden></section>
         <a class="source" id="source" target="_blank" rel="noreferrer"
           ><i data-icon="sheet"></i><span>시트 연결 중…</span><i data-icon="external"></i
         ></a>
@@ -54,7 +53,15 @@
         <p id="launch-notice" role="status" hidden></p>
         <div class="stage">
           <div class="stage-tools">
-            <div class="modes" id="tools" role="group" aria-label="지도 도구"></div>
+            <div class="modes" role="group" aria-label="지도 도구">
+              <button class="add" id="browse" aria-haspopup="dialog"><i data-icon="pin"></i>지명 선택</button>
+              <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">항목 <span id="mobile-count"></span></button>
+              <div class="draw-tools">
+                <button id="draw-trigger" aria-expanded="false" aria-controls="tools"><i data-icon="pencil"></i><span id="draw-label">그리기</span><span class="caret" aria-hidden="true"></span></button>
+                <div id="tools" role="group" aria-label="그리기 도구" hidden></div>
+              </div>
+              <button id="finish" hidden>완료</button>
+            </div>
             <div class="end-tools">
               <button id="undo" aria-label="되돌리기" title="마지막 편집 되돌리기" disabled>
                 <i data-icon="undo"></i></button
@@ -67,6 +74,7 @@
               data-layout="portrait"
               xmlns="http://www.w3.org/2000/svg"
               aria-label="편집 지도"
+              aria-description="방향키로 이동하고 더하기와 빼기 키로 확대·축소할 수 있습니다."
               role="group"
               tabindex="0"
               viewBox="0 0 900 610"
@@ -78,7 +86,6 @@
               <button id="country-borders" type="button">국경</button>
               <button id="province-borders" type="button">현대 시·도·주</button>
             </div>
-            <span class="legend"><b></b>표시한 지점 <b></b>선택한 지점</span>
             <div class="zoom">
               <select id="base" aria-label="지도 범위"></select>
               <button id="minus" aria-label="축소">−</button
@@ -90,6 +97,7 @@
         <div class="status" role="status" id="status">지도를 불러오는 중입니다.</div>
       </section>
     </main>
+    <dialog id="items-dialog" aria-labelledby="items-title"></dialog>
     <dialog id="lesson-picker" class="lesson-selector" aria-labelledby="lesson-title">
       <div class="dialog-head">
         <h2 id="lesson-title">수업 선택</h2>
@@ -181,6 +189,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=global-coasts-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=editing-2"></script>
   </body>
 </html>

@@ -45,15 +45,14 @@ const icon = (k) =>
   '"/></svg>';
 document.querySelectorAll('[data-icon]').forEach((el) => (el.innerHTML = icon(el.dataset.icon)));
 const modes = {
-  move: ['선택·이동', '지도를 끌어 이동하고, 휠이나 두 손가락으로 확대·축소하세요.'],
+  move: ['선택·이동', ''],
   pin: ['직접 찍기', '지도를 눌러 새 지점을 표시하세요.'],
   route: ['경로', '지도나 지명 목록에서 두 곳 이상을 차례로 선택하세요.'],
   note: ['메모', '메모를 놓을 위치를 선택하세요.'],
 };
-$('tools').innerHTML =
-  Object.entries(modes)
-    .map(([key, [name]]) => '<button data-mode="' + key + '">' + icon(key) + name + '</button>')
-    .join('') + '<button id="finish" hidden>경로 완료</button>';
+$('tools').innerHTML = ['pin', 'route', 'note']
+  .map((key) => '<button data-mode="' + key + '">' + icon(key) + modes[key][0] + '</button>')
+  .join('');
 
 async function json(file) {
   const r = await fetch(new URL(file, import.meta.url));
@@ -201,15 +200,28 @@ async function start() {
   }
   const samePlace = (mark, p) =>
     mark.spaceId ? mark.spaceId === p.id : mark.name === p.name && mark.lon === p.lon && mark.lat === p.lat;
-  let selected = doc.points.length
-    ? {
-        kind: 'points',
-        index: Math.max(
-          0,
-          doc.points.findIndex((p) => p.name === '인천'),
-        ),
-      }
-    : null;
+  let selected = null;
+  const compact = matchMedia('(max-width: 680px)');
+  const itemsDialog = $('items-dialog');
+  const items = $('items');
+  function positionItems() {
+    const pins = items.querySelector('.pins');
+    if (compact.matches) {
+      pins.before($('inspect'));
+      itemsDialog.append(items);
+    } else {
+      pins.after($('inspect'));
+      if (itemsDialog.open) itemsDialog.close();
+      document.querySelector('main').prepend(items);
+    }
+  }
+  function openItems() {
+    if (compact.matches && !itemsDialog.open) itemsDialog.showModal();
+  }
+  positionItems();
+  compact.addEventListener('change', positionItems);
+  $('show-items').onclick = openItems;
+  $('close-items').onclick = () => itemsDialog.close();
   let pickerMode = 'places',
     restrictToLaunch = requested.length > 1 && (!doc.topic?.id || requested.includes(doc.topic.id)),
     mode = 'move',
@@ -614,7 +626,6 @@ async function start() {
     });
   }
   function list() {
-    $('count').textContent = doc.points.length;
     const rows = Object.keys(kindNames).flatMap((kind) =>
       doc[kind].map((item, index) => {
         const active = selected?.kind === kind && selected.index === index;
@@ -641,6 +652,7 @@ async function start() {
         );
       }),
     );
+    $('count').textContent = $('mobile-count').textContent = rows.length;
     const theme = currentTheme();
     $('pins').innerHTML =
       rows.join('') ||
@@ -666,14 +678,15 @@ async function start() {
       fill.onclick = () =>
         change(() => {
           doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
-          selected = { kind: 'points', index: 0 };
+          selected = null;
           fit(doc.points);
         });
   }
   function inspector() {
     const item = selected && doc[selected.kind]?.[selected.index];
+    $('inspect').hidden = !item;
     if (!item) {
-      $('inspect').innerHTML = '<h3>지점 편집</h3><p class="empty">지도나 목록에서 지점을 선택하세요.</p>';
+      $('inspect').replaceChildren();
       return;
     }
     const { kind, index } = selected;
@@ -705,7 +718,11 @@ async function start() {
         : '<label>' +
           (kind === 'notes' ? '메모 내용' : '지도에 표시할 이름') +
           '<input class="name-input" id="label" maxlength="48"></label>');
-    $('remove').onclick = () => removeItem(kind, index);
+    $('remove').onclick = () => {
+      removeItem(kind, index);
+      const next = $('pins').querySelector('.place') || (itemsDialog.open ? $('close-items') : $('browse'));
+      next.focus({ preventScroll: true });
+    };
     if (isRoute) return;
     const input = $('label');
     input.value = item.name;
@@ -738,6 +755,7 @@ async function start() {
     const item = doc[kind][index];
     if (!item) return;
     if (mode === 'route' && kind === 'points') {
+      if (itemsDialog.open) itemsDialog.close();
       routeTo(item.lon, item.lat);
       return;
     }
@@ -747,6 +765,8 @@ async function start() {
       fit(coords);
     }
     render();
+    openItems();
+    $('inspect').focus({ preventScroll: true });
   }
   $('pins').onclick = (e) => {
     const minus = e.target.closest('[data-remove-kind]');
@@ -754,7 +774,8 @@ async function start() {
       const index = Number(minus.dataset.index);
       removeItem(minus.dataset.removeKind, index);
       const remaining = $('pins').querySelectorAll('[data-remove-kind="' + minus.dataset.removeKind + '"]');
-      (remaining[Math.min(index, remaining.length - 1)] || $('browse')).focus({ preventScroll: true });
+      const next = remaining[Math.min(index, remaining.length - 1)] || (itemsDialog.open ? $('close-items') : $('browse'));
+      next.focus({ preventScroll: true });
       return;
     }
     const row = e.target.closest('[data-kind]');
@@ -830,11 +851,15 @@ async function start() {
     document
       .querySelectorAll('[data-mode]')
       .forEach((b) => b.setAttribute('aria-pressed', String(mode === b.dataset.mode)));
-    $('finish').hidden = mode !== 'route' || activeRoute === null;
+    $('draw-label').textContent = mode === 'move' ? '그리기' : modes[mode][0];
+    $('draw-trigger').classList.toggle('active-tool', mode !== 'move');
+    $('finish').hidden = mode === 'move';
+    $('finish').textContent = activeRoute === null ? '취소' : '경로 완료';
     $('undo').disabled = !past.length;
     $('redo').disabled = !future.length;
     $('labels').setAttribute('aria-pressed', String(doc.labels !== false));
-    message(modes[mode][1]);
+    message(mode === 'route' && (routeStart || activeRoute !== null)
+      ? '다음 지점을 선택하세요.' : modes[mode][1]);
   }
   $('labels').onclick = () =>
     change(() => {
@@ -957,7 +982,7 @@ async function start() {
         doc = fresh();
         setTheme(theme);
       }
-      selected = doc.points.length ? { kind: 'points', index: 0 } : null;
+      selected = null;
       mode = 'move';
       activeRoute = routeStart = null;
     });
@@ -1008,17 +1033,42 @@ async function start() {
       doc.routes[activeRoute].push([lon, lat]);
     });
   }
+  function showTools(open) {
+    $('tools').hidden = !open;
+    $('draw-trigger').setAttribute('aria-expanded', String(open));
+    if (open) $('tools').querySelector('button').focus();
+  }
+  $('draw-trigger').onclick = () => showTools($('tools').hidden);
+  document.addEventListener('click', (e) => {
+    if (!$('tools').hidden && !e.target.closest('.draw-tools')) showTools(false);
+  });
+  document.addEventListener('focusin', (e) => {
+    if (!$('tools').hidden && !e.target.closest('.draw-tools')) showTools(false);
+  });
   $('tools').onclick = (e) => {
-    const b = e.target.closest('[data-mode]');
-    if (b) setMode(b.dataset.mode);
+    const button = e.target.closest('[data-mode]');
+    if (!button) return;
+    showTools(false);
+    if (mode !== button.dataset.mode) setMode(button.dataset.mode);
+    svg.focus({ preventScroll: true });
   };
   $('finish').onclick = () => {
-    if ((doc.routes[activeRoute]?.length || 0) < 2) {
-      message('경로에 지점을 한 곳 더 추가하세요.');
-      return;
-    }
     setMode('move');
+    $('draw-trigger').focus();
   };
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || document.querySelector('dialog[open], :popover-open')) return;
+    if (!$('tools').hidden) {
+      showTools(false);
+      $('draw-trigger').focus();
+    } else if (mode !== 'move') {
+      $('finish').click();
+    } else if (selected && !e.isComposing && !e.target.matches('input,select,textarea')) {
+      selected = null;
+      render();
+      svg.focus({ preventScroll: true });
+    }
+  });
   $('base').onchange = (e) =>
     change(
       () =>
@@ -1385,6 +1435,9 @@ async function start() {
       } else if (d.moved) {
         doc.view = d.view;
         paint();
+      } else if (selected) {
+        selected = null;
+        render();
       }
       return;
     }
@@ -1404,12 +1457,14 @@ async function start() {
       selected = { kind, index };
       mode = 'move';
     });
+    openItems();
     $('label').focus();
     $('label').select();
   }
   svg.onkeydown = (e) => {
     const item = e.target.closest('[data-point],[data-note]');
-    if (mode === 'move' && item && ['Enter', ' '].includes(e.key)) {
+    const canPick = mode === 'move' || (mode === 'route' && item?.hasAttribute('data-point'));
+    if (canPick && item && ['Enter', ' '].includes(e.key)) {
       e.preventDefault();
       pick(
         item.hasAttribute('data-point') ? 'points' : 'notes',
@@ -1437,6 +1492,7 @@ async function start() {
   };
   document.addEventListener('keydown', (e) => {
     if (
+      itemsDialog.open ||
       dialog.open ||
       routePicker.open ||
       lessonPicker.open ||
@@ -1541,6 +1597,8 @@ async function start() {
     const missing = [!editions && '시대별 배경', !boundaries && '현대 경계'].filter(Boolean).join('·');
     message(missing + ' 자료를 모두 불러오지 못했습니다. 새로 고쳐 주세요.');
   }
+  if (library.source !== 'live' || library.historyError || library.unresolved)
+    $('show-items').setAttribute('aria-label', '지도 항목과 시트 연결 상태 보기');
   if (beforeRecovery) persist();
   if (requested.length === 1 && !linked) {
     $('launch-notice').textContent = '연표에서 선택한 카테고리를 시트에서 찾을 수 없습니다.';

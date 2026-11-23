@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { camera, comparisonYears, zoomView, definitions, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+import { W, canvasFrame, camera, comparisonYears, zoomView, definitions, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
@@ -21,6 +21,20 @@ test('clicking a projected point gives the same coordinates for each extent', ()
       const [lon, lat] = ll(view, ...xy(view, p.lon, p.lat, height), height);
       assert.ok(Math.abs(lon - p.lon) < 1e-8 && Math.abs(lat - p.lat) < 1e-8);
     }
+  }
+});
+
+test('responsive frames show new geography at the edges with the saved camera centered', () => {
+  for (const [base, width, height] of [['korea', 880, 480], ['east', 360, 560]]) {
+    const view = camera(base), baseHeight = mapHeight(view);
+    const frame = canvasFrame(view, width, height);
+    assert.ok(Math.abs(frame.width / frame.height - width / height) < 1e-9);
+    assert.equal(frame.x + frame.width / 2, W / 2);
+    assert.equal(frame.y + frame.height / 2, baseHeight / 2);
+    const [lon, lat] = ll(view, frame.x + 12, frame.y + 12, baseHeight);
+    const doc = { view, points: [{ lon, lat, name: '가장자리' }], notes: [], routes: [] };
+    assert.doesNotMatch(draw(doc, bases), /data-point="0"/);
+    assert.match(draw(doc, bases, 1, null, null, frame), /data-point="0"/);
   }
 });
 

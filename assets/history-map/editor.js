@@ -3,6 +3,7 @@ import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js
 import {
   W,
   mapHeight,
+  canvasFrame,
   zoomView,
   camera,
   presets,
@@ -13,7 +14,7 @@ import {
   comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=sidebar-types-1';
+} from './cartography.js?v=full-canvas-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -855,10 +856,9 @@ async function start() {
     if (row) pick(row.dataset.kind, Number(row.dataset.index), true);
   };
   function paint() {
-    const height = mapHeight(doc.view);
-    svg.dataset.layout = doc.view.base === 'korea' ? 'portrait' : 'wide';
-    const unit = W / (svg.clientWidth || W);
-    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + height);
+    const frame = canvasFrame(doc.view, svg.clientWidth, svg.clientHeight);
+    const unit = frame.width / (svg.clientWidth || W);
+    svg.setAttribute('viewBox', [frame.x, frame.y, frame.width, frame.height].join(' '));
     const drawing = displayDrawing();
     const signature = JSON.stringify([
       drawing.edition,
@@ -876,7 +876,7 @@ async function start() {
           '</g>',
       );
     }
-    scene.innerHTML = draw(drawing, bases, unit, selected, historical);
+    scene.innerHTML = draw(drawing, bases, unit, selected, historical, frame);
     if (mode === 'route' && routeStart) {
       const [x, y] = xy(doc.view, ...routeStart);
       scene.insertAdjacentHTML(
@@ -885,10 +885,10 @@ async function start() {
       );
     }
     svg.setAttribute('aria-label', doc.title + ' 지도');
-    const frame = currentTheme()?.frame;
+    const lessonFrame = currentTheme()?.frame;
     $('reset').textContent =
       Math.round(
-        (100 * (frame ? historyCamera(frame.bounds).span : presets[doc.view.base][2])) / doc.view.span,
+        (100 * (lessonFrame ? historyCamera(lessonFrame.bounds).span : presets[doc.view.base][2])) / doc.view.span,
       ) + '%';
   }
   function render() {
@@ -991,10 +991,10 @@ async function start() {
       '</span><small>' + total + '곳</small><span class="caret" aria-hidden="true"></span></button>';
     const addAll = points.length && listedPoints.length === points.length
       ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
-        '">지점 전체 추가</button>' : '';
+        '" aria-label="' + esc(theme.name) + ' 지점 전체 추가">지점 전체 추가</button>' : '';
     const members = open ? '<h5>지역</h5>' + listedPoints.map(placeChoice).join('') +
-      listedShapes.map(shapeChoice).join('') + addAll : '';
-    return header + '<div class="lesson-places" id="' + panel + '"' + (open ? '' : ' hidden') + '>' + members + '</div>';
+      listedShapes.map(shapeChoice).join('') : '';
+    return '<div class="lesson-heading">' + header + addAll + '</div><div class="lesson-places" id="' + panel + '"' + (open ? '' : ' hidden') + '>' + members + '</div>';
   }
   function packageChoices(query) {
     const buttons = packageLessons.map((pkg, i) => '<button type="button" id="catalog-package-' + i +
@@ -1203,7 +1203,7 @@ async function start() {
     change(() => {
       if (append) {
         itemType = 'point';
-        const locations = theme.places.map((id) => byId.get(id));
+        const locations = theme.places.map((id) => byId.get(id)).filter(Boolean);
         for (const place of locations) {
           const mark = doc.points.find((p) => samePlace(p, place));
           if (mark) mark.hidden = false;
@@ -1592,8 +1592,7 @@ async function start() {
   });
   function anchorAt(e) {
     if (!Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return [W / 2, mapHeight(doc.view) / 2];
-    const [x, y] = locationOf(e);
-    return [Math.max(0, Math.min(W, x)), Math.max(0, Math.min(mapHeight(doc.view), y))];
+    return locationOf(e);
   }
   let wheelGesture,
     wheelTime = -Infinity,
@@ -1690,7 +1689,6 @@ async function start() {
     if (e.button !== 0 || drag || pinch || nativePinch) return;
     if (saveTimer) finishZoom();
     const [x, y] = locationOf(e);
-    if (x < 0 || x > W || y < 0 || y > mapHeight(doc.view)) return;
     const label = e.target.closest('[data-point],[data-note]');
     const kind = label?.hasAttribute('data-point') ? 'points' : 'notes';
     const item =
@@ -1828,11 +1826,13 @@ async function start() {
   async function exportMap(format) {
     const drawing = displayDrawing();
     const copy = svg.cloneNode(false);
-    const H = mapHeight(doc.view);
+    const frame = canvasFrame(doc.view, svg.clientWidth, svg.clientHeight);
+    const outputWidth = W * 2, outputHeight = Math.round(outputWidth * frame.height / frame.width);
+    copy.setAttribute('viewBox', [frame.x, frame.y, frame.width, frame.height].join(' '));
     copy.innerHTML =
       definitions(bases) +
       historicalDefinitions(historical, drawing.edition, doc.layerKeys || [], doc) +
-      draw(drawing, bases, W / (svg.clientWidth || W), null, historical);
+      draw(drawing, bases, frame.width / (svg.clientWidth || W), null, historical, frame);
     const title = document.createElementNS(svg.namespaceURI, 'title');
     title.textContent = doc.title;
     copy.prepend(title);
@@ -1855,8 +1855,8 @@ async function start() {
       copy.prepend(desc);
     }
     copy.setAttribute('font-family', 'Apple SD Gothic Neo,Malgun Gothic,sans-serif');
-    copy.setAttribute('width', W * 2);
-    copy.setAttribute('height', H * 2);
+    copy.setAttribute('width', outputWidth);
+    copy.setAttribute('height', outputHeight);
     const blob = new Blob([new XMLSerializer().serializeToString(copy)], {
       type: 'image/svg+xml;charset=utf-8',
     });
@@ -1870,8 +1870,8 @@ async function start() {
       img.src = url;
       await img.decode();
       const canvas = document.createElement('canvas');
-      canvas.width = W * 2;
-      canvas.height = H * 2;
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
       canvas.getContext('2d').drawImage(img, 0, 0);
       const png = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
       if (!png) throw Error();

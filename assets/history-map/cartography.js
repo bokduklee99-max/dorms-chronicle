@@ -37,6 +37,14 @@ const elPath = (d, attrs) => (d ? '<path d="' + d + '" ' + attrs + '/>' : '');
 const rect = (x, y, w, h, attrs) =>
   '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" ' + attrs + '/>';
 export const mapHeight = (view) => (view.base === 'korea' ? (W * 907) / 600 : H);
+// Extend the saved camera's frame to the canvas edges at a uniform geographic scale.
+export function canvasFrame(view, width, height) {
+  const baseHeight = mapHeight(view);
+  if (!(width > 0 && height > 0)) return { x: 0, y: 0, width: W, height: baseHeight };
+  const ratio = width / height;
+  const w = Math.max(W, baseHeight * ratio), h = Math.max(baseHeight, W / ratio);
+  return { x: (W - w) / 2, y: (baseHeight - h) / 2, width: w, height: h };
+}
 // Keep the geographic point under the cursor (or the moving pinch midpoint) fixed.
 export function zoomView(view, factor, from, to = from) {
   const height = mapHeight(view);
@@ -129,10 +137,12 @@ export function historicalDefinitions(history, edition, keys, doc = {}) {
     '</defs>'
   );
 }
-export function draw(doc, bases, unit = 1, selected = null, history) {
+export function draw(doc, bases, unit = 1, selected = null, history, frame = canvasFrame(doc.view)) {
   const camera = doc.view,
     H = mapHeight(camera),
     labels = doc.labels !== false;
+  const { x: left, y: top, width: frameWidth, height: frameHeight } = frame;
+  const rightEdge = left + frameWidth, bottomEdge = top + frameHeight;
   const project = (lon, lat) => xy(camera, lon, lat, H),
     invert = (x, y) => ll(camera, x, y, H);
   function placeMarks(unit) {
@@ -149,7 +159,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
     }));
     return pins
       .map(({ p, index, at: [x, y] }) => {
-        if (x < 0 || x > W || y < 0 || y > H) return '';
+        if (x < left || x > rightEdge || y < top || y > bottomEdge) return '';
         const width = Array.from(p.name).length * size;
         let chosen;
         positions: for (const row of [0, -1, 1, -2, 2, -3, 3]) {
@@ -158,7 +168,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
               by = y + row * (size + 4 * unit) - size * 0.55;
             const box = { x: bx, y: by, w: width, h: size + 2 * unit };
             if (!chosen) chosen = box;
-            if (bx < 2 || bx + width > W - 2 || by < 2 || by + size > H - 2) continue;
+            if (bx < left + 2 || bx + width > rightEdge - 2 || by < top + 2 || by + size > bottomEdge - 2) continue;
             if (
               used.some(
                 (b) => bx < b.x + b.w + unit && bx + width > b.x - unit && by < b.y + b.h && by + box.h > b.y,
@@ -220,8 +230,8 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
       })
       .join('');
   }
-  const [west, north] = invert(0, 0),
-    [east, south] = invert(W, H);
+  const [west, north] = invert(left, top),
+    [east, south] = invert(rightEdge, bottomEdge);
   const isKorea = camera.span < 35 && east > 123 && west < 133 && south < 44 && north > 32;
   let map = '';
   for (const key of [
@@ -299,7 +309,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
       ? seaNames
           .map(([name, lon, lat]) => {
             const [x, y] = project(lon, lat);
-            return x > 26 * unit && x < W - 26 * unit && y > 16 * unit && y < H - 8 * unit
+            return x > left + 26 * unit && x < rightEdge - 26 * unit && y > top + 16 * unit && y < bottomEdge - 8 * unit
               ? text(
                   x,
                   y,
@@ -332,10 +342,10 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
   const insets = originals
     .map((key, i) => {
       const { name, original } = history.layers[key];
-      const width = Math.min(W * 0.28, 150 * unit),
+      const width = Math.min(frameWidth * 0.28, 150 * unit),
         height = width * 0.72,
-        x = 8 * unit + i * (width + 5 * unit),
-        y = 8 * unit;
+        x = left + 8 * unit + i * (width + 5 * unit),
+        y = top + 8 * unit;
       return (
         '<g data-original-layer="' +
         esc(key) +
@@ -415,7 +425,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
     .filter(Boolean)
     .join(' / ');
   return (
-    rect(0, 0, W, H, 'fill="#d9d9d9"') +
+    rect(left, top, frameWidth, frameHeight, 'fill="#d9d9d9"') +
     map +
     boundaryOverlay +
     dokdo +
@@ -426,8 +436,8 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
     insets +
     (credits
       ? text(
-          7 * unit,
-          H - 7 * unit,
+          left + 7 * unit,
+          bottomEdge - 7 * unit,
           credits,
           'font-size="' +
             10 * unit +
@@ -437,10 +447,10 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
         )
       : '') +
     rect(
-      unit / 2,
-      unit / 2,
-      W - unit,
-      H - unit,
+      left + unit / 2,
+      top + unit / 2,
+      frameWidth - unit,
+      frameHeight - unit,
       'fill="none" stroke="#222" stroke-width="' + unit + '" pointer-events="none"',
     )
   );

@@ -343,32 +343,32 @@ main {
 .status {
   font-size: 13px;
   color: var(--muted);
-  margin-top: 9px;
-  min-height: 16px;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 20px);
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--chronicle-surface);
+  box-shadow: 0 1px 5px #302b2124;
+  pointer-events: none;
 }
 .paper-desk {
   touch-action: none;
-  --paper-height: clamp(390px, calc(100dvh - 296px), 840px);
-  display: grid;
-  place-items: center;
-  min-height: calc(var(--paper-height) + 24px);
-  padding: 12px;
-  background: var(--chronicle-tint);
+  position: relative;
+  min-height: clamp(355px, 58dvh, 640px);
+  background: #d9d9d9;
 }
 #atlas {
+  position: absolute;
+  inset: 0;
   display: block;
-  width: min(100%, calc(var(--paper-height) * 0.66152));
-  height: auto;
-  aspect-ratio: 600 / 907;
+  width: 100%;
+  height: 100%;
   touch-action: none;
   cursor: grab;
-  background: white;
-  outline: 5px solid white;
-  box-shadow: 0 1px 8px 5px #292e271b;
-}
-#atlas[data-layout='wide'] {
-  width: min(100%, calc(var(--paper-height) * 1.4754));
-  aspect-ratio: 900 / 610;
 }
 #atlas[data-mode='pin'] {
   cursor: crosshair;
@@ -506,12 +506,8 @@ dialog::backdrop {
   .stage-tools button {
     padding: 4px 7px;
   }
-  .paper-desk {
-    --paper-height: clamp(355px, 48dvh, 475px);
-  }
   .status {
     font-size: 12px;
-    margin-top: 6px;
   }
   .side {
     height: auto;
@@ -844,13 +840,6 @@ button:is(.dark, .add):not(:disabled):hover {
   .paper-desk {
     flex: 1;
     min-height: 0;
-    container-type: size;
-  }
-  #atlas {
-    width: min(100cqw, calc(100cqh * 0.66152));
-  }
-  #atlas[data-layout='wide'] {
-    width: min(100cqw, calc(100cqh * 1.4754));
   }
 }
 @media (max-width: 680px) {
@@ -867,9 +856,6 @@ button:is(.dark, .add):not(:disabled):hover {
   }
   #categories {
     max-height: min(28dvh, 200px);
-  }
-  .paper-desk:has(#atlas[data-layout='wide']) {
-    min-height: 0;
   }
   .selector-options button {
     min-height: 36px;
@@ -1315,7 +1301,7 @@ button:is(.dark, .add):not(:disabled):hover {
   box-shadow: 0 5px 16px #302b211f;
 }
 #tools button { justify-content: flex-start; min-height: 38px; }
-.status:empty { min-height: 0; margin: 0; }
+.status:empty { padding: 0; }
 @media (max-width: 680px) {
   .mobile-only { display: inline-flex; }
   #items-dialog {
@@ -1340,7 +1326,6 @@ button:is(.dark, .add):not(:disabled):hover {
   .stage-foot .display-group { flex-basis: auto; }
   .stage-foot .zoom { margin-left: auto; }
   .stage-tools button { min-height: 38px; }
-  .paper-desk { --paper-height: clamp(355px, 58dvh, 640px); }
 }
 
 #toggle-points { margin-left: auto; }
@@ -1418,7 +1403,17 @@ button:is(.dark, .add):not(:disabled):hover {
 .catalog-packages button[aria-pressed="true"] { background: var(--chronicle-green); color: white; }
 .catalog-section-title { margin: 10px 10px 3px; }
 .lesson-places h5 { grid-column: 1 / -1; margin: 4px 5px; }
-.lesson-toggle small { margin-left: auto; }
+.lesson-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.lesson-heading:has([aria-expanded="true"]) { background: var(--chronicle-tint); }
+.lesson-heading .lesson-toggle { width: auto; min-width: 0; margin: 0; padding-inline: 6px; background: transparent; }
+.lesson-toggle span:first-child { overflow-wrap: anywhere; }
+.lesson-toggle small, .lesson-toggle .caret { flex: none; }
 .lesson-toggle .caret { transform: rotate(-45deg); }
 .lesson-toggle[aria-expanded="true"] { color: var(--chronicle-green); background: var(--chronicle-tint); }
 .lesson-toggle[aria-expanded="true"] .caret { transform: rotate(45deg); }
@@ -1430,7 +1425,7 @@ button:is(.dark, .add):not(:disabled):hover {
   padding: 5px 8px;
   border-left: 2px solid var(--line);
 }
-.lesson-add { grid-column: 1 / -1; justify-self: start; margin-block: 4px; }
+.lesson-add { flex: none; min-height: 30px; padding: 3px 8px; color: var(--chronicle-green); font-size: 13px; }
 .geometry-column { min-width: 0; }
 .geometry-column h4 {
   margin: 0;

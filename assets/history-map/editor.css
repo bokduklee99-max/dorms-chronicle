@@ -160,7 +160,11 @@ main {
   flex-direction: column;
 }
 #pins {
-  padding: 0 10px 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  column-gap: 4px;
+  padding: 0 6px 10px;
   overflow: auto;
   scrollbar-width: thin;
 }
@@ -1025,13 +1029,26 @@ button:is(.dark, .add):not(:disabled):hover {
   content: '✓';
   margin-right: 4px;
 }
+#pins > :not(.pin-row:has(.pin-toggle)) {
+  grid-column: 1 / -1;
+}
 .pin-row {
-  gap: 4px;
+  min-width: 0;
+  gap: 2px;
+}
+.pin-row:has(.pin-toggle) .place {
+  padding: 4px 1px;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+.pin-row:has(.pin-toggle) .remove-item {
+  min-width: 24px;
+  padding: 0;
 }
 .pin-toggle {
   display: grid;
   place-items: center;
-  width: 34px;
+  width: 24px;
   align-self: stretch;
   flex: none;
   cursor: pointer;
@@ -1043,7 +1060,6 @@ button:is(.dark, .add):not(:disabled):hover {
   accent-color: var(--chronicle-green);
   cursor: pointer;
 }
-.pin-toggle + .place { padding-inline-start: 4px; }
 .pin-toggle:has(:not(:checked)) + .place { color: var(--muted); }
 .pin-row .place {
   min-width: 0;

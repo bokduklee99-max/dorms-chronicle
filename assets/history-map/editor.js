@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=live-sheets-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=source-card-1';
 import {
   W,
   mapHeight,
@@ -18,6 +18,10 @@ import {
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
+function coordinateLabel({lat, lon}) {
+  return (lat < 0 ? '남위 ' : '북위 ') + Math.abs(lat).toFixed(4) + '° · ' +
+    (lon < 0 ? '서경 ' : '동경 ') + Math.abs(lon).toFixed(4) + '°';
+}
 const $ = (id) => document.getElementById(id);
 const paths = {
   trash: 'M3 7h18M9 7V4h6v3 M6 7l1 14h10l1-14 M10 10v8m4-8v8',
@@ -229,7 +233,6 @@ async function start() {
     const available = availableLessons();
     const theme = currentTheme();
     const inPackage = available.filter((t) => t.packageId === activePackage);
-    $('historic-events').hidden = !theme?.events || theme.packageId !== activePackage;
     const empty = inPackage.filter((t) => !t.places.length && !t.edition);
     $('packages').innerHTML =
       packages
@@ -489,111 +492,7 @@ async function start() {
   const svg = $('atlas');
   svg.innerHTML = definitions(bases) + '<g id="scene"></g>';
   const scene = $('scene');
-  let definitionKey, eventTheme;
-  function historyControls(theme) {
-    $('historic-events').hidden = !theme?.events;
-    if (eventTheme !== theme) {
-      eventTheme = theme;
-      $('event-map').innerHTML =
-        '<option value="">카테고리 전체</option>' +
-        (theme?.events || [])
-          .map((id) => {
-            const e = historical.events[id];
-            return '<option value="' + esc(id) + '">' + esc(e.date + ' · ' + e.name) + '</option>';
-          })
-          .join('');
-    }
-    $('event-map').value = doc.eventId || '';
-    const keys = doc.layerKeys || [];
-    $('historic-layers').hidden = !keys.length;
-    $('layer-list').innerHTML = keys
-      .map((key, index) => {
-        const layer = historical?.layers[key];
-        if (!layer) return '';
-        const territory = historical.events[doc.eventId]?.territories.find((t) => t.key === key);
-        const period = territory?.from
-          ? ' (' + territory.from + (territory.to ? ' ~ ' + territory.to : '부터') + ')'
-          : '';
-        const label = esc(layer.name + period),
-          note = esc([layer.note, territory?.note].filter(Boolean).join(' · '));
-        if (!layer.d && !layer.original) return '<span>' + label + ' · ' + (layer.loadFailed ? '도형 읽기 실패' : '도형 미등록') + '</span>';
-        return (
-          '<label title="' +
-          note +
-          '"><input type="checkbox" data-layer-index="' +
-          index +
-          '" ' +
-          (doc.hiddenLayers?.includes(key) ? '' : 'checked') +
-          '>' +
-          label +
-          (layer.original ? ' · 원도' : '') +
-          '</label>' +
-          (layer.original
-            ? '<button type="button" data-original="' + index + '">원도 크게 보기</button>'
-            : '')
-        );
-      })
-      .join('');
-  }
-  $('event-map').onchange = (e) => {
-    const theme = currentTheme(),
-      id = e.target.value,
-      event = historical.events[id];
-    change(() => {
-      const { background, backgroundYears, previousBackground, countryBorders, provinceBorders } = doc;
-      doc = { ...fresh(), background, backgroundYears, previousBackground, countryBorders, provinceBorders };
-      doc.topic = { id: theme.id };
-      doc.edition = theme.edition;
-      const source = event || theme;
-      doc.eventId = id;
-      doc.title = event?.name || theme.name;
-      doc.points = source.places.map((id) => sheetPoint(byId.get(id)));
-      doc.layerKeys = [...new Set([...source.layers, ...(event?.territories || []).map((r) => r.key)])];
-      doc.hiddenLayers = [];
-      if (theme.frame) doc.view = historyCamera(theme.frame.bounds);
-      // Frame the event's own linked geography independently of the category overview.
-      if (event) {
-        const coords = doc.points.map((p) => [p.lon, p.lat]);
-        for (const key of doc.layerKeys) {
-          const b = historical.layers[key]?.bounds;
-          if (b) coords.push([b[0], b[1]], [b[2], b[3]]);
-        }
-        if (coords.length) {
-          const xs = coords.map((c) => c[0]),
-            ys = coords.map((c) => c[1]);
-          const bounds = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-          if (bounds[0] === bounds[2]) {
-            bounds[0] -= 1;
-            bounds[2] += 1;
-          }
-          if (bounds[1] === bounds[3]) {
-            bounds[1] -= 0.7;
-            bounds[3] += 0.7;
-          }
-          doc.view = historyCamera(bounds);
-        }
-      }
-      selected = null;
-      activeRoute = routeStart = null;
-      mode = 'move';
-    });
-  };
-  $('layer-list').onchange = (e) => {
-    change(() => setItemHidden('layerKeys', Number(e.target.dataset.layerIndex), !e.target.checked));
-    $('layer-list')
-      .querySelector('[data-layer-index="' + e.target.dataset.layerIndex + '"]')
-      ?.focus({ preventScroll: true });
-  };
-  $('layer-list').onclick = (e) => {
-    const b = e.target.closest('[data-original]');
-    if (!b) return;
-    const layer = historical.layers[doc.layerKeys[b.dataset.original]];
-    modal(
-      layer.name,
-      '<img class="original-shape" alt="' + esc(layer.name) + ' 등록 도형"><p>' + esc(layer.note) + '</p>',
-    );
-    body.querySelector('img').src = layer.original;
-  };
+  let definitionKey;
   const kindNames = { points: '지점', notes: '메모', routes: '경로' },
     kindIcons = { points: 'pin', notes: 'note', routes: 'route' };
   const itemLabels = { point: '점', line: '선', area: '면', other: '기타' };
@@ -610,7 +509,10 @@ async function start() {
     for (const [index, key] of (doc.layerKeys || []).entries()) {
       const entry = shapesByKey.get(key), layer = historical.layers[key];
       const type = entry?.type || (typeof layer?.line === 'boolean' ? (layer.line ? 'line' : 'area') : 'other');
+      const territory = historical.events[doc.eventId]?.territories.find(t => t.key === key);
+      const period = territory?.from && (territory.from + (territory.to ? ' ~ ' + territory.to : '부터'));
       rows.push({ kind: 'layerKeys', index, type, name: entry?.name || layer?.name || key,
+        original: layer?.original, detail: [period, layer?.note, territory?.note].filter(Boolean).join(' · '),
         hidden: doc.hiddenLayers?.includes(key), missing: !layer?.d && !layer?.original, loadFailed: layer?.loadFailed });
     }
     return rows;
@@ -647,18 +549,21 @@ async function start() {
     }
     if (hidden && selected?.kind === kind && selected.index === index) selected = null;
   }
-  function sidebarRow({kind, index, name, hidden, missing, loadFailed}) {
+  function sidebarRow({kind, index, name, hidden, missing, loadFailed, original, detail}) {
     const text = esc(name), id = 'visible-' + kind + '-' + index;
     const toggle = '<label class="pin-toggle" title="지도에 표시"><input type="checkbox" id="' + id +
       '" data-visible-kind="' + kind + '" data-index="' + index + '"' +
       (kind === 'points' ? ' data-visible-point="' + index + '"' : '') +
       ' aria-label="' + text + ' 지도에 표시"' + (missing ? ' disabled' : hidden ? '' : ' checked') + '></label>';
     const label = kind === 'layerKeys'
-      ? '<label for="' + id + '" class="place layer-name">' + text + (loadFailed ? ' · 도형 읽기 실패' : missing ? ' · 도형 미등록' : '') + '</label>'
+      ? '<button type="button" class="place layer-name" data-layer-source="' + index + '" aria-haspopup="dialog" aria-label="' + text +
+        ' 출처와 표시 근거" title="' + esc(detail ? '출처와 표시 근거 · ' + detail : '출처와 표시 근거') + '">' + text +
+        (loadFailed ? ' · 도형 읽기 실패' : missing ? ' · 도형 미등록' : '') + '</button>'
       : '<button class="place" data-kind="' + kind + '" data-index="' + index + '" aria-pressed="' +
         (selected?.kind === kind && selected.index === index) + '">' +
         (kind === 'points' ? '' : '<i>' + icon(kindIcons[kind]) + '</i>') + '<span>' + text + '</span></button>';
-    return '<div class="pin-row' + (kind === 'points' ? '' : ' wide-item') + '">' + toggle + label +
+    return '<div class="pin-row' + (kind === 'notes' ? ' wide-item' : '') + '">' + toggle + label +
+      (original ? '<button type="button" data-original="' + index + '" aria-label="' + text + ' 원도 크게 보기">원도 보기</button>' : '') +
       '<button type="button" class="remove-item" data-remove-kind="' + kind + '" data-index="' + index +
       '" aria-label="' + text + ' 지도에서 빼기" title="지도에서 빼기">−</button></div>';
   }
@@ -719,34 +624,22 @@ async function start() {
       return;
     }
     const { kind, index } = selected;
-    const isRoute = kind === 'routes',
-      name = isRoute ? '경로 ' + (index + 1) : item.sourceName || item.name;
-    const coord = isRoute
-      ? item.length + '곳'
-      : Math.abs(item.lat).toFixed(4) +
-        '° ' +
-        (item.lat < 0 ? 'S' : 'N') +
-        '  ' +
-        Math.abs(item.lon).toFixed(4) +
-        '° ' +
-        (item.lon < 0 ? 'W' : 'E');
+    const isRoute = kind === 'routes';
+    const field = kind === 'notes' ? '메모 내용' : '지도에 표시할 이름';
+    const title = isRoute
+      ? '<strong class="inspect-route">경로 ' + (index + 1) + '</strong>'
+      : '<label class="inspect-name" title="' + field + ' 수정"><input id="label" maxlength="48" aria-label="' +
+        field + '">' + icon('pencil') + '</label>';
     $('inspect').innerHTML =
-      '<h3>선택한 ' +
-      kindNames[kind] +
-      '</h3><div class="edit-head"><i>' +
-      icon(kindIcons[kind]) +
-      '</i><strong>' +
-      esc(name) +
-      '</strong><button id="remove" title="지도에서 빼기" aria-label="지도에서 빼기">' +
-      icon('trash') +
-      '</button></div><p class="coord">' +
-      coord +
-      '</p>' +
-      (isRoute
-        ? ''
-        : '<label>' +
-          (kind === 'notes' ? '메모 내용' : '지도에 표시할 이름') +
-          '<input class="name-input" id="label" maxlength="48"></label>');
+      '<div class="inspect-head"><h3>' + icon(kindIcons[kind]) + '선택한 ' + kindNames[kind] +
+      '</h3><button type="button" id="remove" title="지도에서 빼기" aria-label="지도에서 빼기">' +
+      icon('trash') + '</button></div>' + title +
+      (item.sourceName ? '<p id="original-name" hidden>원래 지명 · ' + esc(item.sourceName) + '</p>' : '') +
+      '<p class="inspect-location">' + (isRoute ? '연결한 지점 ' + item.length + '곳' : coordinateLabel(item)) + '</p>' +
+      (kind === 'notes' ? '' : '<button id="item-source" type="button" aria-haspopup="dialog">출처와 표시 근거<span aria-hidden="true">›</span></button>');
+    if (kind !== 'notes') {
+      $('item-source').onclick = () => showItemSource(kind, index);
+    }
     $('remove').onclick = () => {
       removeItem(kind, index);
       const next = $('pins').querySelector('button.place, input:enabled') || (itemsDialog.open ? $('close-items') : $('query'));
@@ -755,6 +648,8 @@ async function start() {
     if (isRoute) return;
     const input = $('label');
     input.value = item.name;
+    const originalName = $('original-name');
+    if (originalName) originalName.hidden = item.name === item.sourceName;
     let original = item.name,
       edited = false;
     input.onfocus = () => {
@@ -767,6 +662,7 @@ async function start() {
         edited = true;
       }
       item.name = input.value.trim() || original;
+      if (originalName) originalName.hidden = item.name === item.sourceName;
       list();
       paint();
       persist();
@@ -826,6 +722,18 @@ async function start() {
     $(input.id)?.focus({ preventScroll: true });
   };
   $('pins').onclick = (e) => {
+    const sourceButton = e.target.closest('[data-layer-source]');
+    if (sourceButton) {
+      showItemSource('layerKeys', Number(sourceButton.dataset.layerSource));
+      return;
+    }
+    const preview = e.target.closest('[data-original]');
+    if (preview) {
+      const layer = historical.layers[doc.layerKeys[preview.dataset.original]];
+      modal(layer.name, '<img class="original-shape" alt="' + esc(layer.name) + ' 등록 도형"><p>' + esc(layer.note) + '</p>');
+      body.querySelector('img').src = layer.original;
+      return;
+    }
     const minus = e.target.closest('[data-remove-kind]');
     if (minus) {
       const index = Number(minus.dataset.index);
@@ -881,7 +789,6 @@ async function start() {
     pickerList();
     $('map-name').textContent = doc.title;
     const theme = currentTheme();
-    historyControls(theme);
     backgroundControls();
     if (theme !== lastTheme) {
       if (theme?.source === '시트 주제') {
@@ -957,7 +864,7 @@ async function start() {
       index: themes.indexOf(theme),
       points: theme.places.map(id => byId.get(id)).filter(Boolean),
       shapes: (theme.layers || []).map(key => shapesByKey.get(key)).filter(Boolean),
-    })).filter(category => category.points.length || category.shapes.length),
+    })),
   })).filter(pkg => pkg.categories.length);
   let catalogPackage = Math.max(0, packageLessons.findIndex(pkg => pkg.id === currentTheme()?.packageId));
 
@@ -969,33 +876,35 @@ async function start() {
     const matches = packageLessons[catalogPackage].categories.map(category => {
       const matching = entry => category.theme.name.includes(query) || entry.name.includes(query) || entry.keywords?.includes(query);
       return { category, points: category.points.filter(matching), shapes: category.shapes.filter(matching) };
-    }).filter(row => row.points.length || row.shapes.length);
+    }).filter(row => row.category.theme.name.includes(query) || row.points.length || row.shapes.length);
     if (!matches.length) return packages + '<p class="empty">이 패키지에 검색 결과가 없습니다.</p>';
 
     const active = matches.find(row => row.category.index === selectedLesson) || matches[0];
     const headings = matches.map(row => {
-      const { index, theme, points } = row.category;
+      const { index, theme } = row.category;
       const title = esc(theme.name);
       const select = '<button class="choice lesson-toggle" id="choice-lesson-' + index + '" data-lesson="' + index +
         '" aria-pressed="' + (row === active) + '" aria-controls="lesson-regions"><span>' + title +
         '</span><small>' + (row.points.length + row.shapes.length) + '곳</small></button>';
-      const add = points.length && row.points.length === points.length
-        ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
-          '" aria-label="' + title + ' 지점 전체 추가">지점 전체 추가</button>' : '';
-      return '<div class="lesson-heading">' + select + add + '</div>';
+      return '<div class="lesson-heading">' + select + '</div>';
     });
+    const { index, theme, points } = active.category;
+    const title = esc(theme.name);
+    const add = points.length && active.points.length === points.length
+      ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
+        '" aria-label="' + title + ' 지점 전체 추가">지점 전체 추가</button>' : '';
     const regionRows = ['point', 'line', 'area'].map(type => {
       const buttons = type === 'point' ? active.points.map(placeChoice)
         : active.shapes.filter(shape => shape.type === type).map(shapeChoice);
-      if (!buttons.length) return '';
+      const content = buttons.length ? buttons.join('') : '<span class="lesson-region-empty">없음</span>';
       const labelId = 'lesson-region-' + type;
       return '<div class="lesson-region-row" role="group" aria-labelledby="' + labelId + '"><h5 id="' +
-        labelId + '">' + itemLabels[type] + '</h5><div class="lesson-region-items">' + buttons.join('') + '</div></div>';
+        labelId + '">' + itemLabels[type] + '</h5><div class="lesson-region-items">' + content + '</div></div>';
     });
     return packages + '<div class="lesson-columns"><section><h4>카테고리</h4>' +
       '<div class="lesson-list" data-scroll-key="categories-' + catalogPackage + '">' + headings.join('') +
-      '</div></section><section id="lesson-regions"><h4>' + esc(active.category.theme.name) +
-      ' · 지역</h4><div class="lesson-places" data-scroll-key="regions-' + active.category.index + '">' +
+      '</div></section><section id="lesson-regions"><div class="lesson-region-head"><h4>' + title +
+      ' · 지역</h4>' + add + '</div><div class="lesson-places" data-scroll-key="regions-' + active.category.index + '">' +
       regionRows.join('') + '</div></section></div>';
   }
   function pickerList() {
@@ -1101,7 +1010,7 @@ async function start() {
       event.preventDefault();
       selectedLesson = Number(event.target.dataset.lesson);
       pickerList();
-      $('lesson-regions')?.querySelector('button:not(:disabled)')?.focus();
+      $('lesson-regions')?.querySelector('.lesson-places button:not(:disabled)')?.focus();
     } else if (event.key === 'ArrowLeft' && event.target.closest('#lesson-regions')) {
       event.preventDefault();
       $('choices').querySelector('[data-lesson][aria-pressed="true"]')?.focus();
@@ -1344,7 +1253,7 @@ async function start() {
     body = $('dialog-body');
   $('close-dialog').onclick = () => dialog.close('cancel');
   function modal(title, html) {
-    dialog.classList.remove('map-library');
+    dialog.classList.remove('map-library', 'source-dialog');
     $('new').hidden = true;
     $('gallery-tools').hidden = true;
     $('themes').hidden = true;
@@ -1352,6 +1261,68 @@ async function start() {
     body.innerHTML = html;
     dialog.returnValue = '';
     if (!dialog.open) dialog.showModal();
+  }
+  function showItemSource(kind, index) {
+    const row = sidebarItems().find(item => item.kind === kind && item.index === index);
+    if (!row) return;
+    const mark = kind === 'points' ? doc.points[index] : null;
+    const place = mark && byId.get(mark.spaceId);
+    const key = kind === 'layerKeys' ? doc.layerKeys[index] : place?.shapeKey;
+    const space = place || shapesByKey.get(key);
+    const record = library.shapeSources?.get(key);
+    const manual = kind === 'routes' || (mark && !mark.spaceId);
+    const original = key && historical.layers[key]?.original;
+    const representative = mark && record?.period?.trim() === place?.name + ' 대표점';
+    const type = representative ? '대표점' : itemLabels[row.type];
+    function link(url, label) {
+      return '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' +
+        esc(label) + '<span aria-hidden="true"> ↗</span></a>';
+    }
+    function sheetLink(gid, number, label) {
+      const url = new URL(SHEET_CONFIG.url);
+      url.hash = 'gid=' + gid + (number ? '&range=A' + number : '');
+      return link(url.href, label);
+    }
+
+    const context = space?.description || (manual
+      ? (mark ? '지도에서 직접 찍은 지점입니다.' : '지도에서 선택한 지점을 순서대로 이은 경로입니다.')
+      : '');
+    const facts = [];
+    if (record?.period && !representative && record.period !== row.name) facts.push(['표시 기준', record.period]);
+    if (mark) facts.push(['위치', coordinateLabel(mark)]);
+    if (original) facts.push(['표시 방식', '원도의 그림 좌표에 맞춰 별도로 표시합니다.']);
+    const method = record?.method;
+    const methodHtml = method && method !== context
+      ? (context || facts.length ? '<details><summary>도형을 만든 방법</summary><p>' + esc(method) + '</p></details>'
+        : '<p class="source-context">' + esc(method) + '</p>') : '';
+
+    const citation = record?.source?.trim();
+    const spaceReference = citation?.match(/^공간 시트\s*\(([^)]+)\)$/);
+    let credit;
+    if (spaceReference) {
+      const number = place?.id === spaceReference[1] ? place.spaceRow : null;
+      credit = sheetLink(SHEET_CONFIG.spaceSheetId, number, '공간 시트');
+    } else if (citation) {
+      credit = citation.split(/(https?:\/\/[^\s<>"]+)/i).map(part => {
+        if (!/^https?:\/\//i.test(part)) return esc(part);
+        try { return link(part, new URL(part).hostname); }
+        catch { return esc(part); }
+      }).join('');
+    } else {
+      credit = manual ? '직접 작성' : record ? '시트에 출처 미기록' : '현재 시트에서 출처를 확인할 수 없습니다.';
+    }
+    const sourceLabel = mark ? '좌표 출처' : '도형 출처';
+    const contextLink = context && space?.spaceRow && !spaceReference
+      ? sheetLink(SHEET_CONFIG.spaceSheetId, space.spaceRow, '장소 설명') : '';
+    const recordLink = record ? sheetLink(SHEET_CONFIG.mapShapeSheetId, record.sheetRow, '도형 기록') : '';
+    modal(row.name, '<div class="source-body">' +
+      (context ? '<p class="source-context">' + esc(context) + '</p>' : '') +
+      (facts.length ? '<dl>' + facts.map(([label, value]) => '<div><dt>' + label + '</dt><dd>' + esc(value) + '</dd></div>').join('') + '</dl>' : '') +
+      methodHtml + '</div><footer class="source-credit"><div><strong>' + sourceLabel + '</strong><span>' + credit +
+      '</span></div><div class="source-links">' + contextLink + recordLink + '</div></footer>');
+    dialog.classList.add('source-dialog');
+    $('dialog-title').insertAdjacentHTML('afterbegin', '<span class="source-type" data-geometry="' +
+      row.type + '">' + esc(type) + '</span>');
   }
   function ask(title, initial, submit, onAccept) {
     modal(

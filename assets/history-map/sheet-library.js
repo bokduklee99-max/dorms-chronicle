@@ -37,7 +37,11 @@ export function shapeCatalog(tables) {
   for (const row of tables.공간) {
     const type = row.공간유형, key = row.지도참조키;
     if (!key || !['line', 'area'].includes(type) || (shapes.has(key) && shapes.get(key).도형유형 !== type)) continue;
-    register(key, type, row.공간명, kindLabel(tables, '공간', '공간유형', type), [row.시대별칭, row.설명].join(' '));
+    const entry = register(key, type, row.공간명, kindLabel(tables, '공간', '공간유형', type), [row.시대별칭, row.설명].join(' '));
+    if (entry.name === row.공간명) {
+      entry.description = row.설명;
+      entry.spaceRow = row.sheetRow;
+    }
   }
   for (const row of tables.영토변화 || []) {
     const key = row.지도참조키, shape = shapes.get(key);
@@ -70,6 +74,9 @@ export function sheetLibrary(tables, presets) {
         : kindLabel(tables, '공간', '공간유형', 'point');
     byId.set(id, {
       id,
+      shapeKey: row.지도참조키,
+      description: description.includes(' (history-map-maker') ? '' : description,
+      spaceRow: row.sheetRow,
       name: row.공간명,
       lon,
       lat,
@@ -110,7 +117,10 @@ export function sheetLibrary(tables, presets) {
   const packages = tables.패키지
     .filter((row) => row.패키지ID && row.패키지명)
     .map((row) => ({ id: row.패키지ID, name: row.패키지명 }));
-  return { shapes: catalog, packages, places: [...byId.values()], themes, eras: presets.eras };
+  const shapeSources = new Map([...shapes].map(([key, row]) => [key, {
+    source: row.출처, period: row.기준시점, method: row['도형 추출·사용 설명'], sheetRow: row.sheetRow,
+  }]));
+  return { shapeSources, shapes: catalog, packages, places: [...byId.values()], themes, eras: presets.eras };
 }
 
 export async function loadSheetLibrary(config, presets, readRecords) {
@@ -118,7 +128,7 @@ export async function loadSheetLibrary(config, presets, readRecords) {
   const failedTabs = [];
   const entries = await Promise.all(Object.entries(fields).map(async ([name, columns]) => {
     try {
-      return [name, await readRecords(config, name, columns) || []];
+      return [name, await readRecords(config, name, columns, undefined, ['공간', '지도도형'].includes(name) && Boolean(config.sheetIds?.[name])) || []];
     } catch {
       // Retry the live tab by name through Google's visualization endpoint.
       try {

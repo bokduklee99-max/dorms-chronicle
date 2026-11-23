@@ -78,15 +78,20 @@ export function sheetLibrary(tables, presets) {
       eras,
     });
   }
+  const catalog = shapeCatalog(tables);
+  const shapeKeys = new Set(catalog.map(entry => entry.key));
+  const keysBySpace = new Map(tables.공간.map(row => [row.공간ID, row.지도참조키]));
   const links = new Map();
   for (const row of tables.카테고리_공간) {
-    if (!byId.has(row.공간ID)) continue;
-    if (!links.has(row.카테고리ID)) links.set(row.카테고리ID, new Set());
-    links.get(row.카테고리ID).add(row.공간ID);
+    const id = row.공간ID, category = row.카테고리ID;
+    if (!links.has(category)) links.set(category, { places: new Set(), layers: new Set() });
+    const members = links.get(category);
+    if (byId.has(id)) members.places.add(id);
+    else if (shapeKeys.has(keysBySpace.get(id))) members.layers.add(keysBySpace.get(id));
   }
   const themes = [];
   for (const row of tables.카테고리) {
-    const ids = links.get(row.카테고리ID);
+    const members = links.get(row.카테고리ID);
     if (row.카테고리ID && row.카테고리명)
       themes.push({
         id: row.카테고리ID,
@@ -94,7 +99,8 @@ export function sheetLibrary(tables, presets) {
         packageId: row.패키지ID,
         source: '시트 주제',
         era: [row.시작일, row.종료일].filter(Boolean).join(' — '),
-        places: [...(ids || [])],
+        places: [...(members?.places || [])],
+        layers: [...(members?.layers || [])],
       });
   }
   for (const theme of presets.themes) {
@@ -104,7 +110,7 @@ export function sheetLibrary(tables, presets) {
   const packages = tables.패키지
     .filter((row) => row.패키지ID && row.패키지명)
     .map((row) => ({ id: row.패키지ID, name: row.패키지명 }));
-  return { shapes: shapeCatalog(tables), packages, places: [...byId.values()], themes, eras: presets.eras };
+  return { shapes: catalog, packages, places: [...byId.values()], themes, eras: presets.eras };
 }
 
 export async function loadSheetLibrary(config, presets, readRecords, storage) {

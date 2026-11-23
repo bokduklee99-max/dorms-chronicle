@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=shape-catalog-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=package-regions-1';
 import {
   W,
   mapHeight,
@@ -917,20 +917,47 @@ async function start() {
       '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') + '><span>' +
       esc(entry.name) + '</span><small>' + caption + '</small></button>';
   }
-  function lessonChoice(theme, index) {
+  const shapesByKey = new Map((library.shapes || []).map(entry => [entry.key, entry]));
+  const packageLessons = packages.map(pkg => ({
+    ...pkg,
+    categories: lessons.filter(theme => theme.packageId === pkg.id).map(theme => ({
+      theme,
+      index: themes.indexOf(theme),
+      points: theme.places.map(id => byId.get(id)).filter(Boolean),
+      shapes: (theme.layers || []).map(key => shapesByKey.get(key)).filter(Boolean),
+    })).filter(category => category.points.length || category.shapes.length),
+  })).filter(pkg => pkg.categories.length);
+  let catalogPackage = Math.max(0, packageLessons.findIndex(pkg => pkg.id === currentTheme()?.packageId));
+
+  function lessonChoice(category, query) {
+    const { theme, index, points, shapes } = category;
+    const matching = entry => theme.name.includes(query) || entry.name.includes(query) || entry.keywords?.includes(query);
+    const listedPoints = points.filter(matching), listedShapes = shapes.filter(matching);
+    const total = listedPoints.length + listedShapes.length;
+    if (!total) return '';
     const open = expandedLesson === index;
     const panel = 'lesson-places-' + index;
     const header = '<button class="choice lesson-toggle" id="choice-lesson-' + index + '" data-lesson="' + index +
       '" aria-expanded="' + open + '" aria-controls="' + panel + '"><span>' + esc(theme.name) +
-      '</span><small>' + theme.places.length + '곳</small><span class="caret" aria-hidden="true"></span></button>';
-    const members = open ? theme.places.map((id) => placeChoice(byId.get(id))).join('') +
-      '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
-      '">지점 전체 추가</button>' : '';
+      '</span><small>' + total + '곳</small><span class="caret" aria-hidden="true"></span></button>';
+    const addAll = points.length && listedPoints.length === points.length
+      ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
+        '">지점 전체 추가</button>' : '';
+    const members = open ? '<h5>지역</h5>' + listedPoints.map(placeChoice).join('') +
+      listedShapes.map(shapeChoice).join('') + addAll : '';
     return header + '<div class="lesson-places" id="' + panel + '"' + (open ? '' : ' hidden') + '>' + members + '</div>';
+  }
+  function packageChoices(query) {
+    const buttons = packageLessons.map((pkg, i) => '<button type="button" id="catalog-package-' + i +
+      '" data-catalog-package="' + i + '" aria-pressed="' + (i === catalogPackage) + '">' + esc(pkg.name) + '</button>');
+    const categories = packageLessons[catalogPackage].categories.map(category => lessonChoice(category, query)).join('');
+    return '<div class="catalog-packages" role="group" aria-label="패키지"><h4>패키지</h4>' +
+      buttons.join('') + '</div><h4 class="catalog-section-title">카테고리</h4>' +
+      (categories || '<p class="empty">이 패키지에 검색 결과가 없습니다.</p>');
   }
   function pickerList() {
     const topic = pickerMode !== 'places',
-      rows = topic ? themes : places;
+      rows = pickerMode === 'lessons' ? [] : topic ? themes : places;
     const query = $('query').value.trim(),
       era = $('era').value;
     const groups = { point: new Map(), line: new Map(), area: new Map() };
@@ -940,16 +967,12 @@ async function start() {
     }
     const results = [];
     for (const [i, r] of rows.entries()) {
-      if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) continue;
+      if (topic && (r.source === '시트 주제' || !r.places.length)) continue;
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) continue;
       if (![r.name, r.keywords || '', r.kind || ''].some((s) => s.includes(query))) continue;
       if (!topic) {
         const kind = !r.kind || r.kind === '지점' ? '지점·도시' : r.kind;
         addResult('point', kind, placeChoice(r));
-        continue;
-      }
-      if (pickerMode === 'lessons') {
-        results.push(lessonChoice(r, i));
         continue;
       }
       const button = '<button class="choice" data-index="' + i + '"><span>' + esc(r.name) +
@@ -964,6 +987,7 @@ async function start() {
             ' 지점만 추가">지점만 추가</button></div>'
         : button);
     }
+    if (pickerMode === 'lessons' && packageLessons.length) results.push(packageChoices(query));
     const empty =
       library.source === 'unavailable'
         ? '시트 데이터를 불러오지 못했습니다. 새로고침해 주세요.'
@@ -1005,7 +1029,8 @@ async function start() {
     $('add-sources').querySelectorAll('button').forEach((button) =>
       button.setAttribute('aria-pressed', String(button.dataset.source === which)),
     );
-    $('query').placeholder = which === 'places' ? '지명 또는 옛 이름 검색' : '이름 검색';
+    $('query').placeholder = which === 'places' ? '지명 또는 옛 이름 검색' :
+      which === 'lessons' ? '선택한 패키지에서 카테고리·지역 검색' : '이름 검색';
     $('query').value = query;
     $('era').value = era;
     pickerList();
@@ -1080,6 +1105,13 @@ async function start() {
           if (layer.bounds) doc.view = historyCamera(layer.bounds);
         }
       });
+      return;
+    }
+    if (b.hasAttribute('data-catalog-package')) {
+      catalogPackage = Number(b.dataset.catalogPackage);
+      expandedLesson = null;
+      pickerList();
+      $('choices').scrollTop = 0;
       return;
     }
     if (b.hasAttribute('data-lesson')) {

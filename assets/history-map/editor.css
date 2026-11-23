@@ -1396,6 +1396,22 @@ button:is(.dark, .add):not(:disabled):hover {
   max-height: min(49dvh, 405px);
   padding: 12px;
 }
+.catalog-packages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 6px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.catalog-packages h4, .catalog-section-title, .lesson-places h5 {
+  margin: 0; font-size: 13px; color: var(--muted);
+}
+.catalog-packages h4 { margin-right: 4px; }
+.catalog-packages button { padding: 4px 10px; }
+.catalog-packages button[aria-pressed="true"] { background: var(--chronicle-green); color: white; }
+.catalog-section-title { margin: 10px 10px 3px; }
+.lesson-places h5 { grid-column: 1 / -1; margin: 4px 5px; }
 .lesson-toggle small { margin-left: auto; }
 .lesson-toggle .caret { transform: rotate(-45deg); }
 .lesson-toggle[aria-expanded="true"] { color: var(--chronicle-green); background: var(--chronicle-tint); }

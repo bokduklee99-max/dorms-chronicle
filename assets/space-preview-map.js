@@ -188,11 +188,6 @@ async function drawHistoricalPlace(space,shape,view) {
     source = koreaSource;
   }
   if (rivers) map.append(layer(rivers.geometry,'river'));
-  if (view.coast === 'shanghai-land' && day >= '1928-01-01' && day <= '1934-12-31') {
-    map.append(layer((await asset('shanghai-police-1928-1934.geojson')).geometry,'line'));
-    credit = '1928–1934년 상하이 공동조계 경찰구역 · Virtual Shanghai';
-    source = 'https://www.virtualshanghai.net/Data/Tables?ID=224';
-  }
   if (cities) for (const f of cities.features.filter(f=>view.cities.includes(f.id))) {
     cityLabel(map,f.properties.name,...f.geometry.coordinates,Math.min(box[2]*.046,box[3]*.065),false);
   }
@@ -280,7 +275,7 @@ const contextRegions = {
   geo_new_york:'new-york', geo_washington_dc:'washington', geo_bay_of_pigs:'pigs', geo_cairo:'cairo',
   geo_frg_territory:'germany', geo_gdr_territory:'germany', geo_germany:'germany',
   geo_europe:'europe', geo_west_europe:'europe', geo_east_europe:'europe', geo_ussr:'ussr',
-  geo_manchuria_primorsky:'manchuria', geo_americas:'americas', geo_east_asia:'east-asia',
+  geo_manchuria_primorsky:'manchuria', geo_china_proper:'east-asia', geo_iron_curtain:'europe', geo_americas:'americas', geo_east_asia:'east-asia',
   geo_vietnam:'vietnam', geo_japan:'japan', geo_cuba:'cuba',
   geo_middle_east:'middle-east', geo_south_asia:'south-asia', geo_israel:'israel',
   geo_afghanistan:'afghanistan', geo_iran:'iran', geo_india_pakistan:'india-pakistan'
@@ -369,18 +364,6 @@ async function drawRegisteredMap(container,space,shape,pointWidth,date,registere
     const type = shape.도형유형;
     const url = shape.지도데이터URL || '';
     const key = space.지도참조키;
-    const original = {geo_iron_curtain:'iron-curtain',geo_china_proper:'china-proper'}[key];
-    if (!registered && original && url.startsWith('data:image/svg+xml;base64,') && !registeredSvgFrame(url).geographic) {
-      const img = document.createElement('img');
-      img.className = 'context-original';
-      img.src = geometryDir+'context/'+original+'.svg';
-      img.alt = space.공간명+' 원도';
-      img.onerror = () => {container.textContent='등록된 원도를 불러오지 못했습니다.';};
-      const china = original === 'china-proper';
-      container.replaceChildren(img,mapCredit(china ? '1940년대 중국 관내 · Milenioscuro·Soumya-8974' : '냉전기 유럽의 철의 장막 · Sémhur 외',
-        'https://commons.wikimedia.org/wiki/File:'+(china ? 'China_Proper_1940s.svg' : 'Iron_Curtain_map.svg')));
-      return;
-    }
     const region = contextRegions[key];
     if (region && !(key === 'geo_seoul' && pointBackdrop(space,date) === 'gyeongseong')) {
       if (await drawRegion(container,space,shape,region,date)) return;
@@ -389,11 +372,6 @@ async function drawRegisteredMap(container,space,shape,pointWidth,date,registere
     if (type === 'svg-area' || type === 'svg-line' || shape.데이터형식 === 'svg_legacy') {
       const {box,geographic} = registeredSvgFrame(url);
       map = mapFrame(space.공간명,box,geographic);
-      if (registered && original && !geographic) {
-        const [x,y,width,height] = original==='iron-curtain' ? [3458,1115,6284,6991] : [0,0,1215.4127,940.1275];
-        map.setAttribute('viewBox',[x,y,width,height].join(' '));
-        map.append(svg('image',{href:geometryDir+'context/'+original+'.svg',x,y,width,height,opacity:.65}));
-      }
       const image = svg('image',{href:url,x:box[0],y:box[1],width:box[2],height:box[3],class:'space-shape-image'});
       image.addEventListener('error',()=>{container.textContent='등록된 지도 도형을 불러오지 못했습니다.';});
       map.append(image);

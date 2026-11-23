@@ -94,7 +94,10 @@ test('historical borders and modern first-level boundaries can be selected indep
         assert.equal(image.includes('href="#historic-land"'), !!edition);
         assert.equal(image.includes('href="#modern-borders"'), !edition && countryBorders);
         assert.equal(image.includes('href="#modern-provinces"'), provinceBorders);
-        if (edition) assert.equal(/id="historic-land"[^>]*stroke="none"/.test(image), !countryBorders);
+        if (edition) {
+          assert.match(image, /<use href="#historic-polygons" fill="#111" stroke="#111"/);
+          assert.equal(image.includes('fill="#fff" stroke="#576367"'), countryBorders);
+        }
       }
     }
   }
@@ -164,4 +167,13 @@ test('southern Asia uses detailed coastlines across the old 18°N cutoff indepen
       assert.match(draw({ ...doc, countryBorders }, bases), /href="#geo-southernAsia"/);
     }
   }
+});
+
+test('all outline tiles include a separate shoreline, including the global fallback', () => {
+  for (const [key, tile] of Object.entries(bases)) {
+    assert.ok(tile.coast?.startsWith('M'), key);
+    assert.ok(definitions({ [key]: tile }).includes(tile.coast), key);
+  }
+  const doc = { view: { base: 'globe', lon: -100, lat: 20, span: 45 }, points: [], notes: [], routes: [] };
+  assert.match(draw({ ...doc, countryBorders: false }, bases), /href="#geo-globe"/);
 });

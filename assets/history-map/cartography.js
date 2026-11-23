@@ -63,8 +63,8 @@ export function definitions(bases) {
         '" height="' +
         b.h +
         '" overflow="hidden">' +
-        (key === 'southernAsia'
-          // Only paint sea over sea at the overlap with the coarser base.
+        (key !== 'globe'
+          // Composite only actual water over the global tile to avoid rectangular seams on land.
           ? elPath('M0 0H' + b.w + 'V' + b.h + 'H0Z' + b.land, 'fill="#d9d9d9" fill-rule="evenodd"')
           : rect(0, 0, b.w, b.h, 'fill="#d9d9d9"')) +
         elPath(b.land, 'fill="#fff" fill-rule="evenodd"') +
@@ -118,13 +118,13 @@ export function historicalDefinitions(history, edition, keys, doc = {}) {
           'id="modern-provinces" fill="none" stroke="#536e80" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"',
         )
       : '') +
-    '<g id="historic-land" fill="#fff" fill-rule="evenodd" stroke="' +
-    (doc.countryBorders === false ? 'none' : '#576367') +
-    '" stroke-width="' +
-    (doc.provinceBorders ? 1.35 : 0.65) +
-    '">' +
-    countryPaths +
-    '</g>' +
+    '<g id="historic-polygons" fill-rule="evenodd">' + countryPaths + '</g>' +
+    // The upper land fill covers shared edges. Only the outer coast of this edition keeps the dark rim.
+    '<g id="historic-land"><use href="#historic-polygons" fill="#111" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/>' +
+    '<use href="#historic-polygons" fill="#fff" stroke="' +
+    (doc.countryBorders === false ? '#fff' : '#576367') +
+    '" stroke-width="' + (doc.countryBorders !== false && doc.provinceBorders ? 1.35 : 0.65) +
+    '" stroke-linejoin="round"/></g>' +
     layers +
     '</defs>'
   );

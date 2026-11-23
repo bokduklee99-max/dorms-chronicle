@@ -13,7 +13,7 @@ import {
   comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=southern-asia-1';
+} from './cartography.js?v=global-coasts-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -80,7 +80,7 @@ async function start() {
     json('presets.json').then((presets) =>
       loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
     ),
-    json('bases.json?v=southern-asia-1'),
+    json('bases.json?v=global-coasts-1'),
     packedMapData('editions.json.gz').catch(() => null),
     packedMapData('boundaries.json.gz?v=2').catch(() => null),
   ]);

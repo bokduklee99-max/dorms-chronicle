@@ -46,3 +46,5 @@
 현대 국경과 시·도·주 표시는 Natural Earth 1:10m Admin 0 육상 경계 및 Admin 1 주·도 경계선(v5.1.0)을 0.018도 허용 오차로 단순화한 자료다. 한국·북한·중국·일본·몽골·대만의 내부 경계는 같은 자료의 Admin 1 폴리곤(v5.1.1)에서 인접한 두 구역이 공유하는 선만 추출하여 0.008도 허용 오차로 단순화했다. 시대별 배경을 사용할 때는 그 판본의 영역선을 국경으로 사용한다. 현대 행정경계는 별도로 켤 수 있다. [Natural Earth](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/) · [퍼블릭 도메인](https://www.naturalearthdata.com/about/terms-of-use/)
 
 남아시아·동남아시아 백지도는 Natural Earth 1:10m 육지 v5.1.1을 사용한다. 육지와 실제 해안선을 따로 잘라 그려 지도 자료의 사각 테두리가 해안선으로 표시되지 않도록 했다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/)
+
+전 지구 백지도의 대륙 윤곽은 Natural Earth 1:50m 육지 v4.1.0에서 추출했다. 날짜변경선에서 나뉜 폴리곤의 절단면과 투영 범위 끝에는 해안선을 그리지 않는다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/50m-physical-vectors/50m-land/)

@@ -382,10 +382,12 @@ main {
   height: 9px;
   width: 9px;
   border-radius: 50%;
-  background: #244a5b;
+  background: #111;
 }
 .legend b:nth-child(2) {
-  background: var(--accent);
+  background: #111;
+  outline: 1px dashed #555;
+  outline-offset: 2px;
   margin-left: 11px;
 }
 .zoom button {
@@ -406,13 +408,28 @@ main {
   margin-top: 9px;
   min-height: 16px;
 }
+.paper-desk {
+  --paper-height: clamp(390px, calc(100dvh - 296px), 840px);
+  display: grid;
+  place-items: center;
+  min-height: calc(var(--paper-height) + 24px);
+  padding: 12px;
+  background: #eef0f1;
+}
 #atlas {
   display: block;
-  width: 100%;
-  height: clamp(360px, calc(100dvh - 284px), 840px);
+  width: min(100%, calc(var(--paper-height) * 0.66152));
+  height: auto;
+  aspect-ratio: 600 / 907;
   touch-action: none;
   cursor: grab;
-  background: #173e52;
+  background: white;
+  outline: 5px solid white;
+  box-shadow: 0 1px 8px 5px #24384621;
+}
+#atlas[data-layout='wide'] {
+  width: min(100%, calc(var(--paper-height) * 1.4754));
+  aspect-ratio: 900 / 610;
 }
 #atlas[data-mode='pin'] {
   cursor: crosshair;
@@ -561,8 +578,8 @@ dialog::backdrop {
   .stage-tools button {
     padding: 4px 7px;
   }
-  #atlas {
-    height: clamp(270px, 38dvh, 380px);
+  .paper-desk {
+    --paper-height: clamp(355px, 48dvh, 475px);
   }
   .legend {
     font-size: 12px;

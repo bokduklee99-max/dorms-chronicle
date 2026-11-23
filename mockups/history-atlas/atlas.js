@@ -24,22 +24,11 @@ function icon(key) {
   );
 }
 document.querySelectorAll('[data-icon]').forEach((el) => (el.innerHTML = icon(el.dataset.icon)));
-const palette = {
-  sea: '#173e52',
-  land: '#aabfc0',
-  korea: '#d8e2d4',
-  shore: '#547984',
-  river: '#72a1a6',
-  pin: '#153d51',
-  active: '#aa4926',
-  cream: '#fbfaf1',
-};
 const svg = $('atlas'),
   W = 900;
 const text = (x, y, content, attrs = '') =>
   '<text x="' + x + '" y="' + y + '" ' + attrs + '>' + esc(content) + '</text>';
 const elPath = (d, attrs) => (d ? '<path d="' + d + '" ' + attrs + '/>' : '');
-const fixed = (n) => Number(n).toFixed(1);
 const formatCoord = (p) =>
   Math.abs(p.lat).toFixed(4) +
   '° ' +
@@ -86,43 +75,35 @@ async function start() {
     labels = true,
     camera = { lon: 127.5, lat: 37.55, span: 15 },
     initialSpan = 15,
+    portrait = true,
     H = 610,
     dialogMode = 'places',
     drag = null;
   const rect = (x, y, w, h, attrs) =>
     '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" ' + attrs + '/>';
-  const color = palette;
+  // Match the reference's default Korean base: white land, gray water and dashed borders.
   const defs = Object.entries(bases)
     .map(
-      ([k, b]) =>
+      ([key, b]) =>
         '<svg id="geo-' +
-        k +
+        key +
         '" width="' +
         b.w +
         '" height="' +
         b.h +
         '" overflow="hidden">' +
-        rect(0, 0, b.w, b.h, 'fill="' + color.sea + '"') +
+        rect(0, 0, b.w, b.h, 'fill="#d9d9d9"') +
+        elPath(b.land, 'fill="#fff" fill-rule="evenodd"') +
+        (key === 'korea' || key === 'north'
+          ? elPath(
+              b.border,
+              'fill="none" stroke="#444" stroke-width=".8" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"',
+            )
+          : '') +
         elPath(
           b.coast,
-          'fill="none" stroke="#426678" stroke-width="2" opacity=".55" vector-effect="non-scaling-stroke"',
+          'fill="none" stroke="#111" stroke-width=".8" stroke-linejoin="round" vector-effect="non-scaling-stroke"',
         ) +
-        elPath(b.land, 'fill="' + color.land + '"') +
-        elPath(b.krLand, 'fill="' + color.korea + '"') +
-        elPath(
-          b.coast,
-          'fill="none" stroke="' + color.shore + '" stroke-width=".7" vector-effect="non-scaling-stroke"',
-        ) +
-        (b.rivers || [])
-          .map((r) =>
-            elPath(
-              r.d,
-              'fill="none" stroke="' +
-                color.river +
-                '" stroke-width=".85" vector-effect="non-scaling-stroke"',
-            ),
-          )
-          .join('') +
         '</svg>',
     )
     .join('');
@@ -136,10 +117,14 @@ async function start() {
     return ll(camera, x, y - (H - 610) / 2);
   }
   function fit() {
+    const [lo, hi, bottom, top] = bases.korea.bbox;
+    portrait = marks.every((p) => p.lon >= lo && p.lon <= hi && p.lat >= bottom && p.lat <= top);
+    svg.dataset.layout = portrait ? 'portrait' : 'wide';
     H = (W * svg.clientHeight) / (svg.clientWidth || W);
-    if (!marks.length) {
-      camera = { lon: 127.5, lat: 37.55, span: 15 };
-      initialSpan = 15;
+    if (portrait) {
+      camera = { lon: (lo + hi) / 2, lat: top, span: hi - lo };
+      camera.lat = ll(camera, W / 2, 305 + ((bases.korea.h / bases.korea.w) * W) / 2)[1];
+      initialSpan = camera.span;
       return;
     }
     const lons = marks.map((p) => p.lon),
@@ -151,138 +136,106 @@ async function start() {
     camera = { lon: (west + east) / 2, lat: (north + south) / 2, span: 1 };
     const dy = Math.max(...marks.map((p) => Math.abs(project(p.lon, p.lat)[1] - H / 2)));
     camera.span = Math.max(4, (east - west) * 1.65, (dy * 2) / Math.max(100, H * 0.7));
-    // The Korean War map also needs coastline around the connected places.
-    if (themeTitle === '한국전쟁' && east - west < 7 && north - south < 10) {
-      camera.lon = 127.5;
-      camera.lat = 37.8;
-      camera.span = Math.max(camera.span, Math.min(17, (10.4 * W) / H));
-    }
     initialSpan = camera.span;
   }
   function remember() {
-    history.push(structuredClone({ marks, selected, themeTitle, camera, initialSpan }));
+    history.push(structuredClone({ marks, selected, themeTitle, camera, initialSpan, portrait }));
     if (history.length > 30) history.shift();
     $('undo').disabled = false;
   }
   $('undo').onclick = () => {
     if (!history.length) return;
-    ({ marks, selected, themeTitle, camera, initialSpan } = history.pop());
+    ({ marks, selected, themeTitle, camera, initialSpan, portrait } = history.pop());
     mode = 'select';
     $('undo').disabled = !history.length;
     render();
   };
-  function placeMarks(mobile) {
-    const used = [],
-      size = mobile ? 30 : 15;
-    return [...marks.filter((p) => p.id !== selected), ...marks.filter((p) => p.id === selected)]
-      .map((p) => {
-        const [x, y] = project(p.lon, p.lat);
-        if (x < 10 || x > W - 10 || y < 10 || y > H - 10) return '';
-        const active = p.id === selected,
-          radius = mobile ? 8 : 5.4;
-        const width = Array.from(p.name).length * size + (active ? 22 : 4);
-        const choices = [
-          [1, 0],
-          [-1, 0],
-          [1, -1],
-          [-1, 1],
-          [1, 1],
-          [-1, -1],
-          [1, -2],
-          [-1, 2],
-        ];
-        let pos;
-        for (const [sign, step] of choices) {
-          const bx = sign === 1 ? x + 12 : x - 12 - width,
-            by = y + step * (size + 6) - size * 0.78;
-          const box = { x: bx, y: by, w: width, h: size + 6 };
-          if (!pos) pos = box;
-          if (
-            bx > 16 &&
-            bx + width < W - 16 &&
-            by > 18 &&
-            by + size < H - 20 &&
-            !used.some(
-              (b) => bx < b.x + b.w + 4 && bx + width > b.x - 4 && by < b.y + b.h && by + size + 6 > b.y,
+  function placeMarks(unit) {
+    const size = 13 * unit,
+      gap = 7 * unit;
+    const pins = marks.map((p) => ({ p, at: project(p.lon, p.lat) }));
+    const used = pins.map(({ at: [x, y] }) => ({
+      x: x - 4 * unit,
+      y: y - 4 * unit,
+      w: 8 * unit,
+      h: 8 * unit,
+    }));
+    return pins
+      .map(({ p, at: [x, y] }) => {
+        if (x < 0 || x > W || y < 0 || y > H) return '';
+        const width = Array.from(p.name).length * size;
+        let chosen;
+        positions: for (const row of [0, -1, 1, -2, 2, -3, 3]) {
+          for (const right of [true, false]) {
+            const bx = right ? x + gap : x - gap - width,
+              by = y + row * (size + 4 * unit) - size * 0.55;
+            const box = { x: bx, y: by, w: width, h: size + 2 * unit };
+            if (!chosen) chosen = box;
+            if (bx < 2 || bx + width > W - 2 || by < 2 || by + size > H - 2) continue;
+            if (
+              used.some(
+                (b) => bx < b.x + b.w + unit && bx + width > b.x - unit && by < b.y + b.h && by + box.h > b.y,
+              )
             )
-          ) {
-            pos = box;
-            break;
+              continue;
+            chosen = box;
+            break positions;
           }
         }
-        used.push(pos);
-        const pin = active ? color.active : color.pin;
+        used.push(chosen);
+        const cy = chosen.y + size * 0.55;
         const leader =
-          labels && Math.abs(pos.y + size * 0.78 - y) > 8
+          labels && Math.abs(cy - y) > unit
             ? elPath(
-                'M' +
-                  x +
-                  ' ' +
-                  y +
-                  'L' +
-                  Math.max(pos.x, Math.min(x, pos.x + pos.w)) +
-                  ' ' +
-                  (pos.y + size * 0.6),
-                'stroke="' + color.shore + '" stroke-width="1.1" fill="none"',
+                'M' + x + ' ' + y + 'L' + Math.max(chosen.x, Math.min(x, chosen.x + width)) + ' ' + cy,
+                'stroke="#444" stroke-width="' + 0.65 * unit + '" fill="none"',
               )
             : '';
-        const label = labels
-          ? (active
-              ? rect(pos.x - 2, pos.y - 2, pos.w, pos.h + 2, 'fill="' + color.active + '" rx="3"')
-              : '') +
-            text(
-              pos.x + (active ? 8 : 0),
-              pos.y + size,
-              p.name,
-              'font-size="' +
-                size +
-                '" font-weight="650" fill="' +
-                (active ? 'white' : color.pin) +
-                '" ' +
-                (active
-                  ? ''
-                  : 'stroke="' +
-                    color.cream +
-                    '" stroke-width="3.2" paint-order="stroke" stroke-linejoin="round"'),
-            )
-          : '';
+        const dot = (r, attrs) =>
+          '<circle cx="' + x + '" cy="' + y + '" r="' + r * unit + '" ' + attrs + '/>';
         return (
           '<g data-id="' +
           esc(p.id) +
           '" role="button" aria-label="' +
           esc(p.name) +
           ' 선택" tabindex="0">' +
+          dot(9, 'fill="transparent"') +
           leader +
-          (active
-            ? '<circle cx="' +
-              x +
-              '" cy="' +
-              y +
-              '" r="' +
-              (radius + 6) +
-              '" fill="#ffad70" fill-opacity=".55" stroke="#b15937" stroke-width="1"/>'
+          dot(3.1, 'fill="#111"') +
+          (p.id === selected
+            ? dot(
+                6.3,
+                'data-selection="" fill="none" stroke="#555" stroke-dasharray="' +
+                  2 * unit +
+                  ' ' +
+                  2 * unit +
+                  '" stroke-width="' +
+                  unit +
+                  '"',
+              )
             : '') +
-          '<circle cx="' +
-          x +
-          '" cy="' +
-          y +
-          '" r="' +
-          radius +
-          '" fill="' +
-          pin +
-          '" stroke="' +
-          color.cream +
-          '" stroke-width="1.8"/>' +
-          label +
+          (labels
+            ? text(
+                chosen.x,
+                chosen.y + size * 0.93,
+                p.name,
+                'font-size="' +
+                  size +
+                  '" fill="#111" stroke="#fff" stroke-width="' +
+                  1.6 * unit +
+                  '" paint-order="stroke" stroke-linejoin="round"',
+              )
+            : '') +
           '</g>'
         );
       })
       .join('');
   }
   function draw() {
+    svg.dataset.layout = portrait ? 'portrait' : 'wide';
     H = (W * svg.clientHeight) / (svg.clientWidth || W);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-    const mobile = svg.clientWidth < 550;
+    const unit = W / (svg.clientWidth || W);
     const [west, north] = invert(0, 0),
       [east, south] = invert(W, H);
     const isKorea = camera.span < 35 && east > 123 && west < 133 && south < 44 && north > 32;
@@ -302,75 +255,60 @@ async function start() {
         ((hi - lo) * W) / camera.span / b.w +
         ')"/>';
     }
-    const step = [0.25, 0.5, 1, 2, 5, 10, 20, 45, 90].find((n) => n >= camera.span / 7) || 90;
-    let grid = '',
-      ticks = '';
-    const fs = mobile ? 17 : 10;
-    for (let lon = Math.ceil(west / step) * step; lon < east; lon += step) {
-      const [x] = project(lon, camera.lat);
-      grid += 'M' + fixed(x) + ' 0V' + fixed(H);
-      if (x > 40 && x < W - 40)
-        ticks += text(x, H - 8, Math.abs(lon) + '°' + (lon >= 0 ? 'E' : 'W'), 'text-anchor="middle"');
-    }
-    for (let lat = Math.ceil(south / step) * step; lat < north; lat += step) {
-      const [, y] = project(camera.lon, lat);
-      grid += 'M0 ' + fixed(y) + 'H900';
-      if (y > 30 && y < H - 35) ticks += text(8, y - 5, Math.abs(lat) + '°' + (lat >= 0 ? 'N' : 'S'));
-    }
+    const seaNames = isKorea
+      ? [
+          ['동해', 130.4, 38.7],
+          ['황해', 124.9, 36.9],
+        ]
+      : [
+          ['동해', 134.5, 40],
+          ['황해', 123.6, 35.6],
+        ];
     const seas =
-      camera.span < 34
-        ? [
-            ['황해', 124.0, 36.7],
-            ['동해', 131.1, 38.35],
-            ['남해', 128.5, 33.6],
-          ]
-            .map(([n, lon, lat]) => {
+      camera.span <= 55
+        ? seaNames
+            .map(([name, lon, lat]) => {
               const [x, y] = project(lon, lat);
-              if (y < 30 || y > H - 25 || x < 45 || x > W - 45) return '';
-              return text(
-                x,
-                y,
-                n,
-                'text-anchor="middle" font-family="AppleMyungjo,serif" font-size="' +
-                  (mobile ? 27 : 21) +
-                  '" letter-spacing="6" fill="#b5ced5"',
-              );
+              return x > 26 * unit && x < W - 26 * unit && y > 16 * unit && y < H - 8 * unit
+                ? text(
+                    x,
+                    y,
+                    name,
+                    'text-anchor="middle" font-size="' +
+                      13 * unit +
+                      '" font-style="italic" font-family="Batang,AppleMyungjo,serif" fill="#444"',
+                  )
+                : '';
             })
             .join('')
         : '';
-    const compass =
-      '<g transform="translate(846 56)" stroke="#f1f2d9"><circle r="18" fill="#16394e" stroke-width=".7"/><path d="M0 -24L5 4L0 0L-5 4Z" fill="#f2f1da"/><path d="M0 20L-3 0L0 3L3 0Z" fill="#2a5466"/><path d="M-12 0h24" stroke-width=".6"/></g>' +
-      text(
-        846,
-        24,
-        'N',
-        'font-family="Georgia,serif" font-size="14" text-anchor="middle" fill="white" stroke="#203f50" stroke-width="2" paint-order="stroke"',
-      );
-    const kmPerUnit = (camera.span / W) * 111.32 * Math.cos((camera.lat * Math.PI) / 180);
-    const km =
-      [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000].filter((n) => n / kmPerUnit < 110).at(-1) || 1;
-    const scale =
-      '<g transform="translate(26 ' +
-      (H - 39) +
-      ')">' +
-      rect(-6, -16, km / kmPerUnit + 15, 30, 'rx="2" fill="#183b50" fill-opacity=".85"') +
-      text(0, -2, km + ' km', 'font-size="' + (mobile ? 17 : 11) + '" fill="white" font-family="monospace"') +
-      '<path d="M0 3v5h' +
-      km / kmPerUnit +
-      'v-5" fill="none" stroke="#eef2dd" stroke-width="1.5"/></g>';
+    const [isletX, isletY] = project(131.87, 37.24);
+    const dokdo = isKorea
+      ? '<ellipse cx="' +
+        isletX +
+        '" cy="' +
+        isletY +
+        '" rx="' +
+        1.3 * unit +
+        '" ry="' +
+        1.3 * unit +
+        '" fill="white" stroke="#111" stroke-width="' +
+        0.8 * unit +
+        '"/>'
+      : '';
     scene.innerHTML =
-      rect(0, 0, W, H, 'fill="' + color.sea + '"') +
+      rect(0, 0, W, H, 'fill="#d9d9d9"') +
       map +
-      elPath(grid, 'fill="none" stroke="#72949a" stroke-width=".8" stroke-dasharray="2 5"') +
-      '<g font-family="monospace" font-size="' +
-      fs +
-      '" fill="#d4e1db" stroke="#375567" stroke-width="2" paint-order="stroke">' +
-      ticks +
-      '</g>' +
+      dokdo +
       seas +
-      placeMarks(mobile) +
-      compass +
-      scale;
+      placeMarks(unit) +
+      rect(
+        unit / 2,
+        unit / 2,
+        W - unit,
+        H - unit,
+        'fill="none" stroke="#222" stroke-width="' + unit + '" pointer-events="none"',
+      );
     $('reset').textContent = Math.round((100 * initialSpan) / camera.span) + '%';
     svg.dataset.mode = mode;
   }
@@ -618,6 +556,7 @@ async function start() {
   };
   $('export').onclick = () => {
     const copy = svg.cloneNode(true);
+    copy.querySelector('[data-selection]')?.remove();
     copy.setAttribute('width', 1350);
     copy.setAttribute('height', String(H * 1.5));
     copy.setAttribute('font-family', 'Apple SD Gothic Neo,Malgun Gothic,sans-serif');

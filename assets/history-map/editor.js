@@ -895,10 +895,12 @@ async function start() {
       rows = topic ? themes : places;
     const query = $('query').value.trim(),
       era = $('era').value;
-    const results = rows.flatMap((r, i) => {
-      if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) return [];
-      if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) return [];
-      if (![r.name, r.keywords || ''].some((s) => s.includes(query))) return [];
+    const groups = new Map();
+    const results = [];
+    for (const [i, r] of rows.entries()) {
+      if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) continue;
+      if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) continue;
+      if (![r.name, r.keywords || ''].some((s) => s.includes(query))) continue;
       const pickingPlaces = !topic && mode !== 'route';
       const mark = pickingPlaces && doc.points.find((p) => samePlace(p, r));
       const included = !!mark && !mark.hidden;
@@ -920,7 +922,13 @@ async function start() {
         '</span><small>' +
         esc(caption) +
         '</small></button>';
-      return pickerMode === 'examples' && (doc.points.length || doc.notes.length || doc.routes.length)
+      if (!topic) {
+        const kind = r.kind?.trim() || '지점';
+        if (!groups.has(kind)) groups.set(kind, []);
+        groups.get(kind).push(button);
+        continue;
+      }
+      results.push(pickerMode === 'examples' && (doc.points.length || doc.notes.length || doc.routes.length)
         ? '<div class="topic-choice">' +
             button +
             '<button data-index="' +
@@ -928,8 +936,8 @@ async function start() {
             '" data-append aria-label="' +
             esc(r.name) +
             ' 지점만 추가">지점만 추가</button></div>'
-        : button;
-    });
+        : button);
+    }
     const empty =
       library.source === 'unavailable'
         ? '시트 데이터를 불러오지 못했습니다. 새로고침해 주세요.'
@@ -937,12 +945,30 @@ async function start() {
           ? '지점이 연결된 수업 주제가 없습니다.'
           : '검색 결과가 없습니다.';
     const choices = $('choices');
+    // Keep each type in the same relative position as filters narrow the list.
+    for (const kind of placeKinds) {
+      const buttons = groups.get(kind);
+      if (!buttons) continue;
+      const label = esc(kind);
+      results.push('<section class="place-kind" aria-label="' + label + '"><h4>' + label +
+        '</h4><div class="kind-places" data-kind="' + label + '">' + buttons.join('') + '</div></section>');
+    }
     const html = results.join('') || '<p class="empty">' + empty + '</p>';
     if (html === lastChoices) return;
     lastChoices = html;
     const focused = document.activeElement;
     const index = choices.contains(focused) ? focused.dataset.index : undefined;
+    const filter = JSON.stringify([pickerMode, query, era]);
+    const scroll = new Map();
+    if (filter === lastFilter) {
+      for (const list of choices.querySelectorAll('.kind-places')) scroll.set(list.dataset.kind, list.scrollTop);
+    } else {
+      choices.scrollTop = 0;
+    }
+    lastFilter = filter;
+    choices.classList.toggle('by-kind', groups.size > 0);
     choices.innerHTML = html;
+    for (const list of choices.querySelectorAll('.kind-places')) list.scrollTop = scroll.get(list.dataset.kind) || 0;
     if (index !== undefined) choices.querySelector('[data-index="' + index + '"]')?.focus({ preventScroll: true });
   }
   function setPickerMode(which, query = '', era = '') {
@@ -958,7 +984,8 @@ async function start() {
     pickerList();
     $('choices').scrollTop = 0;
   }
-  let lastChoices, previousCatalog;
+  const placeKinds = [...new Set(places.map((place) => place.kind?.trim() || '지점'))];
+  let lastChoices, lastFilter, previousCatalog;
   const catalog = $('place-catalog');
   function openCatalog() {
     catalog.classList.add('show-results');
@@ -968,9 +995,9 @@ async function start() {
   }
   catalog.addEventListener('focusin', openCatalog);
   catalog.addEventListener('click', openCatalog);
-  catalog.addEventListener('focusout', () => queueMicrotask(() => {
-    if (!catalog.contains(document.activeElement)) closeCatalog();
-  }));
+  catalog.addEventListener('focusout', (event) => {
+    if (event.relatedTarget && !catalog.contains(event.relatedTarget)) closeCatalog();
+  });
   document.addEventListener('pointerdown', (event) => {
     if (!catalog.contains(event.target)) closeCatalog();
   });

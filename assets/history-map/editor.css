@@ -1389,6 +1389,34 @@ button:is(.dark, .add):not(:disabled):hover {
   box-shadow: 0 6px 18px #302b2124;
 }
 #place-catalog.show-results #choices { display: block; }
+#place-catalog.show-results #choices.by-kind {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(195px, 31%)), 1fr));
+  gap: 14px 10px;
+  max-height: min(49dvh, 405px);
+  padding: 12px;
+}
+.place-kind { min-width: 0; }
+.place-kind h4 {
+  margin: 0 0 4px;
+  padding: 0 6px 5px;
+  border-bottom: 1px solid var(--line);
+  color: var(--chronicle-green);
+  font-size: 14px;
+}
+.kind-places {
+  max-height: clamp(90px, 16dvh, 144px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+#place-catalog .kind-places .choice { padding-inline: 6px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  #place-catalog.show-results #choices.by-kind {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+    gap: 12px 6px;
+    padding: 8px;
+  }
+}
 #place-catalog .choice { min-height: 36px; margin: 0; }
 #place-catalog .choice small { flex: none; }
 

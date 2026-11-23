@@ -34,6 +34,24 @@ test('user annotations are escaped in exported SVG', () => {
   assert.ok(!svg.includes('<script>'));
 });
 
+test('hidden points omit their mark and label without shifting the editor selection', () => {
+  const doc = {
+    view: camera('korea'),
+    points: [
+      { ...places[0], name: '숨긴 지명', hidden: true },
+      { ...places[0], name: '표시한 지명' },
+    ],
+    notes: [],
+    routes: [],
+  };
+  const svg = draw(doc, bases, 1, { kind: 'points', index: 1 });
+  assert.doesNotMatch(svg, /숨긴 지명|data-point="0"/);
+  assert.match(svg, /data-point="1"/);
+  assert.match(svg, /data-selection/);
+  doc.points[0].hidden = false;
+  assert.match(draw(doc, bases), /숨긴 지명/);
+});
+
 test('portrait editing and export share geography but only the editor marks the selected point', () => {
   const {
     bbox: [west, , , north],

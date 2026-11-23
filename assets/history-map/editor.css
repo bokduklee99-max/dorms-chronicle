@@ -1030,6 +1030,23 @@ button:is(.dark, .add):not(:disabled):hover {
 .pin-row {
   gap: 4px;
 }
+.pin-toggle {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  align-self: stretch;
+  flex: none;
+  cursor: pointer;
+}
+.pin-toggle input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--chronicle-green);
+  cursor: pointer;
+}
+.pin-toggle + .place { padding-inline-start: 4px; }
+.pin-toggle:has(:not(:checked)) + .place { color: var(--muted); }
 .pin-row .place {
   min-width: 0;
   flex: 1;

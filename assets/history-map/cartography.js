@@ -138,7 +138,9 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
   function placeMarks(unit) {
     const size = 13 * unit,
       gap = 7 * unit;
-    const pins = doc.points.map((p) => ({ p, at: project(p.lon, p.lat) }));
+    const pins = doc.points.flatMap((p, index) =>
+      p.hidden ? [] : [{ p, index, at: project(p.lon, p.lat) }],
+    );
     const used = pins.map(({ at: [x, y] }) => ({
       x: x - 4 * unit,
       y: y - 4 * unit,
@@ -146,7 +148,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
       h: 8 * unit,
     }));
     return pins
-      .map(({ p, at: [x, y] }, index) => {
+      .map(({ p, index, at: [x, y] }) => {
         if (x < 0 || x > W || y < 0 || y > H) return '';
         const width = Array.from(p.name).length * size;
         let chosen;

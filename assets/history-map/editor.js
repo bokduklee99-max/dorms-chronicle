@@ -13,7 +13,7 @@ import {
   comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=global-coasts-1';
+} from './cartography.js?v=point-visibility-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -630,26 +630,16 @@ async function start() {
       doc[kind].map((item, index) => {
         const active = selected?.kind === kind && selected.index === index;
         const name = esc(kind === 'routes' ? '경로 ' + (index + 1) : item.name);
-        return (
-          '<div class="pin-row"><button class="place" data-kind="' +
-          kind +
-          '" data-index="' +
-          index +
-          '" aria-pressed="' +
-          active +
-          '"><i>' +
-          icon(kindIcons[kind]) +
-          '</i>' +
-          '<span>' +
-          name +
-          '</span></button><button type="button" class="remove-item" data-remove-kind="' +
-          kind +
-          '" data-index="' +
-          index +
-          '" aria-label="' +
-          name +
-          ' 지도에서 빼기" title="지도에서 빼기">−</button></div>'
-        );
+        const toggle = kind === 'points'
+          ? '<label class="pin-toggle" title="지도에 표시"><input type="checkbox" data-visible-point="' +
+            index + '" aria-label="' + name + ' 지도에 표시"' + (item.hidden ? '' : ' checked') + '></label>'
+          : '';
+        const symbol = kind === 'points' ? '' : '<i>' + icon(kindIcons[kind]) + '</i>';
+        return '<div class="pin-row">' + toggle + '<button class="place" data-kind="' + kind +
+          '" data-index="' + index + '" aria-pressed="' + active + '">' + symbol + '<span>' + name +
+          '</span></button><button type="button" class="remove-item" data-remove-kind="' + kind +
+          '" data-index="' + index + '" aria-label="' + name +
+          ' 지도에서 빼기" title="지도에서 빼기">−</button></div>';
       }),
     );
     $('count').textContent = $('mobile-count').textContent = rows.length;
@@ -768,6 +758,16 @@ async function start() {
     openItems();
     $('inspect').focus({ preventScroll: true });
   }
+  $('pins').onchange = (event) => {
+    const input = event.target.closest('[data-visible-point]');
+    if (!input) return;
+    const index = Number(input.dataset.visiblePoint);
+    change(() => {
+      doc.points[index].hidden = !input.checked;
+      if (!input.checked && selected?.kind === 'points' && selected.index === index) selected = null;
+    });
+    $('pins').querySelector('[data-visible-point="' + index + '"]').focus({ preventScroll: true });
+  };
   $('pins').onclick = (e) => {
     const minus = e.target.closest('[data-remove-kind]');
     if (minus) {
@@ -875,14 +875,15 @@ async function start() {
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) return [];
       if (![r.name, r.keywords || ''].some((s) => s.includes(query))) return [];
       const pickingPlaces = !topic && mode !== 'route';
-      const included = pickingPlaces && doc.points.some((p) => samePlace(p, r));
+      const mark = pickingPlaces && doc.points.find((p) => samePlace(p, r));
+      const included = !!mark && !mark.hidden;
       const caption = topic
         ? r.places.length + '곳'
         : mode === 'route'
           ? '경로에 추가'
           : included
             ? '✓ 표시 중'
-            : '＋ 추가';
+            : mark?.hidden ? '다시 표시' : '＋ 추가';
       const button =
         '<button class="choice" data-index="' +
         i +
@@ -922,7 +923,7 @@ async function start() {
     $('picker-title').textContent =
       which === 'examples' ? '예시 지도' : mode === 'route' ? '경로에 지점 추가' : '지명 선택';
     $('picker-footer').hidden = which !== 'places' || mode === 'route';
-    $('picker-count').textContent = '표시한 지점 ' + doc.points.length + '곳';
+    $('picker-count').textContent = '표시한 지점 ' + doc.points.filter((p) => !p.hidden).length + '곳';
     $('query').placeholder = which === 'places' ? '지명 또는 옛 이름 검색' : '이름 검색';
     $('query').value = '';
     $('era').value = '';
@@ -960,17 +961,19 @@ async function start() {
       return;
     }
     const index = doc.points.findIndex((m) => samePlace(m, p));
-    if (index >= 0) removeItem('points', index);
+    const wasVisible = index >= 0 && !doc.points[index].hidden;
+    if (wasVisible) removeItem('points', index);
     else
       change(() => {
-        selected = { kind: 'points', index: doc.points.push(sheetPoint(p)) - 1 };
+        if (index >= 0) doc.points[index].hidden = false;
+        selected = { kind: 'points', index: index >= 0 ? index : doc.points.push(sheetPoint(p)) - 1 };
         mode = 'move';
         fit([p]);
       });
     // Retain the search, scroll and keyboard focus across repeated selections.
-    b.setAttribute('aria-pressed', String(index < 0));
-    b.querySelector('small').textContent = index < 0 ? '✓ 표시 중' : '＋ 추가';
-    $('picker-count').textContent = '표시한 지점 ' + doc.points.length + '곳';
+    b.setAttribute('aria-pressed', String(!wasVisible));
+    b.querySelector('small').textContent = wasVisible ? '＋ 추가' : '✓ 표시 중';
+    $('picker-count').textContent = '표시한 지점 ' + doc.points.filter((p) => !p.hidden).length + '곳';
   };
   function applyTheme(theme, append = false) {
     change(() => {
@@ -1086,7 +1089,7 @@ async function start() {
   $('reset').onclick = () =>
     change(() => {
       const coordinates = [
-        ...doc.points,
+        ...doc.points.filter((p) => !p.hidden),
         ...doc.notes,
         ...doc.routes.flat().map(([lon, lat]) => ({ lon, lat })),
       ];
@@ -1179,13 +1182,14 @@ async function start() {
       const height = mapHeight(map.view);
       // Share the editor's coastline definitions while keeping the thumbnail noninteractive.
       const outline = draw({ ...map, points: [], notes: [] }, bases);
-      const dots = map.points.map((point) => {
+      const visiblePoints = map.points.filter((p) => !p.hidden);
+      const dots = visiblePoints.map((point) => {
         const [x, y] = xy(map.view, point.lon, point.lat);
         return '<circle cx="' + x + '" cy="' + y + '" r="12" fill="currentColor"/>';
       }).join('');
       const preview = '<svg class="map-thumb" aria-hidden="true" focusable="false" viewBox="0 0 ' +
         W + ' ' + height + '" preserveAspectRatio="xMidYMid slice">' + outline + dots + '</svg>';
-      const details = [bases[map.view.base].name, '지점 ' + map.points.length + '곳'];
+      const details = [bases[map.view.base].name, '지점 ' + visiblePoints.length + '곳'];
       if (map.routes.length) details.push('경로 ' + map.routes.length + '개');
       if (map.notes.length) details.push('메모 ' + map.notes.length + '개');
       const content = preview + '<span class="map-caption"><strong>' + name + '</strong><small>' +

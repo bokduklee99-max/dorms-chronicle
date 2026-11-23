@@ -1,4 +1,4 @@
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=topic-launch-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=package-bar-1';
 import {
   W,
   mapHeight,
@@ -74,6 +74,12 @@ async function start() {
   const requested = [...new Set(new URLSearchParams(location.search).getAll('topic').filter(Boolean))];
   const linked =
     requested.length === 1 ? themes.find((t) => t.source === '시트 주제' && t.id === requested[0]) : null;
+  const lessons = themes.filter((t) => t.source === '시트 주제');
+  const packages = [...(library.packages || [])];
+  for (const t of lessons) {
+    if (!packages.some((p) => p.id === t.packageId))
+      packages.push({ id: t.packageId, name: t.packageId || '패키지 미지정' });
+  }
   const reloading = performance.getEntriesByType('navigation')[0]?.type === 'reload';
   const source = $('source');
   const sheetUrl = new URL(SHEET_CONFIG.url);
@@ -133,7 +139,8 @@ async function start() {
     }
   } else {
     doc = fresh();
-    if (linked) setTheme(linked);
+    const initial = requested.length ? linked : lessons.find((t) => t.places.length);
+    if (initial) setTheme(initial);
   }
   function setTheme(theme) {
     doc.title = theme.name;
@@ -162,11 +169,109 @@ async function start() {
       }
     : null;
   let pickerMode = 'places',
-    restrictToLaunch = false,
+    restrictToLaunch = requested.length > 1 && (!doc.topic?.id || requested.includes(doc.topic.id)),
     mode = 'move',
     activeRoute = null,
     routeStart = null,
     routePicker = $('picker');
+  const availableLessons = () =>
+    restrictToLaunch ? lessons.filter((t) => requested.includes(t.id)) : lessons;
+  let activePackage =
+    currentTheme()?.packageId ??
+    availableLessons().find((t) => t.places.length)?.packageId ??
+    availableLessons()[0]?.packageId ??
+    packages[0]?.id;
+  let showEmpty = false;
+  let lastTheme = currentTheme();
+  function showSelectors() {
+    const focused = document.activeElement;
+    const zone = focused?.closest('#packages,#categories');
+    const available = availableLessons();
+    const theme = currentTheme();
+    const inPackage = available.filter((t) => t.packageId === activePackage);
+    const empty = inPackage.filter((t) => !t.places.length);
+    $('packages').innerHTML =
+      packages
+        .map((p, i) =>
+          restrictToLaunch && !available.some((t) => t.packageId === p.id)
+            ? ''
+            : '<button data-package="' +
+              i +
+              '" aria-pressed="' +
+              (activePackage === p.id) +
+              '">' +
+              esc(p.name) +
+              '</button>',
+        )
+        .join('') || '<span>표시할 패키지가 없습니다.</span>';
+    if (restrictToLaunch)
+      $('packages').insertAdjacentHTML(
+        'beforeend',
+        '<button class="extra-choice" id="all-packages">모든 수업 보기</button>',
+      );
+    const visible = inPackage.filter((t) => t.places.length || showEmpty || t === theme);
+    $('categories').innerHTML =
+      visible
+        .map(
+          (t) =>
+            '<button data-category="' +
+            themes.indexOf(t) +
+            '" aria-pressed="' +
+            (theme === t) +
+            '"><span>' +
+            esc(t.name) +
+            '</span><small>' +
+            t.places.length +
+            '곳</small></button>',
+        )
+        .join('') ||
+      '<span>' +
+        (library.source === 'unavailable'
+          ? '시트를 읽지 못했습니다. 새로고침해 주세요.'
+          : empty.length
+            ? '연결된 지점이 없습니다.'
+            : '이 패키지에 표시할 카테고리가 없습니다.') +
+        '</span>';
+    if (empty.some((t) => t !== theme))
+      $('categories').insertAdjacentHTML(
+        'beforeend',
+        '<button class="extra-choice" id="empty-categories" aria-expanded="' +
+          showEmpty +
+          '">' +
+          (showEmpty ? '접기' : '지점 없는 카테고리 ' + empty.length + '개') +
+          '</button>',
+      );
+    if (zone && !focused.isConnected) {
+      const match = [...zone.querySelectorAll('button')].find(
+        (b) =>
+          (b.id && b.id === focused.id) ||
+          (b.dataset.category !== undefined && b.dataset.category === focused.dataset.category) ||
+          (b.dataset.package !== undefined && b.dataset.package === focused.dataset.package),
+      );
+      (match || zone.querySelector('button[aria-pressed="true"]') || zone.querySelector('button'))?.focus({
+        preventScroll: true,
+      });
+    }
+  }
+  $('packages').onclick = (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.id === 'all-packages') restrictToLaunch = false;
+    else activePackage = packages[Number(b.dataset.package)].id;
+    showEmpty = false;
+    showSelectors();
+  };
+  $('categories').onclick = (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.id === 'empty-categories') {
+      showEmpty = !showEmpty;
+      showSelectors();
+      return;
+    }
+    const t = themes[Number(b.dataset.category)];
+    if (t !== currentTheme()) applyTheme(t);
+  };
   const past = beforeRecovery ? [beforeRecovery] : [],
     future = [];
   function message(s) {
@@ -369,7 +474,17 @@ async function start() {
     list();
     inspector();
     $('map-name').textContent = doc.title;
-    document.querySelector('.category').textContent = currentTheme()?.era || '';
+    const theme = currentTheme();
+    if (theme !== lastTheme) {
+      if (theme?.source === '시트 주제') {
+        activePackage = theme.packageId;
+        if (!requested.includes(theme.id)) restrictToLaunch = false;
+      }
+      $('launch-notice').hidden = true;
+      lastTheme = theme;
+      showSelectors();
+    }
+    document.querySelector('.category').textContent = theme?.era || '';
     $('base').value = doc.view.base;
     svg.dataset.mode = mode;
     document
@@ -392,7 +507,6 @@ async function start() {
       era = $('era').value;
     const results = rows.flatMap((r, i) => {
       if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) return [];
-      if (pickerMode === 'lessons' && restrictToLaunch && !requested.includes(r.id)) return [];
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) return [];
       if (![r.name, r.keywords || ''].some((s) => s.includes(query))) return [];
       const caption = topic
@@ -410,7 +524,7 @@ async function start() {
         '</span><small>' +
         esc(caption) +
         '</small></button>';
-      return topic && (doc.points.length || doc.notes.length || doc.routes.length)
+      return pickerMode === 'examples' && (doc.points.length || doc.notes.length || doc.routes.length)
         ? '<div class="topic-choice">' +
             button +
             '<button data-index="' +
@@ -428,31 +542,28 @@ async function start() {
           : '검색 결과가 없습니다.';
     $('choices').innerHTML = results.join('') || '<p class="empty">' + empty + '</p>';
   }
-  function openPicker(which, restrict = false) {
-    restrictToLaunch = restrict;
+  function openPicker(which) {
     pickerMode = which;
-    const topic = which !== 'places';
-    $('topic-sources').hidden = !topic;
-    $('launch-notice').hidden = true;
+    $('add-sources').hidden = which === 'examples';
     $('era').closest('label').hidden = which === 'lessons';
-    $('topic-sources')
+    $('add-sources')
       .querySelectorAll('button')
       .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.source === which)));
-    $('picker-title').textContent = topic ? '지도 주제 선택' : '시트에서 지명 추가';
-    $('query').placeholder = topic ? '주제 검색' : '지명 또는 옛 이름 검색';
+    $('picker-title').textContent = which === 'examples' ? '예시 지도' : '지명 추가';
+    $('query').placeholder = which === 'places' ? '지명 또는 옛 이름 검색' : '이름 검색';
     $('query').value = '';
     $('era').value = '';
     pickerList();
     if (!routePicker.open) {
       routePicker.showModal();
-      (topic ? $('topic-sources').querySelector('[aria-pressed="true"]') : $('query')).focus();
+      $('query').focus();
     }
   }
   $('browse').onclick = () => openPicker('places');
-  $('themes').onclick = () => openPicker('lessons');
-  $('topic-sources').onclick = (e) => {
+  $('themes').onclick = () => openPicker('examples');
+  $('add-sources').onclick = (e) => {
     const button = e.target.closest('[data-source]');
-    if (button) openPicker(button.dataset.source, restrictToLaunch);
+    if (button) openPicker(button.dataset.source);
   };
   $('query').oninput = pickerList;
   $('era').onchange = pickerList;
@@ -463,19 +574,7 @@ async function start() {
     const i = Number(b.dataset.index);
     routePicker.close();
     if (pickerMode !== 'places') {
-      const t = themes[i],
-        locations = t.places.map((id) => byId.get(id));
-      change(() => {
-        if (b.hasAttribute('data-append')) {
-          doc.points.push(
-            ...locations.filter((p) => !doc.points.some((m) => samePlace(m, p))).map(sheetPoint),
-          );
-          fit(locations);
-        } else setTheme(t);
-        mode = 'move';
-        activeRoute = routeStart = null;
-        selected = doc.points.length ? { kind: 'points', index: 0 } : null;
-      });
+      applyTheme(themes[i], pickerMode === 'lessons' || b.hasAttribute('data-append'));
       return;
     }
     const p = places[i];
@@ -491,6 +590,21 @@ async function start() {
       fit([p]);
     });
   };
+  function applyTheme(theme, append = false) {
+    change(() => {
+      if (append) {
+        const locations = theme.places.map((id) => byId.get(id));
+        doc.points.push(...locations.filter((p) => !doc.points.some((m) => samePlace(m, p))).map(sheetPoint));
+        fit(doc.points);
+      } else {
+        doc = fresh();
+        setTheme(theme);
+      }
+      selected = doc.points.length ? { kind: 'points', index: 0 } : null;
+      mode = 'move';
+      activeRoute = routeStart = null;
+    });
+  }
   function fit(points) {
     if (!points.length) return;
     const H = mapHeight(doc.view);
@@ -839,17 +953,16 @@ async function start() {
         }),
     );
   };
+  showSelectors();
   render();
   if (beforeRecovery) persist();
-  if ((!resume || !reloading) && !linked) {
-    openPicker('lessons', requested.length > 1);
-    if (requested.length === 1) {
-      $('launch-notice').textContent = '연표에서 선택한 주제를 시트에서 찾을 수 없습니다.';
-      $('launch-notice').hidden = false;
-    }
+  if (requested.length === 1 && !linked) {
+    $('launch-notice').textContent = '연표에서 선택한 카테고리를 시트에서 찾을 수 없습니다.';
+    $('launch-notice').hidden = false;
   }
   new ResizeObserver(paint).observe(svg);
 }
 start().catch(() => {
+  $('categories').textContent = '지도 자료를 불러오지 못했습니다.';
   $('status').textContent = '지도 자료를 불러오지 못했습니다. 페이지를 새로 고쳐 주세요.';
 });

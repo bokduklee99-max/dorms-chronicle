@@ -12,6 +12,7 @@ const presets = {
   themes: [{ name: '원본 묶음', era: '근현대', places: ['a', 'b', 'removed'] }],
 };
 const tables = {
+  패키지: [{ 패키지ID: 'pkg', 패키지명: '수업 패키지' }],
   공간: [
     { 공간ID: 'a', 공간명: '중앙', 지도참조키: 'point_a', 시대별칭: '옛 이름' },
     { 공간ID: 'b', 공간명: '중앙', 지도참조키: 'point_b' },
@@ -22,7 +23,7 @@ const tables = {
     { 지도참조키: 'point_b', 경도: '-77.1', 위도: '38.2' },
     { 지도참조키: 'point_c', 경도: '', 위도: '0' },
   ],
-  카테고리: [{ 카테고리ID: 'c1', 카테고리명: '시트에 추가한 주제' }],
+  카테고리: [{ 카테고리ID: 'c1', 패키지ID: 'pkg', 카테고리명: '시트에 추가한 주제' }],
   카테고리_공간: [
     { 카테고리ID: 'c1', 공간ID: 'b' },
     { 카테고리ID: 'c1', 공간ID: 'b' },
@@ -31,7 +32,9 @@ const tables = {
 };
 
 test('sheet IDs distinguish namesakes and themes resolve only current, mappable spaces', () => {
-  const { places, themes } = sheetLibrary(tables, presets);
+  const { packages, places, themes } = sheetLibrary(tables, presets);
+  assert.deepEqual(packages, [{ id: 'pkg', name: '수업 패키지' }]);
+  assert.equal(themes[0].packageId, 'pkg');
   assert.deepEqual(
     places.map((p) => [p.id, p.lon, p.lat]),
     [
@@ -51,7 +54,7 @@ test('a timeline category keeps its ID even when empty or named like an example 
     {
       ...tables,
       카테고리: [
-        { 카테고리ID: 'c1', 카테고리명: '원본 묶음', 시작일: '1950' },
+        { 카테고리ID: 'c1', 패키지ID: 'pkg', 카테고리명: '원본 묶음', 시작일: '1950' },
         { 카테고리ID: 'c2', 카테고리명: '원본 묶음' },
       ],
     },

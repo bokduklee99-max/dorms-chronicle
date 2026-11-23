@@ -1,9 +1,10 @@
 import { loadShape, readGeometryFile } from '../../event-map-links.js?v=point-files-1';
 
 const required = {
+  패키지: ['패키지ID', '패키지명'],
   공간: ['공간ID', '공간명', '지도참조키'],
   지도도형: ['지도참조키'],
-  카테고리: ['카테고리ID', '카테고리명'],
+  카테고리: ['카테고리ID', '패키지ID', '카테고리명'],
   카테고리_공간: ['카테고리ID', '공간ID'],
 };
 
@@ -54,6 +55,7 @@ export function sheetLibrary(tables, presets) {
       themes.push({
         id: row.카테고리ID,
         name: row.카테고리명,
+        packageId: row.패키지ID,
         source: '시트 주제',
         era: [row.시작일, row.종료일].filter(Boolean).join(' — '),
         places: [...(ids || [])],
@@ -63,7 +65,10 @@ export function sheetLibrary(tables, presets) {
     const ids = theme.places.filter((id) => byId.has(id));
     if (ids.length) themes.push({ ...theme, places: ids, source: '편집기 주제' });
   }
-  return { places: [...byId.values()], themes, eras: presets.eras };
+  const packages = tables.패키지
+    .filter((row) => row.패키지ID && row.패키지명)
+    .map((row) => ({ id: row.패키지ID, name: row.패키지명 }));
+  return { packages, places: [...byId.values()], themes, eras: presets.eras };
 }
 
 export async function loadSheetLibrary(config, presets, readRecords, storage) {

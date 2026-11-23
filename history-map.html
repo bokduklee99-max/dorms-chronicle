@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>역사 지도 제작실 · Chronicle</title>
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=topic-launch-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=package-bar-1" />
   </head>
   <body>
     <header class="top">
@@ -18,6 +18,19 @@
         ><button id="export" class="dark"><i data-icon="download"></i>지도 내보내기</button>
       </nav>
     </header>
+    <section class="lesson-selector" aria-label="수업 지도 선택">
+      <div class="selector-row">
+        <h2 id="package-label">패키지</h2>
+        <div id="packages" class="selector-options" role="group" aria-labelledby="package-label"></div>
+      </div>
+      <div class="selector-row">
+        <h2 id="category-label">카테고리</h2>
+        <div id="categories" class="selector-options" role="group" aria-labelledby="category-label">
+          <span role="status">시트에서 불러오는 중…</span>
+        </div>
+      </div>
+      <p id="launch-notice" role="status" hidden></p>
+    </section>
     <main>
       <aside class="side" aria-label="지도 구성">
         <div class="side-head">
@@ -44,7 +57,7 @@
             </h2>
           </div>
           <div class="doc-actions">
-            <button id="new">새 지도</button><button id="themes"><i data-icon="layers"></i>주제 변경</button>
+            <button id="new">새 지도</button><button id="themes"><i data-icon="layers"></i>예시 지도</button>
           </div>
         </div>
         <div class="stage">
@@ -87,11 +100,10 @@
         <h2 id="picker-title"></h2>
         <button id="close" aria-label="닫기">×</button>
       </div>
-      <div id="topic-sources" role="group" aria-label="지도 주제 목록" hidden>
-        <button type="button" data-source="lessons">내 수업 주제</button>
-        <button type="button" data-source="examples">예시 지도</button>
+      <div id="add-sources" role="group" aria-label="추가할 지점 선택" hidden>
+        <button type="button" data-source="places">지명</button>
+        <button type="button" data-source="lessons">카테고리별 지점</button>
       </div>
-      <p id="launch-notice" role="status" hidden></p>
       <label class="search"
         ><i data-icon="search"></i><input id="query" type="search" aria-label="검색"
       /></label>
@@ -114,6 +126,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=topic-launch-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=package-bar-1"></script>
   </body>
 </html>

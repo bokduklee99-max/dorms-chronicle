@@ -780,7 +780,7 @@ async function start() {
       }
       if (!doc.points.length) doc.itemsCleared = true;
     });
-    (itemsDialog.open ? $('query') : $('undo')).focus({ preventScroll: true });
+    (itemsDialog.open ? $('close-items') : $('undo')).focus({ preventScroll: true });
   };
   $('pins').onchange = (event) => {
     const input = event.target.closest('[data-visible-point]');
@@ -959,10 +959,34 @@ async function start() {
     $('choices').scrollTop = 0;
   }
   let lastChoices, previousCatalog;
-  $('browse').onclick = () => {
-    openItems();
-    $('query').focus();
-  };
+  const catalog = $('place-catalog');
+  function openCatalog() {
+    catalog.classList.add('show-results');
+  }
+  function closeCatalog() {
+    catalog.classList.remove('show-results');
+  }
+  catalog.addEventListener('focusin', openCatalog);
+  catalog.addEventListener('click', openCatalog);
+  catalog.addEventListener('focusout', () => queueMicrotask(() => {
+    if (!catalog.contains(document.activeElement)) closeCatalog();
+  }));
+  document.addEventListener('pointerdown', (event) => {
+    if (!catalog.contains(event.target)) closeCatalog();
+  });
+  catalog.addEventListener('keydown', (event) => {
+    if (event.isComposing) return;
+    if (event.key === 'Escape' && catalog.classList.contains('show-results')) {
+      event.preventDefault();
+      event.stopPropagation();
+      $('query').focus();
+      closeCatalog();
+    } else if (event.key === 'ArrowDown' && event.target === $('query')) {
+      event.preventDefault();
+      openCatalog();
+      $('choices').querySelector('button')?.focus();
+    }
+  });
   $('themes').onclick = () => {
     dialog.close();
     previousCatalog = { mode: pickerMode, query: $('query').value, era: $('era').value, scroll: $('choices').scrollTop };
@@ -981,7 +1005,10 @@ async function start() {
     const button = e.target.closest('[data-source]');
     if (button) setPickerMode(button.dataset.source);
   };
-  $('query').oninput = pickerList;
+  $('query').oninput = () => {
+    if (catalog.contains($('query'))) openCatalog();
+    pickerList();
+  };
   $('era').onchange = pickerList;
   $('close').onclick = () => routePicker.close();
   $('choices').onclick = (e) => {

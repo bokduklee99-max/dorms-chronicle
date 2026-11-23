@@ -1396,6 +1396,19 @@ button:is(.dark, .add):not(:disabled):hover {
   max-height: min(49dvh, 405px);
   padding: 12px;
 }
+.lesson-toggle small { margin-left: auto; }
+.lesson-toggle .caret { transform: rotate(-45deg); }
+.lesson-toggle[aria-expanded="true"] { color: var(--chronicle-green); background: var(--chronicle-tint); }
+.lesson-toggle[aria-expanded="true"] .caret { transform: rotate(45deg); }
+.lesson-places {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 2px 8px;
+  margin: 2px 6px 8px 12px;
+  padding: 5px 8px;
+  border-left: 2px solid var(--line);
+}
+.lesson-add { grid-column: 1 / -1; justify-self: start; margin-block: 4px; }
 .place-kind { min-width: 0; }
 .place-kind h4 {
   margin: 0 0 4px;

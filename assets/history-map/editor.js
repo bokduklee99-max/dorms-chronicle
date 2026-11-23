@@ -890,6 +890,27 @@ async function start() {
     change(() => {
       doc.labels = doc.labels === false;
     });
+  function placeChoice(place) {
+    const mark = doc.points.find((point) => samePlace(point, place));
+    const visible = !!mark && !mark.hidden;
+    const routing = mode === 'route';
+    const caption = routing ? '경로에 추가' : visible ? '✓ 표시 중' : mark?.hidden ? '다시 표시' : '＋ 추가';
+    const id = esc(place.id);
+    return '<button class="choice" id="choice-place-' + id + '" data-place="' + id + '"' +
+      (routing ? '' : ' aria-pressed="' + visible + '" aria-label="' + esc(place.name + ' 지도에 표시') + '"') +
+      '><span>' + esc(place.name) + '</span><small>' + caption + '</small></button>';
+  }
+  function lessonChoice(theme, index) {
+    const open = expandedLesson === index;
+    const panel = 'lesson-places-' + index;
+    const header = '<button class="choice lesson-toggle" id="choice-lesson-' + index + '" data-lesson="' + index +
+      '" aria-expanded="' + open + '" aria-controls="' + panel + '"><span>' + esc(theme.name) +
+      '</span><small>' + theme.places.length + '곳</small><span class="caret" aria-hidden="true"></span></button>';
+    const members = open ? theme.places.map((id) => placeChoice(byId.get(id))).join('') +
+      '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
+      '">지점 전체 추가</button>' : '';
+    return header + '<div class="lesson-places" id="' + panel + '"' + (open ? '' : ' hidden') + '>' + members + '</div>';
+  }
   function pickerList() {
     const topic = pickerMode !== 'places',
       rows = topic ? themes : places;
@@ -901,34 +922,19 @@ async function start() {
       if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) continue;
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) continue;
       if (![r.name, r.keywords || ''].some((s) => s.includes(query))) continue;
-      const pickingPlaces = !topic && mode !== 'route';
-      const mark = pickingPlaces && doc.points.find((p) => samePlace(p, r));
-      const included = !!mark && !mark.hidden;
-      const caption = topic
-        ? r.places.length + '곳'
-        : mode === 'route'
-          ? '경로에 추가'
-          : included
-            ? '✓ 표시 중'
-            : mark?.hidden ? '다시 표시' : '＋ 추가';
-      const button =
-        '<button class="choice" data-index="' +
-        i +
-        (pickingPlaces
-          ? '" aria-pressed="' + included + '" aria-label="' + esc(r.name + ' 지도에 표시')
-          : '') +
-        '"><span>' +
-        esc(r.name) +
-        '</span><small>' +
-        esc(caption) +
-        '</small></button>';
       if (!topic) {
         const kind = r.kind?.trim() || '지점';
         if (!groups.has(kind)) groups.set(kind, []);
-        groups.get(kind).push(button);
+        groups.get(kind).push(placeChoice(r));
         continue;
       }
-      results.push(pickerMode === 'examples' && (doc.points.length || doc.notes.length || doc.routes.length)
+      if (pickerMode === 'lessons') {
+        results.push(lessonChoice(r, i));
+        continue;
+      }
+      const button = '<button class="choice" data-index="' + i + '"><span>' + esc(r.name) +
+        '</span><small>' + r.places.length + '곳</small></button>';
+      results.push((doc.points.length || doc.notes.length || doc.routes.length)
         ? '<div class="topic-choice">' +
             button +
             '<button data-index="' +
@@ -957,7 +963,7 @@ async function start() {
     if (html === lastChoices) return;
     lastChoices = html;
     const focused = document.activeElement;
-    const index = choices.contains(focused) ? focused.dataset.index : undefined;
+    const focusId = choices.contains(focused) ? focused.id : null;
     const filter = JSON.stringify([pickerMode, query, era]);
     const scroll = new Map();
     if (filter === lastFilter) {
@@ -969,9 +975,10 @@ async function start() {
     choices.classList.toggle('by-kind', groups.size > 0);
     choices.innerHTML = html;
     for (const list of choices.querySelectorAll('.kind-places')) list.scrollTop = scroll.get(list.dataset.kind) || 0;
-    if (index !== undefined) choices.querySelector('[data-index="' + index + '"]')?.focus({ preventScroll: true });
+    if (focusId) $(focusId)?.focus({ preventScroll: true });
   }
   function setPickerMode(which, query = '', era = '') {
+    expandedLesson = null;
     pickerMode = which;
     $('add-sources').hidden = which === 'examples';
     $('era').closest('label').hidden = which === 'lessons';
@@ -985,7 +992,7 @@ async function start() {
     $('choices').scrollTop = 0;
   }
   const placeKinds = [...new Set(places.map((place) => place.kind?.trim() || '지점'))];
-  let lastChoices, lastFilter, previousCatalog;
+  let lastChoices, lastFilter, previousCatalog, expandedLesson = null;
   const catalog = $('place-catalog');
   function openCatalog() {
     catalog.classList.add('show-results');
@@ -1039,15 +1046,26 @@ async function start() {
   $('era').onchange = pickerList;
   $('close').onclick = () => routePicker.close();
   $('choices').onclick = (e) => {
-    const b = e.target.closest('[data-index]');
+    const b = e.target.closest('button');
     if (!b) return;
-    const i = Number(b.dataset.index);
-    if (pickerMode !== 'places') {
-      if (routePicker.open) routePicker.close();
-      applyTheme(themes[i], pickerMode === 'lessons' || b.hasAttribute('data-append'));
+    if (b.hasAttribute('data-lesson')) {
+      const index = Number(b.dataset.lesson);
+      expandedLesson = expandedLesson === index ? null : index;
+      pickerList();
+      $(b.id)?.scrollIntoView({ block: 'nearest' });
       return;
     }
-    const p = places[i];
+    if (b.hasAttribute('data-add-lesson')) {
+      applyTheme(themes[Number(b.dataset.addLesson)], true);
+      return;
+    }
+    if (pickerMode === 'examples') {
+      routePicker.close();
+      applyTheme(themes[Number(b.dataset.index)], b.hasAttribute('data-append'));
+      return;
+    }
+    const p = byId.get(b.dataset.place);
+    if (!p) return;
     if (mode === 'route') {
       if (itemsDialog.open) itemsDialog.close();
       routeTo(p.lon, p.lat);

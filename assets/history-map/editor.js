@@ -644,9 +644,10 @@ async function start() {
       }),
     );
     $('count').textContent = $('mobile-count').textContent = rows.length;
-    $('clear-items').disabled = !rows.length;
+    const hasCheckedPoints = doc.points.some((point) => !point.hidden);
+    $('delete-checked').disabled = !hasCheckedPoints;
     $('toggle-points').disabled = !doc.points.length;
-    $('toggle-points').textContent = !doc.points.length || doc.points.some((p) => !p.hidden) ? '전체 해제' : '전체 선택';
+    $('toggle-points').textContent = !doc.points.length || hasCheckedPoints ? '전체 해제' : '전체 선택';
     const theme = currentTheme();
     $('pins').innerHTML =
       rows.join('') ||
@@ -769,12 +770,15 @@ async function start() {
       if (hide && selected?.kind === 'points') selected = null;
     });
   };
-  $('clear-items').onclick = () => {
+  $('delete-checked').onclick = () => {
     change(() => {
-      for (const kind of Object.keys(kindNames)) doc[kind] = [];
-      doc.itemsCleared = true;
-      selected = activeRoute = routeStart = null;
-      mode = 'move';
+      const inspectedPoint = selected?.kind === 'points' ? doc.points[selected.index] : null;
+      doc.points = doc.points.filter((point) => point.hidden);
+      if (inspectedPoint) {
+        const index = doc.points.indexOf(inspectedPoint);
+        selected = index < 0 ? null : { kind: 'points', index };
+      }
+      if (!doc.points.length) doc.itemsCleared = true;
     });
     (itemsDialog.open ? $('query') : $('undo')).focus({ preventScroll: true });
   };

@@ -1344,7 +1344,7 @@ button:is(.dark, .add):not(:disabled):hover {
 }
 
 #toggle-points { margin-left: auto; }
-#toggle-points, #clear-items {
+#toggle-points, #delete-checked {
   white-space: nowrap;
   padding: 4px;
   border: 0;
@@ -1352,7 +1352,7 @@ button:is(.dark, .add):not(:disabled):hover {
   color: var(--chronicle-green);
   font-size: 13px;
 }
-#clear-items { color: var(--chronicle-accent-hover); }
+#delete-checked { color: var(--chronicle-accent-hover); }
 .side-head { gap: 4px; flex-wrap: wrap; }
 #place-catalog {
   flex: none;

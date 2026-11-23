@@ -6,7 +6,7 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=editor-actions-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=map-navigation-1" />
   </head>
   <body>
     <header class="top">
@@ -77,12 +77,18 @@
         <p id="launch-notice" role="status" hidden></p>
         <div class="stage">
           <div class="stage-tools">
-            <div class="modes" role="group" aria-label="지도 도구">
-              <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">작업대 <span id="mobile-count"></span></button>
+            <div class="display-tools" role="group" aria-label="지도 표시">
               <button id="display-trigger" type="button" popovertarget="display-options" aria-label="지도 구성">
                 <i data-icon="layers"></i>지도 구성 <span id="base-summary">백지도</span>
               </button>
+              <div class="display-group boundaries" role="group" aria-label="경계 표시">
+                <button id="country-borders" type="button">국경</button>
+                <button id="province-borders" type="button">현대 시·도·주</button>
+              </div>
               <button id="compare-year" type="button" hidden></button>
+            </div>
+            <div class="modes" role="group" aria-label="지도 도구">
+              <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">작업대 <span id="mobile-count"></span></button>
               <div class="draw-tools">
                 <button id="draw-trigger" aria-expanded="false" aria-controls="tools"><i data-icon="pencil"></i><span id="draw-label">그리기</span><span class="caret" aria-hidden="true"></span></button>
                 <div id="tools" role="group" aria-label="그리기 도구" hidden></div>
@@ -107,18 +113,11 @@
             ></svg>
             <div class="status" role="status" id="status">지도를 불러오는 중입니다.</div>
           </div>
-          <div class="stage-foot">
-            <div class="display-group" role="group" aria-label="경계 표시">
-              <strong>경계</strong>
-              <button id="country-borders" type="button">국경</button>
-              <button id="province-borders" type="button">현대 시·도·주</button>
-            </div>
-            <div class="zoom">
-              <select id="base" aria-label="지도 범위"></select>
-              <button id="minus" aria-label="축소">−</button
-              ><button id="reset" title="전체 지점에 맞추기">100%</button
-              ><button id="plus" aria-label="확대">+</button>
-            </div>
+          <div class="zoom" role="group" aria-label="지도 범위와 배율">
+            <select id="base" aria-label="지도 범위"></select>
+            <button id="minus" aria-label="축소">−</button>
+            <button id="reset" title="전체 지점에 맞추기">100%</button>
+            <button id="plus" aria-label="확대">+</button>
           </div>
         </div>
       </section>

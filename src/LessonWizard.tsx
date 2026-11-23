@@ -192,6 +192,7 @@ export function LessonWizard(){
    <aside className="lesson-map-panel" aria-label="지도 미리보기" ref={mapPanel}>
     <div className="lesson-map-heading"><p>지도 미리보기</p><h3>{(step===1?topic?.name:event?.title)??'선택한 항목 없음'}</h3>{step===2&&event&&<time>{event.date}</time>}</div>
     {step===2&&event?.description?.trim()&&<p className="lesson-event-description">{event.description}</p>}
+    {step===1&&topic&&<a href={'/history-map.html?topic='+encodeURIComponent(topic.topic_id)} target="_blank" rel="noreferrer">지도 제작실에서 열기 ↗</a>}
     {step===1&&topic&&<CategoryEventMap key={topic.topic_id} events={categoryEvents} meta={topicMeta} maps={maps}/>}
     {step===2&&event&&<EventMap key={event.id} event={event} maps={maps}/>}
    </aside>

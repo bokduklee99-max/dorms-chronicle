@@ -1,4 +1,4 @@
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=point-files-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=topic-launch-1';
 import {
   W,
   mapHeight,
@@ -63,20 +63,18 @@ async function start() {
   } catch {
     /* Storage may be disabled. */
   }
-  const periods = new Map();
-  const readRecords = async (...args) => {
-    const rows = await SheetData.sheetRecords(...args);
-    if (args[1] === '카테고리')
-      for (const r of rows) periods.set(r.카테고리명, [r.시작일, r.종료일].filter(Boolean).join(' — '));
-    return rows;
-  };
   const [library, bases] = await Promise.all([
-    json('presets.json').then((presets) => loadSheetLibrary(SHEET_CONFIG, presets, readRecords, storage)),
+    json('presets.json').then((presets) =>
+      loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
+    ),
     json('bases.json'),
   ]);
   const { places, themes, eras } = library;
   const byId = new Map(places.map((p) => [p.id, p]));
-  const example = themes.find((t) => t.source === '시트 주제' && t.name === '한국전쟁') ?? themes[0];
+  const requested = [...new Set(new URLSearchParams(location.search).getAll('topic').filter(Boolean))];
+  const linked =
+    requested.length === 1 ? themes.find((t) => t.source === '시트 주제' && t.id === requested[0]) : null;
+  const reloading = performance.getEntriesByType('navigation')[0]?.type === 'reload';
   const source = $('source');
   const sheetUrl = new URL(SHEET_CONFIG.url);
   sheetUrl.hash = 'gid=' + SHEET_CONFIG.spaceSheetId;
@@ -97,7 +95,7 @@ async function start() {
     notes: [],
     routes: [],
   });
-  const draftKey = 'chronicle.atlas.draft.v1',
+  const draftKey = 'chronicle.atlas.draft.v1' + (requested.length ? '.' + JSON.stringify(requested) : ''),
     libraryKey = 'chronicle.atlas.library.v1';
   const valid = (d) =>
     d &&
@@ -122,11 +120,12 @@ async function start() {
   }
   let doc = read(draftKey, null);
   let beforeRecovery = null;
-  if (valid(doc)) {
+  const resume = valid(doc) && (!requested.length || reloading || (linked && doc.topic?.id === linked.id));
+  if (resume) {
     openDrawing(doc);
     if (library.recoveredEmptyLibrary && !doc.points.length && !doc.notes.length && !doc.routes.length) {
-      const theme = themes.find((t) => t.name === doc.title);
-      if (theme) {
+      const theme = currentTheme();
+      if (theme?.places.length) {
         beforeRecovery = structuredClone(doc);
         doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
         fit(doc.points);
@@ -134,11 +133,22 @@ async function start() {
     }
   } else {
     doc = fresh();
-    if (example) {
-      doc.title = example.name;
-      doc.points = example.places.map((id) => sheetPoint(byId.get(id)));
-      fit(doc.points);
-    }
+    if (linked) setTheme(linked);
+  }
+  function setTheme(theme) {
+    doc.title = theme.name;
+    doc.topic = theme.source === '편집기 주제' ? { example: theme.name } : { id: theme.id };
+    doc.view = camera('korea');
+    doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
+    doc.notes = [];
+    doc.routes = [];
+    fit(doc.points);
+  }
+  function currentTheme() {
+    if (doc.topic?.id) return themes.find((t) => t.id === doc.topic.id);
+    if (doc.topic?.example)
+      return themes.find((t) => t.source === '편집기 주제' && t.name === doc.topic.example);
+    return themes.find((t) => t.name === doc.title);
   }
   const samePlace = (mark, p) =>
     mark.spaceId ? mark.spaceId === p.id : mark.name === p.name && mark.lon === p.lon && mark.lat === p.lat;
@@ -152,6 +162,7 @@ async function start() {
       }
     : null;
   let pickerMode = 'places',
+    restrictToLaunch = false,
     mode = 'move',
     activeRoute = null,
     routeStart = null,
@@ -225,10 +236,10 @@ async function start() {
         );
       }),
     );
-    const theme = themes.find((t) => t.name === doc.title);
+    const theme = currentTheme();
     $('pins').innerHTML =
       rows.join('') ||
-      (theme
+      (theme?.places.length
         ? '<button class="place" id="fill-theme">' +
           esc(theme.name) +
           ' 지점 ' +
@@ -237,7 +248,9 @@ async function start() {
         : '<p class="empty">' +
           (library.source === 'unavailable'
             ? '시트의 지점 좌표를 불러오지 못했습니다. 페이지를 새로고침해 주세요.'
-            : '지명을 추가하세요.') +
+            : theme?.id
+              ? '이 주제에 좌표가 연결된 지점이 없습니다.'
+              : '지명을 추가하세요.') +
           '</p>');
     const fill = $('fill-theme');
     if (fill)
@@ -356,8 +369,7 @@ async function start() {
     list();
     inspector();
     $('map-name').textContent = doc.title;
-    document.querySelector('.category').textContent =
-      periods.get(doc.title) || themes.find((t) => t.name === doc.title)?.era || '';
+    document.querySelector('.category').textContent = currentTheme()?.era || '';
     $('base').value = doc.view.base;
     svg.dataset.mode = mode;
     document
@@ -374,15 +386,17 @@ async function start() {
       doc.labels = doc.labels === false;
     });
   function pickerList() {
-    const topic = pickerMode === 'themes',
+    const topic = pickerMode !== 'places',
       rows = topic ? themes : places;
     const query = $('query').value.trim(),
       era = $('era').value;
     const results = rows.flatMap((r, i) => {
+      if (topic && ((pickerMode === 'lessons') !== (r.source === '시트 주제') || !r.places.length)) return [];
+      if (pickerMode === 'lessons' && restrictToLaunch && !requested.includes(r.id)) return [];
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) return [];
       if (![r.name, r.keywords || ''].some((s) => s.includes(query))) return [];
       const caption = topic
-        ? r.source + ' · ' + r.places.length + '곳'
+        ? r.places.length + '곳'
         : mode === 'route'
           ? '경로에 추가'
           : doc.points.some((p) => samePlace(p, r))
@@ -396,7 +410,7 @@ async function start() {
         '</span><small>' +
         esc(caption) +
         '</small></button>';
-      return topic
+      return topic && (doc.points.length || doc.notes.length || doc.routes.length)
         ? '<div class="topic-choice">' +
             button +
             '<button data-index="' +
@@ -406,21 +420,40 @@ async function start() {
             ' 지점만 추가">지점만 추가</button></div>'
         : button;
     });
-    $('choices').innerHTML = results.join('') || '<p class="empty">검색 결과가 없습니다.</p>';
+    const empty =
+      library.source === 'unavailable'
+        ? '시트 데이터를 불러오지 못했습니다. 새로고침해 주세요.'
+        : !query && pickerMode === 'lessons'
+          ? '지점이 연결된 수업 주제가 없습니다.'
+          : '검색 결과가 없습니다.';
+    $('choices').innerHTML = results.join('') || '<p class="empty">' + empty + '</p>';
   }
-  function openPicker(which) {
+  function openPicker(which, restrict = false) {
+    restrictToLaunch = restrict;
     pickerMode = which;
-    const topic = which === 'themes';
-    $('picker-title').textContent = topic ? '지도 주제 변경' : '시트에서 지명 추가';
+    const topic = which !== 'places';
+    $('topic-sources').hidden = !topic;
+    $('launch-notice').hidden = true;
+    $('era').closest('label').hidden = which === 'lessons';
+    $('topic-sources')
+      .querySelectorAll('button')
+      .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.source === which)));
+    $('picker-title').textContent = topic ? '지도 주제 선택' : '시트에서 지명 추가';
     $('query').placeholder = topic ? '주제 검색' : '지명 또는 옛 이름 검색';
     $('query').value = '';
     $('era').value = '';
     pickerList();
-    routePicker.showModal();
-    $('query').focus();
+    if (!routePicker.open) {
+      routePicker.showModal();
+      (topic ? $('topic-sources').querySelector('[aria-pressed="true"]') : $('query')).focus();
+    }
   }
   $('browse').onclick = () => openPicker('places');
-  $('themes').onclick = () => openPicker('themes');
+  $('themes').onclick = () => openPicker('lessons');
+  $('topic-sources').onclick = (e) => {
+    const button = e.target.closest('[data-source]');
+    if (button) openPicker(button.dataset.source, restrictToLaunch);
+  };
   $('query').oninput = pickerList;
   $('era').onchange = pickerList;
   $('close').onclick = () => routePicker.close();
@@ -429,22 +462,19 @@ async function start() {
     if (!b) return;
     const i = Number(b.dataset.index);
     routePicker.close();
-    if (pickerMode === 'themes') {
+    if (pickerMode !== 'places') {
       const t = themes[i],
         locations = t.places.map((id) => byId.get(id));
       change(() => {
-        if (!b.hasAttribute('data-append')) {
-          doc.points = [];
-          doc.notes = [];
-          doc.routes = [];
-          doc.title = t.name;
-          doc.view = camera('korea');
-        }
-        doc.points.push(...locations.filter((p) => !doc.points.some((m) => samePlace(m, p))).map(sheetPoint));
+        if (b.hasAttribute('data-append')) {
+          doc.points.push(
+            ...locations.filter((p) => !doc.points.some((m) => samePlace(m, p))).map(sheetPoint),
+          );
+          fit(locations);
+        } else setTheme(t);
         mode = 'move';
         activeRoute = routeStart = null;
         selected = doc.points.length ? { kind: 'points', index: 0 } : null;
-        fit(locations);
       });
       return;
     }
@@ -811,6 +841,13 @@ async function start() {
   };
   render();
   if (beforeRecovery) persist();
+  if ((!resume || !reloading) && !linked) {
+    openPicker('lessons', requested.length > 1);
+    if (requested.length === 1) {
+      $('launch-notice').textContent = '연표에서 선택한 주제를 시트에서 찾을 수 없습니다.';
+      $('launch-notice').hidden = false;
+    }
+  }
   new ResizeObserver(paint).observe(svg);
 }
 start().catch(() => {

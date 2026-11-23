@@ -795,3 +795,15 @@ dialog::backdrop {
     max-width: 80px;
   }
 }
+
+#topic-sources {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+#topic-sources button[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+}
+#launch-notice { color: var(--ink); }

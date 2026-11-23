@@ -46,6 +46,28 @@ test('sheet IDs distinguish namesakes and themes resolve only current, mappable 
   );
 });
 
+test('a timeline category keeps its ID even when empty or named like an example map', () => {
+  const { themes } = sheetLibrary(
+    {
+      ...tables,
+      카테고리: [
+        { 카테고리ID: 'c1', 카테고리명: '원본 묶음', 시작일: '1950' },
+        { 카테고리ID: 'c2', 카테고리명: '원본 묶음' },
+      ],
+    },
+    presets,
+  );
+  assert.deepEqual(
+    themes.map((t) => [t.source, t.id, t.places]),
+    [
+      ['시트 주제', 'c1', ['b']],
+      ['시트 주제', 'c2', []],
+      ['편집기 주제', undefined, ['a', 'b']],
+    ],
+  );
+  assert.equal(themes[0].era, '1950');
+});
+
 test('reopening a drawing updates sheet positions and preserves authored labels and custom marks', () => {
   const { places } = sheetLibrary(tables, presets);
   const a = sheetPoint(places[0]),

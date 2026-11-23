@@ -50,12 +50,16 @@ export function sheetLibrary(tables, presets) {
   const themes = [];
   for (const row of tables.카테고리) {
     const ids = links.get(row.카테고리ID);
-    if (row.카테고리명 && ids?.size)
-      themes.push({ name: row.카테고리명, era: '', source: '시트 주제', places: [...ids] });
+    if (row.카테고리ID && row.카테고리명)
+      themes.push({
+        id: row.카테고리ID,
+        name: row.카테고리명,
+        source: '시트 주제',
+        era: [row.시작일, row.종료일].filter(Boolean).join(' — '),
+        places: [...(ids || [])],
+      });
   }
-  const sheetNames = new Set(themes.map((t) => t.name));
   for (const theme of presets.themes) {
-    if (sheetNames.has(theme.name)) continue;
     const ids = theme.places.filter((id) => byId.has(id));
     if (ids.length) themes.push({ ...theme, places: ids, source: '편집기 주제' });
   }

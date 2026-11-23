@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>역사 지도 제작실 · Chronicle</title>
-    <link rel="stylesheet" href="./assets/history-map/editor.css" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=topic-launch-1" />
   </head>
   <body>
     <header class="top">
@@ -87,6 +87,11 @@
         <h2 id="picker-title"></h2>
         <button id="close" aria-label="닫기">×</button>
       </div>
+      <div id="topic-sources" role="group" aria-label="지도 주제 목록" hidden>
+        <button type="button" data-source="lessons">내 수업 주제</button>
+        <button type="button" data-source="examples">예시 지도</button>
+      </div>
+      <p id="launch-notice" role="status" hidden></p>
       <label class="search"
         ><i data-icon="search"></i><input id="query" type="search" aria-label="검색"
       /></label>
@@ -109,6 +114,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=point-files-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=topic-launch-1"></script>
   </body>
 </html>

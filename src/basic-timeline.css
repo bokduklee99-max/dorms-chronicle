@@ -76,3 +76,6 @@
 .bt-filter-group button{border:1px solid var(--chronicle-line);border-radius:5px;padding:5px 9px;font-size:14px;line-height:1.4;text-align:left}
 .bt-filter-group button[aria-pressed=true]{background:var(--chronicle-green);border-color:var(--chronicle-green);color:white}
 @media(max-width:500px){.bt-filters{padding:10px}.bt-filter-group{grid-template-columns:2.8em minmax(0,1fr);gap:6px}}
+
+.bt-filters header{flex-wrap:wrap}
+.bt-atlas{margin-inline-start:auto;font-size:14px;color:var(--chronicle-green);text-underline-offset:3px}

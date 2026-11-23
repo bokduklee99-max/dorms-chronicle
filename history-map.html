@@ -6,16 +6,16 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=category-geometry-rows-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=editor-actions-1" />
   </head>
   <body>
     <header class="top">
       <a class="wordmark" href="/" aria-label="DoRms' Chronicle 홈">DoRms' Chronicle<span aria-hidden="true">✳</span></a>
       <span class="brand-divider"></span>
       <h1>역사 지도 제작실</h1>
-      <nav>
-        <button id="gallery">내 지도</button><button id="save">저장</button
-        ><button id="export" class="dark"><i data-icon="download"></i>지도 내보내기</button>
+      <nav aria-label="지도 열기">
+        <button id="choose-lesson" type="button" aria-haspopup="dialog">수업 선택</button>
+        <button id="gallery" type="button" aria-haspopup="dialog"><i data-icon="folder"></i>내 지도</button>
       </nav>
     </header>
     <section id="place-catalog" aria-labelledby="catalog-title">
@@ -65,16 +65,13 @@
             <div class="category"></div>
             <h2>
               <button id="rename" title="지도 제목 수정">
-                <span id="map-name">역사 지도</span><i data-icon="pencil"></i>
+                <span id="map-name">제목 없는 지도</span><i data-icon="pencil"></i>
               </button>
             </h2>
           </div>
-          <div class="doc-actions">
-            <button id="choose-lesson" type="button" aria-haspopup="dialog">수업 선택</button>
-            <button id="display-trigger" type="button" popovertarget="display-options" aria-label="지도 구성">
-              <i data-icon="layers"></i>지도 구성 <span id="base-summary">백지도</span>
-            </button>
-            <button id="compare-year" type="button" hidden></button>
+          <div class="doc-actions" role="group" aria-label="현재 지도 저장과 내보내기">
+            <button id="save" type="button">저장</button>
+            <button id="export" type="button" class="dark"><i data-icon="download"></i>지도 내보내기</button>
           </div>
         </div>
         <p id="launch-notice" role="status" hidden></p>
@@ -82,6 +79,10 @@
           <div class="stage-tools">
             <div class="modes" role="group" aria-label="지도 도구">
               <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">항목 <span id="mobile-count"></span></button>
+              <button id="display-trigger" type="button" popovertarget="display-options" aria-label="지도 구성">
+                <i data-icon="layers"></i>지도 구성 <span id="base-summary">백지도</span>
+              </button>
+              <button id="compare-year" type="button" hidden></button>
               <div class="draw-tools">
                 <button id="draw-trigger" aria-expanded="false" aria-controls="tools"><i data-icon="pencil"></i><span id="draw-label">그리기</span><span class="caret" aria-hidden="true"></span></button>
                 <div id="tools" role="group" aria-label="그리기 도구" hidden></div>
@@ -199,6 +200,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=category-geometry-rows-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=editor-actions-1"></script>
   </body>
 </html>

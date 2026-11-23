@@ -148,8 +148,7 @@ async function start() {
     const { base, lon, lat, span } = drawing.view;
     // Migrate the old default framing; keep custom pans and zooms.
     if (base === 'korea' && lon === 127.6 && lat === 38.25 && span === 19) drawing.view = camera('korea');
-    let t = themes.find((t) => t.id && t.id === drawing.topic?.id);
-    if (!drawing.topic) t = themes.find((t) => t.name === drawing.title);
+    const t = themes.find((t) => t.id && t.id === drawing.topic?.id);
     if (t?.edition && !drawing.edition) {
       drawing.edition = t.edition;
       drawing.layerKeys = t.layers;
@@ -164,6 +163,7 @@ async function start() {
   let doc = read(draftKey, null);
   let beforeRecovery = null;
   const resume = valid(doc) && (!requested.length || reloading || (linked && doc.topic?.id === linked.id));
+  const resumedId = resume ? doc.id : null;
   if (resume) {
     openDrawing(doc);
     if (library.recoveredEmptyLibrary && !doc.itemsCleared && !doc.points.length && !doc.notes.length && !doc.routes.length) {
@@ -176,8 +176,7 @@ async function start() {
     }
   } else {
     doc = fresh();
-    const initial = requested.length ? linked : lessons.find((t) => t.places.length);
-    if (initial) setTheme(initial);
+    if (linked) setTheme(linked);
   }
   function setTheme(theme) {
     delete doc.itemsCleared;
@@ -199,7 +198,6 @@ async function start() {
     if (doc.topic?.id) return themes.find((t) => t.id === doc.topic.id);
     if (doc.topic?.example)
       return themes.find((t) => t.source === '편집기 주제' && t.name === doc.topic.example);
-    return themes.find((t) => t.name === doc.title);
   }
   const samePlace = (mark, p) =>
     mark.spaceId ? mark.spaceId === p.id : mark.name === p.name && mark.lon === p.lon && mark.lat === p.lat;
@@ -909,10 +907,10 @@ async function start() {
       lastTheme = theme;
       showSelectors();
     }
-    document.querySelector('.category').textContent =
-      doc.eventId && historical?.events[doc.eventId]
-        ? theme.name + ' · ' + historical.events[doc.eventId].date
-        : theme?.era || '';
+    const event = historical.events?.[doc.eventId];
+    const context = event ? [theme?.name, event.date] : [theme?.era];
+    if (doc.id === resumedId) context.unshift('이전 작업');
+    document.querySelector('.category').textContent = context.filter(Boolean).join(' · ');
     $('base').querySelector('[value="category"]')?.remove();
     if (theme?.frame) $('base').add(new Option(theme.frame.name + ' (수업 범위)', 'category'), 0);
     $('base').value =

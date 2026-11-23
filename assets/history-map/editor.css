@@ -276,6 +276,7 @@ main {
   color: var(--muted);
   margin-bottom: 4px;
 }
+.category:empty { display: none; }
 .category .ic {
   width: 14px;
 }

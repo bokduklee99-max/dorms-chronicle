@@ -6,7 +6,7 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=package-regions-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=sidebar-types-1" />
   </head>
   <body>
     <header class="top">
@@ -42,10 +42,16 @@
         <div class="side-head">
           <h2 id="items-title">지도 항목 <span id="count"></span></h2>
           <button id="toggle-points" type="button" disabled>전체 해제</button>
-          <button id="delete-checked" type="button" title="체크한 지점 삭제" disabled>선택 삭제</button>
+          <button id="delete-checked" type="button" title="현재 유형에서 체크한 항목 삭제" disabled>선택 삭제</button>
           <button class="mobile-only" id="close-items" aria-label="지도 항목 닫기">닫기</button>
         </div>
         <section class="pins">
+          <div id="item-types" role="group" aria-label="지도 항목 유형">
+            <button type="button" data-item-type="point" aria-pressed="true">점 <span>0</span></button>
+            <button type="button" data-item-type="line" aria-pressed="false">선 <span>0</span></button>
+            <button type="button" data-item-type="area" aria-pressed="false">면 <span>0</span></button>
+            <button type="button" data-item-type="other" hidden>기타 <span>0</span></button>
+          </div>
           <div id="pins"></div>
         </section>
         <section class="inspector" id="inspect" tabindex="-1" aria-label="선택한 항목 편집" hidden></section>
@@ -194,6 +200,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=package-regions-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=sidebar-types-1"></script>
   </body>
 </html>

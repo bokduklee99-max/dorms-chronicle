@@ -368,7 +368,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
     .join('');
   const routes = doc.routes
     .map(
-      (route) =>
+      (route, index) => doc.hiddenRoutes?.includes(index) ? '' :
         '<polyline points="' +
         route.map((p) => project(...p).join(',')).join(' ') +
         '" fill="none" stroke="#333" stroke-width="' +
@@ -382,6 +382,7 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
     .join('');
   const notes = doc.notes
     .map((p, i) => {
+      if (p.hidden) return '';
       const [x, y] = project(p.lon, p.lat);
       return (
         '<g data-note="' +

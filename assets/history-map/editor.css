@@ -1029,6 +1029,12 @@ button:is(.dark, .add):not(:disabled):hover {
   content: '✓';
   margin-right: 4px;
 }
+#item-types { display: flex; gap: 3px; padding: 9px 8px 0; }
+#item-types button { flex: 1; gap: 4px; min-height: 32px; padding: 3px 5px; }
+#item-types button[aria-pressed="true"] { background: var(--chronicle-green); color: white; }
+#item-types span { font-size: 12px; font-variant-numeric: tabular-nums; }
+#pins .layer-name { cursor: pointer; }
+#pins > .wide-item,
 #pins > :not(.pin-row:has(.pin-toggle)) {
   grid-column: 1 / -1;
 }

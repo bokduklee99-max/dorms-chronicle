@@ -13,7 +13,7 @@ import {
   comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=point-visibility-1';
+} from './cartography.js?v=sidebar-types-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -186,6 +186,7 @@ async function start() {
     doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
     doc.notes = [];
     doc.routes = [];
+    delete doc.hiddenRoutes;
     doc.edition = theme.edition;
     doc.layerKeys = theme.layers || [];
     doc.hiddenLayers =
@@ -594,12 +595,7 @@ async function start() {
     });
   };
   $('layer-list').onchange = (e) => {
-    const key = doc.layerKeys[e.target.dataset.layerIndex];
-    change(() => {
-      doc.hiddenLayers = e.target.checked
-        ? (doc.hiddenLayers || []).filter((k) => k !== key)
-        : [...(doc.hiddenLayers || []), key];
-    });
+    change(() => setItemHidden('layerKeys', Number(e.target.dataset.layerIndex), !e.target.checked));
     $('layer-list')
       .querySelector('[data-layer-index="' + e.target.dataset.layerIndex + '"]')
       ?.focus({ preventScroll: true });
@@ -616,42 +612,96 @@ async function start() {
   };
   const kindNames = { points: '지점', notes: '메모', routes: '경로' },
     kindIcons = { points: 'pin', notes: 'note', routes: 'route' };
-  function removeItem(kind, index) {
-    change(() => {
-      doc[kind].splice(index, 1);
-      if (selected?.kind === kind) {
-        if (selected.index === index) selected = null;
-        else if (selected.index > index) selected.index--;
+  const itemLabels = { point: '점', line: '선', area: '면', other: '기타' };
+  let itemType, sidebarMapId;
+  function sidebarItems() {
+    const rows = [];
+    for (const kind of Object.keys(kindNames)) {
+      for (const [index, item] of doc[kind].entries()) {
+        const route = kind === 'routes';
+        rows.push({ kind, index, type: route ? 'line' : 'point', name: route ? '경로 ' + (index + 1) : item.name,
+          hidden: route ? doc.hiddenRoutes?.includes(index) : item.hidden });
       }
-      if (kind === 'routes') activeRoute = routeStart = null;
-    });
+    }
+    for (const [index, key] of (doc.layerKeys || []).entries()) {
+      const entry = shapesByKey.get(key), layer = historical.layers[key];
+      const type = entry?.type || (typeof layer?.line === 'boolean' ? (layer.line ? 'line' : 'area') : 'other');
+      rows.push({ kind: 'layerKeys', index, type, name: entry?.name || layer?.name || key,
+        hidden: doc.hiddenLayers?.includes(key), missing: !layer?.d && !layer?.original });
+    }
+    return rows;
+  }
+  function removeRow(kind, index) {
+    if (kind === 'layerKeys') {
+      const key = doc.layerKeys[index];
+      doc.layerKeys = doc.layerKeys.filter(k => k !== key);
+      doc.hiddenLayers = (doc.hiddenLayers || []).filter(k => k !== key);
+      return;
+    }
+    doc[kind].splice(index, 1);
+    if (selected?.kind === kind) {
+      if (selected.index === index) selected = null;
+      else if (selected.index > index) selected.index--;
+    }
+    if (kind === 'routes') {
+      doc.hiddenRoutes = (doc.hiddenRoutes || []).filter(i => i !== index).map(i => i > index ? i - 1 : i);
+      activeRoute = routeStart = null;
+    }
+  }
+  function removeItem(kind, index) {
+    change(() => removeRow(kind, index));
+  }
+  function setItemHidden(kind, index, hidden) {
+    if (kind === 'layerKeys' || kind === 'routes') {
+      const field = kind === 'routes' ? 'hiddenRoutes' : 'hiddenLayers';
+      const value = kind === 'routes' ? index : doc.layerKeys[index];
+      doc[field] = (doc[field] || []).filter(v => v !== value);
+      if (hidden) doc[field].push(value);
+      if (hidden && kind === 'routes' && activeRoute === index) activeRoute = routeStart = null;
+    } else {
+      doc[kind][index].hidden = hidden;
+    }
+    if (hidden && selected?.kind === kind && selected.index === index) selected = null;
+  }
+  function sidebarRow({kind, index, name, hidden, missing}) {
+    const text = esc(name), id = 'visible-' + kind + '-' + index;
+    const toggle = '<label class="pin-toggle" title="지도에 표시"><input type="checkbox" id="' + id +
+      '" data-visible-kind="' + kind + '" data-index="' + index + '"' +
+      (kind === 'points' ? ' data-visible-point="' + index + '"' : '') +
+      ' aria-label="' + text + ' 지도에 표시"' + (missing ? ' disabled' : hidden ? '' : ' checked') + '></label>';
+    const label = kind === 'layerKeys'
+      ? '<label for="' + id + '" class="place layer-name">' + text + (missing ? ' · 도형 미등록' : '') + '</label>'
+      : '<button class="place" data-kind="' + kind + '" data-index="' + index + '" aria-pressed="' +
+        (selected?.kind === kind && selected.index === index) + '">' +
+        (kind === 'points' ? '' : '<i>' + icon(kindIcons[kind]) + '</i>') + '<span>' + text + '</span></button>';
+    return '<div class="pin-row' + (kind === 'points' ? '' : ' wide-item') + '">' + toggle + label +
+      '<button type="button" class="remove-item" data-remove-kind="' + kind + '" data-index="' + index +
+      '" aria-label="' + text + ' 지도에서 빼기" title="지도에서 빼기">−</button></div>';
   }
   function list() {
-    const rows = Object.keys(kindNames).flatMap((kind) =>
-      doc[kind].map((item, index) => {
-        const active = selected?.kind === kind && selected.index === index;
-        const name = esc(kind === 'routes' ? '경로 ' + (index + 1) : item.name);
-        const toggle = kind === 'points'
-          ? '<label class="pin-toggle" title="지도에 표시"><input type="checkbox" data-visible-point="' +
-            index + '" aria-label="' + name + ' 지도에 표시"' + (item.hidden ? '' : ' checked') + '></label>'
-          : '';
-        const symbol = kind === 'points' ? '' : '<i>' + icon(kindIcons[kind]) + '</i>';
-        return '<div class="pin-row">' + toggle + '<button class="place" data-kind="' + kind +
-          '" data-index="' + index + '" aria-pressed="' + active + '">' + symbol + '<span>' + name +
-          '</span></button><button type="button" class="remove-item" data-remove-kind="' + kind +
-          '" data-index="' + index + '" aria-label="' + name +
-          ' 지도에서 빼기" title="지도에서 빼기">−</button></div>';
-      }),
-    );
-    $('count').textContent = $('mobile-count').textContent = rows.length;
-    const hasCheckedPoints = doc.points.some((point) => !point.hidden);
-    $('delete-checked').disabled = !hasCheckedPoints;
-    $('toggle-points').disabled = !doc.points.length;
-    $('toggle-points').textContent = !doc.points.length || hasCheckedPoints ? '전체 해제' : '전체 선택';
+    const all = sidebarItems();
+    if (sidebarMapId !== doc.id || !itemType || (itemType === 'other' && !all.some(row => row.type === 'other'))) itemType = all[0]?.type || 'point';
+    sidebarMapId = doc.id;
+    const rows = all.filter(row => row.type === itemType);
+    $('count').textContent = $('mobile-count').textContent = all.length;
+    for (const button of $('item-types').children) {
+      const type = button.dataset.itemType;
+      const count = all.filter(row => row.type === type).length;
+      button.querySelector('span').textContent = count;
+      button.hidden = type === 'other' && !count;
+      button.setAttribute('aria-pressed', String(type === itemType));
+    }
+    const checked = rows.some(row => !row.hidden && !row.missing);
+    $('delete-checked').disabled = !checked;
+    $('toggle-points').disabled = !rows.some(row => !row.missing);
+    $('toggle-points').textContent = checked ? '전체 해제' : '전체 선택';
+    $('toggle-points').title = itemLabels[itemType] + ' 항목 ' + $('toggle-points').textContent;
+    $('delete-checked').title = '체크한 ' + itemLabels[itemType] + ' 항목 삭제';
     const theme = currentTheme();
     $('pins').innerHTML =
-      rows.join('') ||
-      (theme?.places.length && !doc.eventId
+      rows.map(sidebarRow).join('') ||
+      (itemType !== 'point' ? '<p class="empty">추가한 ' + itemLabels[itemType] + ' 항목이 없습니다.</p>' :
+       theme?.places.length && !doc.eventId
         ? '<button class="place" id="fill-theme">' +
           esc(theme.name) +
           ' 지점 ' +
@@ -715,7 +765,7 @@ async function start() {
           '<input class="name-input" id="label" maxlength="48"></label>');
     $('remove').onclick = () => {
       removeItem(kind, index);
-      const next = $('pins').querySelector('.place') || (itemsDialog.open ? $('close-items') : $('query'));
+      const next = $('pins').querySelector('button.place, input:enabled') || (itemsDialog.open ? $('close-items') : $('query'));
       next.focus({ preventScroll: true });
     };
     if (isRoute) return;
@@ -754,6 +804,7 @@ async function start() {
       routeTo(item.lon, item.lat);
       return;
     }
+    itemType = kind === 'routes' ? 'line' : 'point';
     selected = { kind, index };
     if (center) {
       const coords = kind === 'routes' ? item.map(([lon, lat]) => ({ lon, lat })) : [item];
@@ -763,34 +814,32 @@ async function start() {
     openItems();
     $('inspect').focus({ preventScroll: true });
   }
+  $('item-types').onclick = (e) => {
+    const button = e.target.closest('[data-item-type]');
+    if (!button) return;
+    itemType = button.dataset.itemType;
+    selected = null;
+    render();
+    $('pins').scrollTop = 0;
+  };
   $('toggle-points').onclick = () => {
-    const hide = doc.points.some((point) => !point.hidden);
-    change(() => {
-      for (const point of doc.points) point.hidden = hide;
-      if (hide && selected?.kind === 'points') selected = null;
-    });
+    const rows = sidebarItems().filter(row => row.type === itemType && !row.missing);
+    const hide = rows.some(row => !row.hidden);
+    change(() => rows.forEach(row => setItemHidden(row.kind, row.index, hide)));
   };
   $('delete-checked').onclick = () => {
+    const rows = sidebarItems().filter(row => row.type === itemType && !row.hidden && !row.missing);
     change(() => {
-      const inspectedPoint = selected?.kind === 'points' ? doc.points[selected.index] : null;
-      doc.points = doc.points.filter((point) => point.hidden);
-      if (inspectedPoint) {
-        const index = doc.points.indexOf(inspectedPoint);
-        selected = index < 0 ? null : { kind: 'points', index };
-      }
-      if (!doc.points.length) doc.itemsCleared = true;
+      for (const row of rows.reverse()) removeRow(row.kind, row.index);
+      if (itemType === 'point' && !doc.points.length) doc.itemsCleared = true;
     });
     (itemsDialog.open ? $('close-items') : $('undo')).focus({ preventScroll: true });
   };
   $('pins').onchange = (event) => {
-    const input = event.target.closest('[data-visible-point]');
+    const input = event.target.closest('[data-visible-kind]');
     if (!input) return;
-    const index = Number(input.dataset.visiblePoint);
-    change(() => {
-      doc.points[index].hidden = !input.checked;
-      if (!input.checked && selected?.kind === 'points' && selected.index === index) selected = null;
-    });
-    $('pins').querySelector('[data-visible-point="' + index + '"]').focus({ preventScroll: true });
+    change(() => setItemHidden(input.dataset.visibleKind, Number(input.dataset.index), !input.checked));
+    $(input.id)?.focus({ preventScroll: true });
   };
   $('pins').onclick = (e) => {
     const minus = e.target.closest('[data-remove-kind]');
@@ -1101,6 +1150,7 @@ async function start() {
         doc.layerKeys = (doc.layerKeys || []).filter((k) => k !== key);
         doc.hiddenLayers = (doc.hiddenLayers || []).filter((k) => k !== key);
         if (!visible) {
+          itemType = shapesByKey.get(key).type;
           doc.layerKeys.push(key);
           if (layer.bounds) doc.view = historyCamera(layer.bounds);
         }
@@ -1142,6 +1192,7 @@ async function start() {
     if (wasVisible) removeItem('points', index);
     else
       change(() => {
+        itemType = 'point';
         if (index >= 0) doc.points[index].hidden = false;
         else doc.points.push(sheetPoint(p));
         mode = 'move';
@@ -1151,6 +1202,7 @@ async function start() {
   function applyTheme(theme, append = false) {
     change(() => {
       if (append) {
+        itemType = 'point';
         const locations = theme.places.map((id) => byId.get(id));
         for (const place of locations) {
           const mark = doc.points.find((p) => samePlace(p, place));
@@ -1210,6 +1262,7 @@ async function start() {
         doc.routes.push([routeStart]);
         routeStart = null;
       }
+      itemType = 'line';
       doc.routes[activeRoute].push([lon, lat]);
     });
   }
@@ -1267,8 +1320,8 @@ async function start() {
     change(() => {
       const coordinates = [
         ...doc.points.filter((p) => !p.hidden),
-        ...doc.notes,
-        ...doc.routes.flat().map(([lon, lat]) => ({ lon, lat })),
+        ...doc.notes.filter(note => !note.hidden),
+        ...doc.routes.filter((_, i) => !doc.hiddenRoutes?.includes(i)).flat().map(([lon, lat]) => ({ lon, lat })),
       ];
       if (currentTheme()?.frame && !doc.eventId) {
         doc.view = historyCamera(currentTheme().frame.bounds);
@@ -1706,6 +1759,7 @@ async function start() {
   function addAt(lon, lat) {
     const kind = mode === 'note' ? 'notes' : 'points';
     change(() => {
+      itemType = 'point';
       const index = doc[kind].push({ lon, lat, name: kind === 'notes' ? '새 메모' : '새 지점' }) - 1;
       selected = { kind, index };
       mode = 'move';

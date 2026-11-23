@@ -63,7 +63,10 @@ export function definitions(bases) {
         '" height="' +
         b.h +
         '" overflow="hidden">' +
-        rect(0, 0, b.w, b.h, 'fill="#d9d9d9"') +
+        (key === 'southernAsia'
+          // Only paint sea over sea at the overlap with the coarser base.
+          ? elPath('M0 0H' + b.w + 'V' + b.h + 'H0Z' + b.land, 'fill="#d9d9d9" fill-rule="evenodd"')
+          : rect(0, 0, b.w, b.h, 'fill="#d9d9d9"')) +
         elPath(b.land, 'fill="#fff" fill-rule="evenodd"') +
         elPath(
           b.coast,
@@ -223,11 +226,13 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
     'globe',
     'world',
     'east',
+    'southernAsia',
     ...(['north', 'south'].includes(camera.base) ? [camera.base] : isKorea ? ['korea'] : []),
   ]) {
-    const b = bases[key],
-      [lo, hi, , top] = b.bbox,
-      [x, y] = project(lo, top);
+    const b = bases[key];
+    const [lo, hi, bottom, top] = b.bbox;
+    if (east < lo || west > hi || north < bottom || south > top) continue;
+    const [x, y] = project(lo, top);
     map +=
       '<use href="#geo-' +
       key +

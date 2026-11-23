@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { camera, comparisonYears, zoomView, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+import { camera, comparisonYears, zoomView, definitions, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
@@ -148,5 +148,20 @@ test('zoom keeps the same geography under a pointer or moving pinch center acros
     }
     assert.equal(zoomView(view, 0.0001, from).span, 0.5);
     assert.equal(zoomView(view, 1000, from).span, 360);
+  }
+});
+
+
+test('southern Asia uses detailed coastlines across the old 18°N cutoff independently of political borders', () => {
+  const tile = bases.southernAsia;
+  const [west, east, south, north] = tile.bbox;
+  assert.ok(west < 73 && east > 141 && south < -10 && north > 18);
+  assert.ok(tile.coast.startsWith('M') && tile.land.includes('Z'));
+  assert.ok(definitions({ southernAsia: tile }).includes(tile.coast));
+  for (const [lon, lat] of [[80.7, 7.8], [104, 14], [114, 0], [122, 12]]) {
+    const doc = { view: { base: 'globe', lon, lat, span: 8 }, points: [], notes: [], routes: [] };
+    for (const countryBorders of [true, false]) {
+      assert.match(draw({ ...doc, countryBorders }, bases), /href="#geo-southernAsia"/);
+    }
   }
 });

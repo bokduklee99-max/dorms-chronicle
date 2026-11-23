@@ -13,7 +13,7 @@ import {
   comparisonYears,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=map-zoom-1';
+} from './cartography.js?v=southern-asia-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -80,7 +80,7 @@ async function start() {
     json('presets.json').then((presets) =>
       loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
     ),
-    json('bases.json'),
+    json('bases.json?v=southern-asia-1'),
     packedMapData('editions.json.gz').catch(() => null),
     packedMapData('boundaries.json.gz?v=2').catch(() => null),
   ]);
@@ -485,8 +485,8 @@ async function start() {
     render();
   }
   $('era').insertAdjacentHTML('beforeend', eras.map((e) => '<option>' + esc(e) + '</option>').join(''));
-  $('base').innerHTML = Object.entries(bases)
-    .map(([key, b]) => '<option value="' + key + '">' + esc(b.name) + '</option>')
+  $('base').innerHTML = Object.keys(presets)
+    .map((key) => '<option value="' + key + '">' + esc(bases[key].name) + '</option>')
     .join('');
   const svg = $('atlas');
   svg.innerHTML = definitions(bases) + '<g id="scene"></g>';

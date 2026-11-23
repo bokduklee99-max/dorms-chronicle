@@ -6,7 +6,7 @@
     <title>역사 지도 제작실 · DoRms' Chronicle</title>
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="stylesheet" href="./assets/chronicle-theme.css" />
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=point-visibility-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=inline-catalog-1" />
   </head>
   <body>
     <header class="top">
@@ -22,12 +22,32 @@
       <aside class="side" id="items" aria-labelledby="items-title">
         <div class="side-head">
           <h2 id="items-title">지도 항목 <span id="count"></span></h2>
+          <button id="toggle-points" type="button" disabled>전체 해제</button>
           <button class="mobile-only" id="close-items" aria-label="지도 항목 닫기">닫기</button>
         </div>
         <section class="pins">
           <div id="pins"></div>
         </section>
         <section class="inspector" id="inspect" tabindex="-1" aria-label="선택한 항목 편집" hidden></section>
+        <section id="place-catalog" aria-labelledby="catalog-title">
+          <h3 id="catalog-title">지명 선택</h3>
+          <div id="catalog-controls">
+            <div id="add-sources" role="group" aria-label="추가할 지점 선택" hidden>
+              <button type="button" data-source="places">지명</button>
+              <button type="button" data-source="lessons">카테고리별 지점</button>
+            </div>
+            <label class="search"
+              ><i data-icon="search"></i><input id="query" type="search" aria-label="검색"
+            /></label>
+            <label class="era"
+              >시대
+              <select id="era">
+                <option value="">모든 시대</option>
+              </select></label
+            >
+            <div id="choices"></div>
+          </div>
+        </section>
         <a class="source" id="source" target="_blank" rel="noreferrer"
           ><i data-icon="sheet"></i><span>시트 연결 중…</span><i data-icon="external"></i
         ></a>
@@ -54,7 +74,7 @@
         <div class="stage">
           <div class="stage-tools">
             <div class="modes" role="group" aria-label="지도 도구">
-              <button class="add" id="browse" aria-haspopup="dialog"><i data-icon="pin"></i>지명 선택</button>
+              <button class="add mobile-only" id="browse" aria-controls="items-dialog" aria-haspopup="dialog"><i data-icon="pin"></i>지명 선택</button>
               <button class="mobile-only" id="show-items" aria-haspopup="dialog" aria-controls="items-dialog">항목 <span id="mobile-count"></span></button>
               <div class="draw-tools">
                 <button id="draw-trigger" aria-expanded="false" aria-controls="tools"><i data-icon="pencil"></i><span id="draw-label">그리기</span><span class="caret" aria-hidden="true"></span></button>
@@ -156,24 +176,7 @@
         <h2 id="picker-title"></h2>
         <button id="close" aria-label="닫기">×</button>
       </div>
-      <div id="add-sources" role="group" aria-label="추가할 지점 선택" hidden>
-        <button type="button" data-source="places">지명</button>
-        <button type="button" data-source="lessons">카테고리별 지점</button>
-      </div>
-      <label class="search"
-        ><i data-icon="search"></i><input id="query" type="search" aria-label="검색"
-      /></label>
-      <label class="era"
-        >시대
-        <select id="era">
-          <option value="">모든 시대</option>
-        </select></label
-      >
-      <div id="choices"></div>
-      <div id="picker-footer" hidden>
-        <span id="picker-count" role="status"></span
-        ><button type="button" id="picker-done" class="primary">완료</button>
-      </div>
+      <div id="example-search"></div>
     </dialog>
     <dialog id="dialog" aria-labelledby="dialog-title">
       <form method="dialog">
@@ -191,6 +194,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=point-visibility-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=inline-catalog-1"></script>
   </body>
 </html>

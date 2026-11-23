@@ -996,8 +996,7 @@ button:is(.dark, .add):not(:disabled):hover {
 
 #year-list,
 .year-chip,
-.pin-row,
-#picker-footer {
+.pin-row {
   display: flex;
   align-items: center;
 }
@@ -1005,8 +1004,7 @@ button:is(.dark, .add):not(:disabled):hover {
   flex-wrap: wrap;
   gap: 4px;
 }
-#year-list:empty,
-#picker-footer[hidden] {
+#year-list:empty {
   display: none;
 }
 #year-list {
@@ -1072,19 +1070,6 @@ button:is(.dark, .add):not(:disabled):hover {
 .choice[aria-pressed='true'] small {
   color: var(--chronicle-green);
   font-weight: 700;
-}
-#picker-footer {
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
-  margin-top: 8px;
-}
-#picker-count {
-  color: var(--muted);
-  font-size: 14px;
-}
-#picker-done {
-  min-width: 70px;
 }
 #lesson-picker {
   width: min(650px, 94vw);
@@ -1340,4 +1325,38 @@ button:is(.dark, .add):not(:disabled):hover {
   .stage-foot .zoom { margin-left: auto; }
   .stage-tools button { min-height: 38px; }
   .paper-desk { --paper-height: clamp(355px, 58dvh, 640px); }
+}
+
+#toggle-points {
+  margin-left: auto;
+  padding: 4px 7px;
+  border: 0;
+  background: transparent;
+  color: var(--chronicle-green);
+  font-size: 13px;
+}
+.side-head { gap: 5px; }
+#place-catalog {
+  flex: none;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+}
+#catalog-title { margin-bottom: 8px; font-size: 16px; }
+#place-catalog #add-sources { gap: 3px; margin-bottom: 7px; }
+#place-catalog #add-sources button { min-height: 30px; padding: 4px 8px; font-size: 13px; }
+#place-catalog .search input { min-width: 0; padding-inline: 0; }
+#place-catalog .era { margin: 6px 0; }
+#place-catalog #choices {
+  height: clamp(95px, 17dvh, 180px);
+  margin: 0;
+  scrollbar-width: thin;
+}
+#place-catalog .choice { min-height: 32px; margin: 0; padding: 5px 7px; }
+#place-catalog .choice small { flex: none; }
+@media (max-width: 680px) {
+  #items-dialog .side { max-height: 85dvh; overflow-y: auto; }
+  #items-dialog .pins { flex: none; max-height: 25dvh; }
+  #items-dialog .side-head { position: sticky; top: 0; z-index: 1; background: var(--chronicle-surface); }
+  #place-catalog #choices { height: min(22dvh, 180px); }
+  #place-catalog .choice { min-height: 40px; }
 }

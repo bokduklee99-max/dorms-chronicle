@@ -643,6 +643,8 @@ async function start() {
       }),
     );
     $('count').textContent = $('mobile-count').textContent = rows.length;
+    $('toggle-points').disabled = !doc.points.length;
+    $('toggle-points').textContent = !doc.points.length || doc.points.some((p) => !p.hidden) ? '전체 해제' : '전체 선택';
     const theme = currentTheme();
     $('pins').innerHTML =
       rows.join('') ||
@@ -710,7 +712,7 @@ async function start() {
           '<input class="name-input" id="label" maxlength="48"></label>');
     $('remove').onclick = () => {
       removeItem(kind, index);
-      const next = $('pins').querySelector('.place') || (itemsDialog.open ? $('close-items') : $('browse'));
+      const next = $('pins').querySelector('.place') || (itemsDialog.open ? $('close-items') : $('query'));
       next.focus({ preventScroll: true });
     };
     if (isRoute) return;
@@ -758,6 +760,13 @@ async function start() {
     openItems();
     $('inspect').focus({ preventScroll: true });
   }
+  $('toggle-points').onclick = () => {
+    const hide = doc.points.some((point) => !point.hidden);
+    change(() => {
+      for (const point of doc.points) point.hidden = hide;
+      if (hide && selected?.kind === 'points') selected = null;
+    });
+  };
   $('pins').onchange = (event) => {
     const input = event.target.closest('[data-visible-point]');
     if (!input) return;
@@ -774,7 +783,7 @@ async function start() {
       const index = Number(minus.dataset.index);
       removeItem(minus.dataset.removeKind, index);
       const remaining = $('pins').querySelectorAll('[data-remove-kind="' + minus.dataset.removeKind + '"]');
-      const next = remaining[Math.min(index, remaining.length - 1)] || (itemsDialog.open ? $('close-items') : $('browse'));
+      const next = remaining[Math.min(index, remaining.length - 1)] || (itemsDialog.open ? $('close-items') : $('query'));
       next.focus({ preventScroll: true });
       return;
     }
@@ -822,6 +831,7 @@ async function start() {
     paint();
     list();
     inspector();
+    pickerList();
     $('map-name').textContent = doc.title;
     const theme = currentTheme();
     historyControls(theme);
@@ -911,52 +921,66 @@ async function start() {
         : !query && pickerMode === 'lessons'
           ? '지점이 연결된 수업 주제가 없습니다.'
           : '검색 결과가 없습니다.';
-    $('choices').innerHTML = results.join('') || '<p class="empty">' + empty + '</p>';
+    const choices = $('choices');
+    const html = results.join('') || '<p class="empty">' + empty + '</p>';
+    if (html === lastChoices) return;
+    lastChoices = html;
+    const focused = document.activeElement;
+    const index = choices.contains(focused) ? focused.dataset.index : undefined;
+    choices.innerHTML = html;
+    if (index !== undefined) choices.querySelector('[data-index="' + index + '"]')?.focus({ preventScroll: true });
   }
-  function openPicker(which) {
+  function setPickerMode(which, query = '', era = '') {
     pickerMode = which;
     $('add-sources').hidden = which === 'examples';
     $('era').closest('label').hidden = which === 'lessons';
-    $('add-sources')
-      .querySelectorAll('button')
-      .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.source === which)));
-    $('picker-title').textContent =
-      which === 'examples' ? '예시 지도' : mode === 'route' ? '경로에 지점 추가' : '지명 선택';
-    $('picker-footer').hidden = which !== 'places' || mode === 'route';
-    $('picker-count').textContent = '표시한 지점 ' + doc.points.filter((p) => !p.hidden).length + '곳';
+    $('add-sources').querySelectorAll('button').forEach((button) =>
+      button.setAttribute('aria-pressed', String(button.dataset.source === which)),
+    );
     $('query').placeholder = which === 'places' ? '지명 또는 옛 이름 검색' : '이름 검색';
-    $('query').value = '';
-    $('era').value = '';
+    $('query').value = query;
+    $('era').value = era;
     pickerList();
-    if (!routePicker.open) {
-      routePicker.showModal();
-      $('query').focus();
-    }
+    $('choices').scrollTop = 0;
   }
-  $('browse').onclick = () => openPicker('places');
+  let lastChoices, previousCatalog;
+  $('browse').onclick = () => {
+    openItems();
+    $('query').focus();
+  };
   $('themes').onclick = () => {
     dialog.close();
-    openPicker('examples');
+    previousCatalog = { mode: pickerMode, query: $('query').value, era: $('era').value, scroll: $('choices').scrollTop };
+    $('example-search').append($('catalog-controls'));
+    $('picker-title').textContent = '예시 지도';
+    setPickerMode('examples');
+    routePicker.showModal();
+    $('query').focus();
   };
+  routePicker.addEventListener('close', () => {
+    $('place-catalog').append($('catalog-controls'));
+    setPickerMode(previousCatalog.mode, previousCatalog.query, previousCatalog.era);
+    $('choices').scrollTop = previousCatalog.scroll;
+  });
   $('add-sources').onclick = (e) => {
     const button = e.target.closest('[data-source]');
-    if (button) openPicker(button.dataset.source);
+    if (button) setPickerMode(button.dataset.source);
   };
   $('query').oninput = pickerList;
   $('era').onchange = pickerList;
-  $('close').onclick = $('picker-done').onclick = () => routePicker.close();
+  $('close').onclick = () => routePicker.close();
   $('choices').onclick = (e) => {
     const b = e.target.closest('[data-index]');
     if (!b) return;
     const i = Number(b.dataset.index);
     if (pickerMode !== 'places') {
-      routePicker.close();
+      if (routePicker.open) routePicker.close();
       applyTheme(themes[i], pickerMode === 'lessons' || b.hasAttribute('data-append'));
       return;
     }
     const p = places[i];
     if (mode === 'route') {
-      routePicker.close();
+      if (itemsDialog.open) itemsDialog.close();
       routeTo(p.lon, p.lat);
       return;
     }
@@ -966,21 +990,21 @@ async function start() {
     else
       change(() => {
         if (index >= 0) doc.points[index].hidden = false;
-        selected = { kind: 'points', index: index >= 0 ? index : doc.points.push(sheetPoint(p)) - 1 };
+        else doc.points.push(sheetPoint(p));
         mode = 'move';
         fit([p]);
       });
-    // Retain the search, scroll and keyboard focus across repeated selections.
-    b.setAttribute('aria-pressed', String(!wasVisible));
-    b.querySelector('small').textContent = wasVisible ? '＋ 추가' : '✓ 표시 중';
-    $('picker-count').textContent = '표시한 지점 ' + doc.points.filter((p) => !p.hidden).length + '곳';
   };
   function applyTheme(theme, append = false) {
     change(() => {
       if (append) {
         const locations = theme.places.map((id) => byId.get(id));
-        doc.points.push(...locations.filter((p) => !doc.points.some((m) => samePlace(m, p))).map(sheetPoint));
-        fit(doc.points);
+        for (const place of locations) {
+          const mark = doc.points.find((p) => samePlace(p, place));
+          if (mark) mark.hidden = false;
+          else doc.points.push(sheetPoint(place));
+        }
+        fit(doc.points.filter((p) => !p.hidden));
       } else {
         doc = fresh();
         setTheme(theme);
@@ -1668,6 +1692,7 @@ async function start() {
     );
   };
   showSelectors();
+  setPickerMode('places');
   render();
   if (!editions || !boundaries) {
     const missing = [!editions && '시대별 배경', !boundaries && '현대 경계'].filter(Boolean).join('·');

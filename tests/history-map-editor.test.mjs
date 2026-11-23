@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { camera, draw, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+import { gunzipSync } from 'node:zlib';
+import { camera, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
@@ -52,4 +53,49 @@ test('portrait editing and export share geography but only the editor marks the 
   const image = draw(doc, bases);
   assert.doesNotMatch(image, /data-selection/);
   assert.match(image, /<polyline/);
+});
+
+
+test('packaged backgrounds contain every registered edition and both modern boundary levels', () => {
+  const packed = (file) =>
+    JSON.parse(gunzipSync(readFileSync(new URL('../assets/history-map/' + file, import.meta.url))));
+  const editions = packed('editions.json.gz');
+  const boundaries = packed('boundaries.json.gz');
+  assert.equal(Object.keys(editions).length, 55);
+  for (const year of [-123000, 400, 1945, 1980, 2010]) {
+    const key = 'world_' + (year < 0 ? 'bc' : '') + Math.abs(year);
+    assert.equal(editions[key].year, year);
+  }
+  for (const edition of Object.values(editions)) {
+    assert.ok(edition.paths.length > 0);
+    assert.ok(edition.paths.every((d) => d.startsWith('M') && d.endsWith('Z')));
+  }
+  assert.deepEqual(Object.keys(boundaries).sort(), ['countries', 'provinces']);
+  for (const path of Object.values(boundaries)) assert.match(path, /^M[-.,0-9LM]+$/);
+});
+
+test('historical borders and modern first-level boundaries can be selected independently', () => {
+  const history = {
+    editions: { old: { name: '시대별 배경', paths: ['M1,1L2,2Z'] } },
+    boundaries: { countries: 'M1,1L2,2', provinces: 'M3,3L4,4' },
+    layers: {},
+  };
+  const doc = { view: camera('korea'), points: [], notes: [], routes: [] };
+  function svg(options) {
+    return historicalDefinitions(history, options.edition, [], options) +
+      draw({ ...doc, ...options }, bases, 1, null, history);
+  }
+  assert.match(svg({}), /href="#modern-borders"/);
+  assert.doesNotMatch(svg({}), /href="#modern-provinces"/);
+  for (const edition of ['old', undefined]) {
+    for (const countryBorders of [true, false]) {
+      for (const provinceBorders of [true, false]) {
+        const image = svg({ edition, countryBorders, provinceBorders });
+        assert.equal(image.includes('href="#historic-land"'), !!edition);
+        assert.equal(image.includes('href="#modern-borders"'), !edition && countryBorders);
+        assert.equal(image.includes('href="#modern-provinces"'), provinceBorders);
+        if (edition) assert.equal(/id="historic-land"[^>]*stroke="none"/.test(image), !countryBorders);
+      }
+    }
+  }
 });

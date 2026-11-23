@@ -57,6 +57,7 @@ export function sheetLibrary(tables, presets) {
         id: row.카테고리ID,
         name: row.카테고리명,
         packageId: row.패키지ID,
+        defaultEdition: row.지도참조키,
         source: '시트 주제',
         era: [row.시작일, row.종료일].filter(Boolean).join(' — '),
         places: [...(ids || [])],

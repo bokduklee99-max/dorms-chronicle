@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>역사 지도 제작실 · Chronicle</title>
-    <link rel="stylesheet" href="./assets/history-map/editor.css?v=cold-war-1" />
+    <link rel="stylesheet" href="./assets/history-map/editor.css?v=backgrounds-1" />
   </head>
   <body>
     <header class="top">
@@ -66,6 +66,19 @@
         <label class="historic-events" id="historic-events" hidden>
           <span>사건 지도</span><select id="event-map"></select>
         </label>
+        <div class="map-display" aria-label="지도 표시 설정">
+          <div class="display-group" role="group" aria-label="배경지도">
+            <strong>배경</strong>
+            <button id="background-auto" type="button">수업 기본</button>
+            <button id="background-outline" type="button">백지도</button>
+            <select id="background-year" aria-label="시대별 배경지도"><option value="">시대별 지도</option></select>
+          </div>
+          <div class="display-group" role="group" aria-label="경계 표시">
+            <strong>경계</strong>
+            <button id="country-borders" type="button">국경</button>
+            <button id="province-borders" type="button">현대 시·도·주</button>
+          </div>
+        </div>
         <div class="stage">
           <div class="stage-tools">
             <div class="modes" id="tools" role="group" aria-label="지도 도구"></div>
@@ -132,6 +145,6 @@
     </dialog>
     <script src="./sheet-config.js"></script>
     <script src="./sheets.js"></script>
-    <script type="module" src="./assets/history-map/editor.js?v=cold-war-1"></script>
+    <script type="module" src="./assets/history-map/editor.js?v=backgrounds-1"></script>
   </body>
 </html>

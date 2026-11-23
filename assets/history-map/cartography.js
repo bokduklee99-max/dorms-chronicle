@@ -38,7 +38,7 @@ const rect = (x, y, w, h, attrs) =>
   '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" ' + attrs + '/>';
 export const mapHeight = (view) => (view.base === 'korea' ? (W * 907) / 600 : H);
 export function definitions(bases) {
-  // Match the reference's default Korean base: white land, gray water and dashed borders.
+  // All outline maps use white land and gray water under the optional boundary layers.
   const defs = Object.entries(bases)
     .map(
       ([key, b]) =>
@@ -51,12 +51,6 @@ export function definitions(bases) {
         '" overflow="hidden">' +
         rect(0, 0, b.w, b.h, 'fill="#d9d9d9"') +
         elPath(b.land, 'fill="#fff" fill-rule="evenodd"') +
-        (key === 'korea' || key === 'north'
-          ? elPath(
-              b.border,
-              'fill="none" stroke="#444" stroke-width=".8" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"',
-            )
-          : '') +
         elPath(
           b.coast,
           'fill="none" stroke="#111" stroke-width=".8" stroke-linejoin="round" vector-effect="non-scaling-stroke"',
@@ -70,7 +64,7 @@ export function definitions(bases) {
     '</defs>'
   );
 }
-export function historicalDefinitions(history, edition, keys) {
+export function historicalDefinitions(history, edition, keys, doc = {}) {
   if (!history) return '';
   const base = history.editions[edition];
   const countryPaths = (base?.paths || [])
@@ -89,7 +83,22 @@ export function historicalDefinitions(history, edition, keys) {
     })
     .join('');
   return (
-    '<defs><g id="historic-land" fill="#fff" fill-rule="evenodd" stroke="#576367" stroke-width=".65">' +
+    '<defs>' +
+    (!base?.paths && doc.countryBorders !== false
+      ? elPath(
+          history.boundaries?.countries,
+          'id="modern-borders" fill="none" stroke="#444" stroke-width=".8" vector-effect="non-scaling-stroke"',
+        )
+      : '') +
+    (doc.provinceBorders
+      ? elPath(
+          history.boundaries?.provinces,
+          'id="modern-provinces" fill="none" stroke="#60778b" stroke-width=".7" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"',
+        )
+      : '') +
+    '<g id="historic-land" fill="#fff" fill-rule="evenodd" stroke="' +
+    (doc.countryBorders === false ? 'none' : '#576367') +
+    '" stroke-width=".65">' +
     countryPaths +
     '</g>' +
     layers +
@@ -213,6 +222,11 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
   const transform = 'translate(' + origin.join(' ') + ') scale(' + W / camera.span + ')';
   const edition = history?.editions[doc.edition];
   if (edition?.paths) map = '<g transform="' + transform + '"><use href="#historic-land"/></g>';
+  let boundaries = '';
+  if (!edition?.paths && doc.countryBorders !== false && history?.boundaries?.countries)
+    boundaries += '<use href="#modern-borders"/>';
+  if (doc.provinceBorders && history?.boundaries?.provinces) boundaries += '<use href="#modern-provinces"/>';
+  const boundaryOverlay = boundaries ? '<g transform="' + transform + '">' + boundaries + '</g>' : '';
   if (history && doc.layerKeys?.length) {
     const colors = ['#498079', '#9c6941', '#646c9a', '#8b626c'];
     map +=
@@ -361,20 +375,31 @@ export function draw(doc, bases, unit = 1, selected = null, history) {
       );
     })
     .join('');
+  const credits = [
+    edition?.name,
+    doc.provinceBorders
+      ? '현대 시·도·주 · Natural Earth'
+      : !edition?.paths && boundaries
+        ? '현대 국경 · Natural Earth'
+        : '',
+  ]
+    .filter(Boolean)
+    .join(' / ');
   return (
     rect(0, 0, W, H, 'fill="#d9d9d9"') +
     map +
+    boundaryOverlay +
     dokdo +
     seas +
     routes +
     placeMarks(unit) +
     notes +
     insets +
-    (edition
+    (credits
       ? text(
           7 * unit,
           H - 7 * unit,
-          edition.name,
+          credits,
           'font-size="' +
             10 * unit +
             '" fill="#35464a" stroke="white" stroke-width="' +

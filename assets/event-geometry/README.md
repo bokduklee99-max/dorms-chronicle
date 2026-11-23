@@ -40,3 +40,7 @@
 `context/iron-curtain.svg`와 `context/china-proper.svg`는 시트에 등록된 발췌 도형의 배경을 원래 투영에서 볼 수 있도록 원도 전체를 담았다. [철의 장막 원도 · Sémhur 외](https://commons.wikimedia.org/wiki/File:Iron_Curtain_map.svg), [1940년대 중국 관내 원도 · Milenioscuro, Soumya-8974](https://commons.wikimedia.org/wiki/File:China_Proper_1940s.svg). 이용 조건과 저작자 표기는 각 원본 설명을 따른다.
 
 냉전 제작실의 `world-1980.geojson`은 시트가 지정한 1980년 판본의 배포 URL이 404여서 CShapes 2.1 GW에서 1980-01-01 유효 경계를 추출한 대체 배경이다. `cold-war-territories.geojson`에는 1949-04-04 NATO 창립 12개 회원국의 본국과 CShapes의 1949-12-08 대만 경계를 담았다. 두 파일은 원본을 0.09도 허용 오차로 단순화하고 좌표를 소수 셋째 자리로 반올림했다. [Schvitz 외, CShapes](https://icr.ethz.ch/data/cshapes/) · [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · [NATO 창립 회원국](https://www.nato.int/en/about-us/organization/nato-member-countries)
+
+지도 제작실의 시대별 배경은 시트의 세계지도 판본에 맞춘 André Ourednik의 Historical Basemaps(커밋 4b5039e50d8d2464b065bd76ad6086cd4597108d)와 위의 CShapes 1980년 판본을 사용한다. 편집기에 맞춰 경로를 단순화하고 메르카토르 좌표로 투영했다. 고대 판본에는 문화권의 범위도 포함된다. [Historical Basemaps 원본](https://github.com/aourednik/historical-basemaps) · [GPL-3.0](historical-basemaps-license.txt)
+
+현대 국경과 시·도·주 표시는 Natural Earth 1:10m Admin 0 육상 경계 및 Admin 1 주·도 경계선(v5.1.0)을 0.018도 허용 오차로 단순화한 자료다. 시간별 배경을 사용할 때는 그 판본의 영역선을 국경으로 사용한다. 현대 행정경계는 별도로 켤 수 있다. [Natural Earth](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/) · [퍼블릭 도메인](https://www.naturalearthdata.com/about/terms-of-use/)

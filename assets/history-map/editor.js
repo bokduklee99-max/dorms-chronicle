@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=cold-war-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=backgrounds-1';
 import {
   W,
   mapHeight,
@@ -11,7 +11,7 @@ import {
   definitions,
   historicalDefinitions,
   draw,
-} from './cartography.js?v=cold-war-1';
+} from './cartography.js?v=backgrounds-1';
 
 const xy = (view, lon, lat) => project(view, lon, lat, mapHeight(view));
 const ll = (view, x, y) => invert(view, x, y, mapHeight(view));
@@ -58,6 +58,15 @@ async function json(file) {
   if (!r.ok) throw Error(file);
   return r.json();
 }
+async function packedMapData(name) {
+  const response = await fetch(new URL(name, import.meta.url));
+  if (!response.ok) throw Error(name);
+  const blob = await response.blob();
+  const signature = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
+  if (signature[0] === 31 && signature[1] === 139)
+    return new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).json();
+  return JSON.parse(await blob.text());
+}
 async function start() {
   let storage;
   try {
@@ -65,13 +74,25 @@ async function start() {
   } catch {
     /* Storage may be disabled. */
   }
-  const [library, bases] = await Promise.all([
+  const [library, bases, editions, boundaries] = await Promise.all([
     json('presets.json').then((presets) =>
       loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
     ),
     json('bases.json'),
+    packedMapData('editions.json.gz').catch(() => null),
+    packedMapData('boundaries.json.gz').catch(() => null),
   ]);
-  const { places, themes, eras, history: historical } = library;
+  const { places, themes, eras } = library;
+  const historical = {
+    ...(library.history || { events: {}, layers: {} }),
+    boundaries,
+    editions: { ...editions },
+  };
+  for (const [id, entry] of Object.entries(library.history?.editions || {})) {
+    if (entry.paths || !historical.editions[id]) {
+      historical.editions[id] = { ...historical.editions[id], ...entry };
+    }
+  }
   const byId = new Map(places.map((p) => [p.id, p]));
   const requested = [...new Set(new URLSearchParams(location.search).getAll('topic').filter(Boolean))];
   const linked =
@@ -298,6 +319,74 @@ async function start() {
     const t = themes[Number(b.dataset.category)];
     if (t !== currentTheme() || doc.eventId) applyTheme(t);
   };
+  function displayDrawing() {
+    const choice = doc.background || doc.edition || currentTheme()?.defaultEdition;
+    return { ...doc, edition: choice === 'outline' ? undefined : choice };
+  }
+  const yearSelect = $('background-year');
+  const byEra = new Map();
+  for (const [id, item] of Object.entries(historical.editions)
+    .filter(([, entry]) => entry.paths)
+    .sort(([, a], [, b]) => (a.year ?? 0) - (b.year ?? 0))) {
+    const year = item.year ?? Number(id.replace('world_', ''));
+    const label =
+      year < 0
+        ? '기원전'
+        : year < 1000
+          ? '1–999년'
+          : year < 1800
+            ? '1000–1799년'
+            : year < 1900
+              ? '1800–1899년'
+              : '1900년 이후';
+    if (!byEra.has(label)) {
+      const group = document.createElement('optgroup');
+      group.label = label;
+      yearSelect.add(group);
+      byEra.set(label, group);
+    }
+    byEra
+      .get(label)
+      .append(
+        new Option(
+          Number.isFinite(year)
+            ? (year < 0 ? '기원전 ' : '') + Math.abs(year).toLocaleString('ko-KR') + '년'
+            : item.name,
+          id,
+        ),
+      );
+  }
+  yearSelect.options[0].disabled = true;
+  yearSelect.disabled = !byEra.size;
+  function setBackground(value) {
+    if ((doc.background || '') !== value)
+      change(() => {
+        doc.background = value;
+      });
+  }
+  $('background-auto').onclick = () => setBackground('');
+  $('background-outline').onclick = () => setBackground('outline');
+  yearSelect.onchange = () => setBackground(yearSelect.value);
+  $('country-borders').onclick = () =>
+    change(() => {
+      doc.countryBorders = doc.countryBorders === false;
+    });
+  $('province-borders').onclick = () =>
+    change(() => {
+      doc.provinceBorders = !doc.provinceBorders;
+    });
+  $('province-borders').disabled = !boundaries?.provinces;
+  function backgroundControls() {
+    const background = doc.background || '';
+    $('background-auto').setAttribute('aria-pressed', String(!background));
+    $('background-outline').setAttribute('aria-pressed', String(background === 'outline'));
+    yearSelect.value = historical.editions[background]?.paths ? background : '';
+    yearSelect.classList.toggle('active-edition', !!yearSelect.value);
+    $('country-borders').setAttribute('aria-pressed', String(doc.countryBorders !== false));
+    $('country-borders').disabled =
+      !boundaries?.countries && !historical.editions[displayDrawing().edition]?.paths;
+    $('province-borders').setAttribute('aria-pressed', String(!!doc.provinceBorders));
+  }
   const past = beforeRecovery ? [beforeRecovery] : [],
     future = [];
   function message(s) {
@@ -395,7 +484,8 @@ async function start() {
       id = e.target.value,
       event = historical.events[id];
     change(() => {
-      doc = fresh();
+      const { background, countryBorders, provinceBorders } = doc;
+      doc = { ...fresh(), background, countryBorders, provinceBorders };
       doc.topic = { id: theme.id };
       doc.edition = theme.edition;
       const source = event || theme;
@@ -597,18 +687,24 @@ async function start() {
     svg.dataset.layout = doc.view.base === 'korea' ? 'portrait' : 'wide';
     const unit = W / (svg.clientWidth || W);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + height);
-    const signature = JSON.stringify([doc.edition, doc.layerKeys]);
+    const drawing = displayDrawing();
+    const signature = JSON.stringify([
+      drawing.edition,
+      doc.layerKeys,
+      doc.countryBorders,
+      doc.provinceBorders,
+    ]);
     if (signature !== definitionKey) {
       definitionKey = signature;
       svg.querySelector('#historic-defs')?.remove();
       scene.insertAdjacentHTML(
         'beforebegin',
         '<g id="historic-defs">' +
-          historicalDefinitions(historical, doc.edition, doc.layerKeys || []) +
+          historicalDefinitions(historical, drawing.edition, doc.layerKeys || [], doc) +
           '</g>',
       );
     }
-    scene.innerHTML = draw(doc, bases, unit, selected, historical);
+    scene.innerHTML = draw(drawing, bases, unit, selected, historical);
     if (mode === 'route' && routeStart) {
       const [x, y] = xy(doc.view, ...routeStart);
       scene.insertAdjacentHTML(
@@ -630,6 +726,7 @@ async function start() {
     $('map-name').textContent = doc.title;
     const theme = currentTheme();
     historyControls(theme);
+    backgroundControls();
     if (theme !== lastTheme) {
       if (theme?.source === '시트 주제') {
         activePackage = theme.packageId;
@@ -1084,23 +1181,29 @@ async function start() {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
   async function exportMap(format) {
+    const drawing = displayDrawing();
     const copy = svg.cloneNode(false);
     const H = mapHeight(doc.view);
     copy.innerHTML =
       definitions(bases) +
-      historicalDefinitions(historical, doc.edition, doc.layerKeys || []) +
-      draw(doc, bases, W / (svg.clientWidth || W), null, historical);
+      historicalDefinitions(historical, drawing.edition, doc.layerKeys || [], doc) +
+      draw(drawing, bases, W / (svg.clientWidth || W), null, historical);
     const title = document.createElementNS(svg.namespaceURI, 'title');
     title.textContent = doc.title;
     copy.prepend(title);
-    if (doc.edition) {
+    if (drawing.edition || doc.layerKeys?.length || doc.provinceBorders || doc.countryBorders !== false) {
       const desc = document.createElementNS(svg.namespaceURI, 'desc');
       desc.textContent = [
-        historical?.editions[doc.edition]?.name,
+        historical.editions[drawing.edition]?.name,
+        doc.provinceBorders || (!drawing.edition && doc.countryBorders !== false)
+          ? 'Natural Earth 1:10m · 현대 경계'
+          : '',
         ...(doc.layerKeys || [])
           .filter((k) => !doc.hiddenLayers?.includes(k))
           .map((k) => historical?.layers[k]?.note),
-        'CShapes · Schvitz et al. CC BY-NC-SA 4.0 · https://icr.ethz.ch/data/cshapes/',
+        drawing.edition === 'world_1980' || doc.layerKeys?.length
+          ? 'CShapes · Schvitz et al. CC BY-NC-SA 4.0 · https://icr.ethz.ch/data/cshapes/'
+          : '',
       ]
         .filter(Boolean)
         .join(' / ');
@@ -1152,6 +1255,10 @@ async function start() {
   };
   showSelectors();
   render();
+  if (!editions || !boundaries) {
+    const missing = [!editions && '시대별 배경', !boundaries && '현대 경계'].filter(Boolean).join('·');
+    message(missing + ' 자료를 모두 불러오지 못했습니다. 새로 고쳐 주세요.');
+  }
   if (beforeRecovery) persist();
   if (requested.length === 1 && !linked) {
     $('launch-notice').textContent = '연표에서 선택한 카테고리를 시트에서 찾을 수 없습니다.';

@@ -1032,3 +1032,52 @@ dialog::backdrop {
     margin: 6px 2px;
   }
 }
+.map-display,
+.display-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.map-display {
+  gap: 6px 18px;
+  margin: 0 0 10px;
+}
+.display-group {
+  gap: 4px;
+}
+.display-group strong {
+  font-size: 13px;
+  color: var(--muted);
+  margin-right: 3px;
+}
+.display-group button,
+.display-group select {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: white;
+  color: var(--ink);
+  font:
+    600 13px Pretendard,
+    sans-serif;
+  min-height: 32px;
+  padding: 5px 8px;
+}
+.display-group button[aria-pressed='true'],
+.display-group select.active-edition {
+  border-color: #658494;
+  background: #e4eff1;
+  color: #153b4c;
+}
+.display-group select:focus-visible {
+  outline: 3px solid #3b8ba7;
+  outline-offset: 2px;
+}
+@media (max-width: 680px) {
+  .map-display {
+    margin-inline: 2px;
+  }
+  .display-group button,
+  .display-group select {
+    min-height: 36px;
+  }
+}

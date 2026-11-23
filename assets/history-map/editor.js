@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=package-regions-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=live-sheets-1';
 import {
   W,
   mapHeight,
@@ -70,15 +70,9 @@ async function packedMapData(name) {
   return JSON.parse(await blob.text());
 }
 async function start() {
-  let storage;
-  try {
-    storage = window.localStorage;
-  } catch {
-    /* Storage may be disabled. */
-  }
   const [library, bases, editions, boundaries] = await Promise.all([
     json('presets.json').then((presets) =>
-      loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords, storage),
+      loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords),
     ),
     json('bases.json?v=global-coasts-1'),
     packedMapData('editions.json.gz').catch(() => null),
@@ -110,15 +104,15 @@ async function start() {
   const sheetUrl = new URL(SHEET_CONFIG.url);
   sheetUrl.hash = 'gid=' + SHEET_CONFIG.spaceSheetId;
   source.href = sheetUrl;
-  source.querySelector('span').textContent =
-    library.source === 'live'
-      ? '구글 시트 · 지명 ' + places.length + '곳'
-      : library.source === 'cached'
-        ? '시트 연결 실패 · 저장된 지명 ' + places.length + '곳'
-        : '시트 연결 실패 · 원본 확인 ↗';
-  if (library.historyError) source.querySelector('span').textContent += ' · 냉전 자료 일부 연결 실패';
-  if (library.unresolved)
-    source.querySelector('span').textContent += ' · 좌표 로드 실패 ' + library.unresolved + '곳';
+  const issues = [];
+  if (library.failedTabs.length) issues.push('탭 읽기 실패: ' + library.failedTabs.join(', '));
+  if (library.unresolved) issues.push('좌표 읽기 실패 ' + library.unresolved + '곳');
+  if (library.failedShapes) issues.push('도형 파일 읽기 실패 ' + library.failedShapes + '개');
+  if (library.failedEditions) issues.push('배경 파일 읽기 실패 ' + library.failedEditions + '개');
+  source.querySelector('span').textContent = library.source === 'live'
+    ? ['구글 시트', '지명 ' + places.length + '곳', ...issues].join(' · ')
+    : '구글 시트 연결 실패 · 원본 열기';
+  source.title = issues.join(' · ') || '구글 시트 열기';
   const fresh = () => ({
     id: crypto.randomUUID(),
     title: '제목 없는 지도',
@@ -161,19 +155,10 @@ async function start() {
     return refreshDrawing(drawing, byId);
   }
   let doc = read(draftKey, null);
-  let beforeRecovery = null;
   const resume = valid(doc) && (!requested.length || reloading || (linked && doc.topic?.id === linked.id));
   const resumedId = resume ? doc.id : null;
   if (resume) {
     openDrawing(doc);
-    if (library.recoveredEmptyLibrary && !doc.itemsCleared && !doc.points.length && !doc.notes.length && !doc.routes.length) {
-      const theme = currentTheme();
-      if (theme?.places.length) {
-        beforeRecovery = structuredClone(doc);
-        doc.points = theme.places.map((id) => sheetPoint(byId.get(id)));
-        fit(doc.points);
-      }
-    }
   } else {
     doc = fresh();
     if (linked) setTheme(linked);
@@ -455,7 +440,7 @@ async function start() {
     $('country-borders').disabled = !boundaries?.countries && !edition;
     $('province-borders').setAttribute('aria-pressed', String(!!doc.provinceBorders));
   }
-  const past = beforeRecovery ? [beforeRecovery] : [],
+  const past = [],
     future = [];
   function message(s) {
     $('status').textContent = s;
@@ -531,7 +516,7 @@ async function start() {
           : '';
         const label = esc(layer.name + period),
           note = esc([layer.note, territory?.note].filter(Boolean).join(' · '));
-        if (!layer.d && !layer.original) return '<span>' + label + ' · 도형 미등록</span>';
+        if (!layer.d && !layer.original) return '<span>' + label + ' · ' + (layer.loadFailed ? '도형 읽기 실패' : '도형 미등록') + '</span>';
         return (
           '<label title="' +
           note +
@@ -626,7 +611,7 @@ async function start() {
       const entry = shapesByKey.get(key), layer = historical.layers[key];
       const type = entry?.type || (typeof layer?.line === 'boolean' ? (layer.line ? 'line' : 'area') : 'other');
       rows.push({ kind: 'layerKeys', index, type, name: entry?.name || layer?.name || key,
-        hidden: doc.hiddenLayers?.includes(key), missing: !layer?.d && !layer?.original });
+        hidden: doc.hiddenLayers?.includes(key), missing: !layer?.d && !layer?.original, loadFailed: layer?.loadFailed });
     }
     return rows;
   }
@@ -662,14 +647,14 @@ async function start() {
     }
     if (hidden && selected?.kind === kind && selected.index === index) selected = null;
   }
-  function sidebarRow({kind, index, name, hidden, missing}) {
+  function sidebarRow({kind, index, name, hidden, missing, loadFailed}) {
     const text = esc(name), id = 'visible-' + kind + '-' + index;
     const toggle = '<label class="pin-toggle" title="지도에 표시"><input type="checkbox" id="' + id +
       '" data-visible-kind="' + kind + '" data-index="' + index + '"' +
       (kind === 'points' ? ' data-visible-point="' + index + '"' : '') +
       ' aria-label="' + text + ' 지도에 표시"' + (missing ? ' disabled' : hidden ? '' : ' checked') + '></label>';
     const label = kind === 'layerKeys'
-      ? '<label for="' + id + '" class="place layer-name">' + text + (missing ? ' · 도형 미등록' : '') + '</label>'
+      ? '<label for="' + id + '" class="place layer-name">' + text + (loadFailed ? ' · 도형 읽기 실패' : missing ? ' · 도형 미등록' : '') + '</label>'
       : '<button class="place" data-kind="' + kind + '" data-index="' + index + '" aria-pressed="' +
         (selected?.kind === kind && selected.index === index) + '">' +
         (kind === 'points' ? '' : '<i>' + icon(kindIcons[kind]) + '</i>') + '<span>' + text + '</span></button>';
@@ -959,7 +944,7 @@ async function start() {
     const available = layer?.d || layer?.original;
     const visible = doc.layerKeys?.includes(entry.key) && !doc.hiddenLayers?.includes(entry.key);
     const key = esc(entry.key);
-    const caption = !available ? '도형 미등록' : visible ? '✓ 표시 중' : layer.original ? '원도 표시' : '＋ 추가';
+    const caption = !available ? (layer?.loadFailed ? '도형 읽기 실패' : '도형 미등록') : visible ? '✓ 표시 중' : layer.original ? '원도 표시' : '＋ 추가';
     return '<button class="choice" id="choice-shape-' + key + '" data-shape="' + key +
       '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') + '><span>' +
       esc(entry.name) + '</span><small>' + caption + '</small></button>';
@@ -1923,9 +1908,8 @@ async function start() {
     const missing = [!editions && '시대별 배경', !boundaries && '현대 경계'].filter(Boolean).join('·');
     message(missing + ' 자료를 모두 불러오지 못했습니다. 새로 고쳐 주세요.');
   }
-  if (library.source !== 'live' || library.historyError || library.unresolved)
+  if (issues.length)
     $('show-items').setAttribute('aria-label', '작업대 열기 및 시트 연결 상태 보기');
-  if (beforeRecovery) persist();
   if (requested.length === 1 && !linked) {
     $('launch-notice').textContent = '연표에서 선택한 카테고리를 시트에서 찾을 수 없습니다.';
     $('launch-notice').hidden = false;

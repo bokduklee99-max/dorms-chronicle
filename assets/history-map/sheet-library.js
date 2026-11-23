@@ -1,4 +1,4 @@
-import { coldWarLibrary, historyTables, loadCatalogLayers } from './cold-war.js?v=shape-catalog-1';
+import { coldWarLibrary, historyTables, loadCatalogLayers } from './cold-war.js?v=live-sheets-1';
 import { loadShape, readGeometryFile } from '../../event-map-links.js?v=point-files-1';
 
 const required = {
@@ -113,116 +113,62 @@ export function sheetLibrary(tables, presets) {
   return { shapes: catalog, packages, places: [...byId.values()], themes, eras: presets.eras };
 }
 
-export async function loadSheetLibrary(config, presets, readRecords, storage) {
-  const cacheKey = 'chronicle.atlas.sheet.v1.' + config.id;
-  let saved;
-  try {
-    const value = JSON.parse(storage?.getItem(cacheKey) || 'null');
-    if (Array.isArray(value?.places) && Array.isArray(value?.themes) && Array.isArray(value?.eras))
-      saved = value;
-  } catch {
-    /* Storage is optional. */
-  }
-  try {
-    let historyError = false;
-    const entries = await Promise.all(
-      Object.entries({ ...required, ...historyTables, 유형설명: ['시트명', '컬럼명', '유형값', '한글명'] }).map(async ([name, fields]) => {
-        try {
-          return [name, await readRecords(config, name, fields)];
-        } catch (error) {
-          if (name === '유형설명') return [name, []];
-          if (!(name in historyTables) || saved?.history) throw error;
-          historyError = true;
-          return [name, []];
-        }
-      }),
-    );
-    const tables = Object.fromEntries(entries);
-    const files = new Map();
-    function readOnce(path) {
-      if (!files.has(path)) files.set(path, readGeometryFile(path));
-      return files.get(path);
-    }
-    const spaceKeys = new Set(tables.공간.map((r) => r.지도참조키));
-    let unresolved = 0;
-    tables.지도도형 = await Promise.all(
-      tables.지도도형.map(async (row) => {
-        if (
-          !spaceKeys.has(row.지도참조키) ||
-          row.도형유형 !== 'point' ||
-          (!row.파일경로 && !row.지도데이터URL)
-        )
-          return row;
-        if (String(row.경도 ?? '').trim() && String(row.위도 ?? '').trim()) return row;
-        try {
-          const {
-            coordinates: [경도, 위도],
-          } = await loadShape(row, readOnce);
-          return { ...row, 경도, 위도 };
-        } catch {
-          unresolved++;
-          return row;
-        }
-      }),
-    );
-    const library = sheetLibrary(tables, presets);
-    if (!historyError && library.themes.some((t) => t.packageId === 'cold-war')) {
-      library.history = await coldWarLibrary(tables, library, readOnce);
-      const partial =
-        Object.values(library.history.editions).some((e) => !e.paths) ||
-        Object.values(library.history.layers).some((layer) => layer.missing);
-      if (partial && saved?.history) {
-        const previous = saved.history;
-        for (const [key, layer] of Object.entries(library.history.layers)) {
-          if (layer.missing && previous.layers[key]?.d && layer.note === previous.layers[key].note)
-            library.history.layers[key] = previous.layers[key];
-        }
-        for (const [key, e] of Object.entries(library.history.editions)) {
-          if (!e.paths && previous.editions[key]?.paths)
-            library.history.editions[key] = previous.editions[key];
-        }
-      }
-      if (partial) historyError = true;
-    }
-    if (library.shapes.length) {
-      library.history ??= { events: {}, editions: {}, layers: {} };
-      await loadCatalogLayers(library.shapes, tables.지도도형, library.history.layers, readOnce);
-    }
-    if (unresolved && !library.places.length) throw Error('지점 도형을 불러오지 못했습니다.');
-    if (!unresolved && !historyError) {
+export async function loadSheetLibrary(config, presets, readRecords) {
+  const fields = { ...required, ...historyTables, 유형설명: ['시트명', '컬럼명', '유형값', '한글명'] };
+  const failedTabs = [];
+  const entries = await Promise.all(Object.entries(fields).map(async ([name, columns]) => {
+    try {
+      return [name, await readRecords(config, name, columns) || []];
+    } catch {
+      // Retry the live tab by name through Google's visualization endpoint.
       try {
-        storage?.setItem(cacheKey, JSON.stringify(library));
+        return [name, await readRecords({ id: config.id }, name, columns)];
       } catch {
-        /* Storage is optional. */
+        failedTabs.push(name);
+        return [name, []];
       }
     }
-    return {
-      ...library,
-      source: 'live',
-      unresolved,
-      historyError,
-      recoveredEmptyLibrary: saved?.places.length === 0 && library.places.length > 0,
-    };
-  } catch {
-    if (saved?.places.length || saved?.shapes?.length) {
-      // The first cache format stored layer drawings without their sheet types.
-      if (!saved.shapes && config.id === '1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0') {
-        try {
-          const response = await fetch(new URL('./cached-shape-schema.json', import.meta.url));
-          if (response.ok) {
-            const snapshot = await response.json();
-            saved.shapes = snapshot.entries;
-            saved.history ??= { events: {}, editions: {}, layers: {} };
-            await loadCatalogLayers(saved.shapes, snapshot.files, saved.history.layers, readGeometryFile);
-          }
-        } catch {
-          // A point-only cache is still usable offline.
-        }
-      }
-      return { ...saved, source: 'cached' };
-    }
-    return { places: [], themes: [], eras: [], source: 'unavailable' };
+  }));
+  const tables = Object.fromEntries(entries);
+  if (Object.keys(required).every(name => failedTabs.includes(name)))
+    return { places: [], themes: [], eras: presets.eras, source: 'unavailable', failedTabs };
+  const files = new Map();
+  function readOnce(path) {
+    if (!files.has(path)) files.set(path, readGeometryFile(path));
+    return files.get(path);
   }
+  const spaceKeys = new Set(tables.공간.map((r) => r.지도참조키));
+  let unresolved = 0;
+  tables.지도도형 = await Promise.all(
+    tables.지도도형.map(async (row) => {
+      if (
+        !spaceKeys.has(row.지도참조키) ||
+        row.도형유형 !== 'point' ||
+        (!row.파일경로 && !row.지도데이터URL)
+      )
+        return row;
+      if (String(row.경도 ?? '').trim() && String(row.위도 ?? '').trim()) return row;
+      try {
+        const {
+          coordinates: [경도, 위도],
+        } = await loadShape(row, readOnce);
+        return { ...row, 경도, 위도 };
+      } catch {
+        unresolved++;
+        return row;
+      }
+    }),
+  );
+  const library = sheetLibrary(tables, presets);
+  if (library.themes.some(t => t.packageId === 'cold-war'))
+    library.history = await coldWarLibrary(tables, library, readOnce);
+  if (library.shapes.length) {
+    library.history ??= { events: {}, editions: {}, layers: {} };
+    await loadCatalogLayers(library.shapes, tables.지도도형, library.history.layers, readOnce);
+  }
+  const failedShapes = Object.values(library.history?.layers || {}).filter(layer => layer.loadFailed).length;
+  const failedEditions = Object.values(library.history?.editions || {}).filter(edition => !edition.paths).length;
+  return { ...library, source: 'live', failedTabs, unresolved, failedShapes, failedEditions };
 }
 
 export const sheetPoint = (p) => ({

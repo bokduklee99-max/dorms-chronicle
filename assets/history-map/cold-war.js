@@ -34,7 +34,6 @@ function shapeDrawing(paths, line) {
 }
 
 async function readLayer(shape, readOnce, svgPaths) {
-  const key = shape.지도참조키;
   const line = shape.도형유형.includes('line');
   if (shape.데이터형식 === 'geojson') return shapeDrawing(shapePaths(await loadShape(shape, readOnce)), line);
   const source = shape.지도데이터URL || '';
@@ -50,30 +49,6 @@ async function readLayer(shape, readOnce, svgPaths) {
       [...root.querySelectorAll('path')].flatMap((p) => geographicSvgLines(p.getAttribute('d'))),
       line,
     );
-  }
-  const region = {
-    geo_afghanistan: 'afghanistan',
-    geo_iran: 'iran',
-    geo_israel: 'israel',
-    geo_india_pakistan: 'india-pakistan',
-    geo_middle_east: 'middle-east',
-  }[key];
-  if (region) {
-    const data = await readOnce('assets/event-geometry/context/' + region + '.json');
-    return {
-      ...shapeDrawing((data.selected || data.countries).flatMap(geographicSvgLines), !data.selected),
-      note: data.date + ' 기준 ' + (data.selected ? '국가 경계' : '권역 내 국가 경계') + ' · CShapes 2.1',
-    };
-  }
-  if (key === 'geo_nato_1949' || key === 'geo_roc_taiwan') {
-    const data = await readOnce('assets/event-geometry/cold-war-territories.geojson');
-    return {
-      ...shapeDrawing(
-        data.features.filter((f) => f.properties.layer === key).flatMap((f) => shapePaths(f.geometry)),
-        false,
-      ),
-      note: (key === 'geo_nato_1949' ? '1949-04-04 창립 12개국 본국' : '1949-12-08 대만') + ' · CShapes 2.1',
-    };
   }
   throw Error('등록된 도형 파일 없음');
 }
@@ -100,13 +75,13 @@ export async function loadCatalogLayers(catalog, shapes, layers, readOnce) {
   const byKey = new Map(shapes.map((shape) => [shape.지도참조키, shape]));
   await Promise.all(catalog.map(async (entry) => {
     const { key, name } = entry;
-    if (layers[key]?.d || layers[key]?.original) return;
+    if (layers[key]) return;
     const shape = byKey.get(key);
     if (!shape) return;
     try {
       layers[key] = { name, note: shape.기준시점 || '', ...(await readLayer(shape, readOnce, svgPaths)) };
     } catch {
-      layers[key] = { name, missing: true };
+      layers[key] = { name, missing: true, loadFailed: Boolean(shape.파일경로 || shape.지도데이터URL) };
     }
   }));
 }
@@ -191,7 +166,7 @@ export async function coldWarLibrary(tables, library, readOnce) {
       try {
         layers[key] = { ...info, ...(await readLayer(s, readOnce, svgPaths)) };
       } catch {
-        layers[key] = { ...info, missing: true };
+        layers[key] = { ...info, missing: true, loadFailed: Boolean(s?.파일경로 || s?.지도데이터URL) };
       }
     }),
   );

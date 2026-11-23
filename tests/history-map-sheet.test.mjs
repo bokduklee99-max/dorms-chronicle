@@ -88,21 +88,32 @@ test('reopening a drawing updates sheet positions and preserves authored labels 
   assert.deepEqual(b.labelOffset, [1, 2]);
 });
 
-test('each visit reads fresh rows and distinguishes offline copies from a successfully emptied sheet', async () => {
-  const config = { id: 'test' },
-    values = new Map(),
-    storage = { getItem: (k) => values.get(k), setItem: (k, v) => values.set(k, v) };
-  const load = (read) => loadSheetLibrary(config, presets, read, storage);
-  const offline = () => {
-    throw Error('offline');
-  };
-  assert.equal((await load(offline)).source, 'unavailable');
+test('visits use current sheet rows, including edits and deletions, and never serve an offline copy', async () => {
+  const config = { id: 'test' };
+  const load = read => loadSheetLibrary(config, presets, read);
   assert.equal((await load((_, name) => tables[name])).places.length, 2);
-  assert.equal((await load(offline)).source, 'cached');
+  const updated = await load((_, name) => name === '공간' ? [{ ...tables.공간[0], 공간명: '수정됨' }] : tables[name]);
+  assert.deepEqual(updated.places.map(p => p.name), ['수정됨']);
   const empty = await load(() => []);
   assert.equal(empty.source, 'live');
   assert.deepEqual(empty.places, []);
-  assert.deepEqual((await load(offline)).places, []);
+  const offline = await load(() => { throw Error('offline'); });
+  assert.equal(offline.source, 'unavailable');
+  assert.deepEqual(offline.places, []);
+});
+
+test('a failed tab retries by name and an optional tab failure preserves fresh places', async () => {
+  const config = { id: 'test', sheetIds: { 공간: 1 } };
+  let retried = false;
+  const library = await loadSheetLibrary(config, presets, (source, name) => {
+    if (name === '공간' && source.sheetIds) throw Error('export failed');
+    if (name === '공간') retried = true;
+    if (name === '지도뷰') throw Error('unavailable');
+    return tables[name] || [];
+  });
+  assert.ok(retried);
+  assert.deepEqual(library.failedTabs, ['지도뷰']);
+  assert.equal(library.places.length, 2);
 });
 
 test('resolves point coordinates by the sheet’s external IDs with one request per referenced file', async (t) => {
@@ -141,10 +152,8 @@ test('resolves point coordinates by the sheet’s external IDs with one request 
   );
 });
 
-test('a missing point file cannot overwrite a good cached library with zero places', async (t) => {
+test('a missing sheet-referenced point file reports the failure and keeps the current categories', async (t) => {
   t.mock.method(globalThis, 'fetch', async () => new Response('Not found', { status: 404 }));
-  const good = sheetLibrary(tables, presets);
-  const storage = { getItem: () => JSON.stringify(good), setItem: () => assert.fail('bad read cached') };
   const data = {
     ...tables,
     지도도형: [
@@ -156,9 +165,11 @@ test('a missing point file cannot overwrite a good cached library with zero plac
       },
     ],
   };
-  const library = await loadSheetLibrary({ id: 'test' }, presets, (_, name) => data[name], storage);
-  assert.equal(library.source, 'cached');
-  assert.deepEqual(library.places, good.places);
+  const library = await loadSheetLibrary({ id: 'test' }, presets, (_, name) => data[name]);
+  assert.equal(library.source, 'live');
+  assert.equal(library.unresolved, 1);
+  assert.deepEqual(library.places, []);
+  assert.equal(library.themes[0].id, 'c1');
 });
 
 test('catalog uses sheet geometry and subtype labels even when a line has a reference coordinate', () => {

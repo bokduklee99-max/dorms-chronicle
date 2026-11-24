@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=area-periods-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=area-names-1';
 import {
   W,
   mapHeight,

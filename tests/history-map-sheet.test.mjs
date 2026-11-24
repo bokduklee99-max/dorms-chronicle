@@ -223,3 +223,30 @@ test('area choices keep the space name and show sheet periods separately', () =>
     ['경계', undefined],
   ]);
 });
+
+test('area choices read actor names for newly imported territories without space rows', async () => {
+  const data = {
+    ...tables,
+    공간: [{ 공간ID: 'manchukuo', 공간명: '만주국', 공간유형: 'area', 지도참조키: 'manchukuo' }],
+    지도도형: [
+      { 지도참조키: 'franks-510', 도형유형: 'area', 기준시점: '510~522년 프랑크 왕국 · Cliopatria' },
+      { 지도참조키: 'manchukuo', 도형유형: 'area', 기준시점: '1938년 만주국 · OpenHistoricalMap' },
+      { 지도참조키: 'unlinked', 도형유형: 'area', 기준시점: '1960년 판본' },
+    ],
+    영토변화: [
+      { 지도참조키: 'franks-510', 주체ID: 'franks', 영토유형: 'sovereignty', 시작일: '510', 종료일: '522' },
+      { 지도참조키: 'manchukuo', 주체ID: 'japan', 영토유형: 'sphere' },
+      { 지도참조키: 'unlinked', 주체ID: 'missing', 영토유형: 'sovereignty' },
+    ],
+    주체: [
+      { 주체ID: 'franks', 주체명: '프랑크 왕국' },
+      { 주체ID: 'japan', 주체명: '일본 제국' },
+    ],
+  };
+  const { shapes } = await loadSheetLibrary({ id: 'test' }, presets, (_, name) => data[name] || []);
+  assert.deepEqual(shapes.map(({ name, period }) => [name, period]), [
+    ['만주국', '1938년 기준'],
+    ['프랑크 왕국', '510년 ~ 522년'],
+    ['이름 미등록', '1960년 기준'],
+  ]);
+});

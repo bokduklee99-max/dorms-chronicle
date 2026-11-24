@@ -75,7 +75,10 @@ export async function loadCatalogLayers(catalog, shapes, layers, readOnce) {
   const byKey = new Map(shapes.map((shape) => [shape.지도참조키, shape]));
   await Promise.all(catalog.map(async (entry) => {
     const { key, name } = entry;
-    if (layers[key]) return;
+    if (layers[key]) {
+      if (entry.type === 'area') layers[key].name = name;
+      return;
+    }
     const shape = byKey.get(key);
     if (!shape) return;
     try {

@@ -1,4 +1,4 @@
-import { coldWarLibrary, historyTables, loadCatalogLayers } from './cold-war.js?v=live-sheets-1';
+import { coldWarLibrary, historyTables, loadCatalogLayers } from './cold-war.js?v=area-names-1';
 import { loadShape, readGeometryFile } from '../../event-map-links.js?v=point-files-1';
 
 const required = {
@@ -38,6 +38,7 @@ function territoryPeriod(start, end) {
 
 export function shapeCatalog(tables) {
   const shapes = new Map(tables.지도도형.map((shape) => [shape.지도참조키, shape]));
+  const actorNames = new Map((tables.주체 || []).map(row => [row.주체ID, row.주체명]));
   const catalog = new Map();
   const periods = new Map();
   function register(key, type, name, kind, keywords) {
@@ -48,7 +49,7 @@ export function shapeCatalog(tables) {
   }
   for (const row of tables.공간) {
     const type = row.공간유형, key = row.지도참조키;
-    if (!key || !['line', 'area'].includes(type) || (shapes.has(key) && shapes.get(key).도형유형 !== type)) continue;
+    if (!key || !row.공간명 || !['line', 'area'].includes(type) || (shapes.has(key) && shapes.get(key).도형유형 !== type)) continue;
     const entry = register(key, type, row.공간명, kindLabel(tables, '공간', '공간유형', type), [row.시대별칭, row.설명].join(' '));
     if (entry.name === row.공간명) {
       entry.description = row.설명;
@@ -59,7 +60,9 @@ export function shapeCatalog(tables) {
     const key = row.지도참조키, shape = shapes.get(key);
     if (!['line', 'area'].includes(shape?.도형유형) || !row.영토유형) continue;
     const kind = kindLabel(tables, '영토변화', '영토유형', row.영토유형);
-    const entry = register(key, shape.도형유형, shape.기준시점 || key, kind, row.설명);
+    const actorName = shape.도형유형 === 'area' ? actorNames.get(row.주체ID) : '';
+    const name = shape.도형유형 === 'area' ? actorName || '이름 미등록' : shape.기준시점 || key;
+    const entry = register(key, shape.도형유형, name, kind, [actorName, row.설명].filter(Boolean).join(' '));
     entry.kind = kind;
     if (entry.type !== 'area') continue;
     const period = territoryPeriod(row.시작일, row.종료일);
@@ -147,7 +150,7 @@ export function sheetLibrary(tables, presets) {
 }
 
 export async function loadSheetLibrary(config, presets, readRecords) {
-  const fields = { ...required, ...historyTables, 유형설명: ['시트명', '컬럼명', '유형값', '한글명'] };
+  const fields = { ...required, ...historyTables, 주체: ['주체ID', '주체명'], 유형설명: ['시트명', '컬럼명', '유형값', '한글명'] };
   const failedTabs = [];
   const entries = await Promise.all(Object.entries(fields).map(async ([name, columns]) => {
     try {

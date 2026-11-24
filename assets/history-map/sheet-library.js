@@ -65,6 +65,17 @@ export function shapeCatalog(tables) {
     const entry = register(key, shape.도형유형, name, kind, [actorName, row.설명].filter(Boolean).join(' '));
     entry.kind = kind;
     if (entry.type !== 'area') continue;
+    if (actorName) {
+      entry.actorId ??= row.주체ID;
+      if (entry.actorId !== row.주체ID) entry.actorId = '';
+      entry.actorName = entry.actorId ? actorName : '';
+    }
+    const date = /^(-?\d+)(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(row.시작일 || '');
+    if (date) {
+      const [, year, month = 0, day = 0] = date;
+      const order = Number(year) * 10000 + Number(month) * 100 + Number(day);
+      entry.startOrder = Math.min(entry.startOrder ?? Infinity, order);
+    }
     const period = territoryPeriod(row.시작일, row.종료일);
     if (!period) continue;
     if (!periods.has(key)) periods.set(key, new Set());
@@ -77,6 +88,17 @@ export function shapeCatalog(tables) {
       : basis?.endsWith('년') ? basis + ' 기준' : basis || '';
   }
   return [...catalog.values()];
+}
+
+export function groupAreaChoices(areas) {
+  const groups = new Map();
+  for (const area of areas) {
+    const key = area.actorId ? 'actor:' + area.actorId : 'shape:' + area.key;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(area);
+  }
+  return [...groups.values()].map(group => group.sort((a, b) =>
+    (a.startOrder ?? Number.MAX_SAFE_INTEGER) - (b.startOrder ?? Number.MAX_SAFE_INTEGER)));
 }
 
 export function sheetLibrary(tables, presets) {

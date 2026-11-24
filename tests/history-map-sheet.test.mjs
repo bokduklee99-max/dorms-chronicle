@@ -5,6 +5,7 @@ import {
   loadSheetLibrary,
   sheetPoint,
   refreshDrawing,
+  groupAreaChoices,
 } from '../assets/history-map/sheet-library.js';
 
 const presets = {
@@ -248,5 +249,31 @@ test('area choices read actor names for newly imported territories without space
     ['만주국', '1938년 기준'],
     ['프랑크 왕국', '510년 ~ 522년'],
     ['이름 미등록', '1960년 기준'],
+  ]);
+});
+
+test('territory versions group by actor ID and sort by start date', () => {
+  const versions = [
+    { key: 'later', actor: 'kingdom', start: '600' },
+    { key: 'namesake', actor: 'different-kingdom', start: '510' },
+    { key: 'earlier', actor: 'kingdom', start: '510' },
+    { key: 'oldest', actor: 'kingdom', start: '-36' },
+    { key: 'unknown', actor: 'kingdom', start: '' },
+    { key: 'unlinked', actor: 'missing', start: '510' },
+  ];
+  const { shapes } = sheetLibrary({
+    ...tables,
+    공간: [],
+    주체: ['kingdom', 'different-kingdom'].map(id => ({ 주체ID: id, 주체명: '왕국' })),
+    지도도형: versions.map(({ key }) => ({ 지도참조키: key, 도형유형: 'area' })),
+    영토변화: versions.map(({ key, actor, start }) => ({
+      지도참조키: key, 주체ID: actor, 영토유형: 'sovereignty', 시작일: start,
+    })),
+  }, presets);
+
+  const groups = groupAreaChoices(shapes);
+  assert.equal(groups[0][0].actorName, '왕국');
+  assert.deepEqual(groups.map(group => group.map(({ key }) => key)), [
+    ['oldest', 'earlier', 'later', 'unknown'], ['namesake'], ['unlinked'],
   ]);
 });

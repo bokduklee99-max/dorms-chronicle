@@ -1478,6 +1478,24 @@ button:is(.dark, .add):not(:disabled):hover {
 }
 #place-catalog .choice { min-height: 36px; margin: 0; }
 #place-catalog .choice small { flex: none; }
+.area-group { min-width: 0; }
+#place-catalog .area-group > summary {
+  align-items: center;
+  flex-direction: row;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+.area-group > summary::-webkit-details-marker { display: none; }
+.area-group > summary:hover,
+.area-group[open] > summary { background: var(--chronicle-tint); }
+.area-group > summary:focus-visible { outline: 2px solid var(--chronicle-green); outline-offset: -2px; }
+.area-group-meta { display: inline-flex; flex: none; align-items: center; gap: 6px; }
+.area-group[open] > summary .caret { transform: translateY(2px) rotate(225deg); }
+.area-versions { margin-inline-start: 5px; padding-inline-start: 5px; border-inline-start: 1px solid var(--line); }
 
 @media (max-width: 680px) {
   #items-dialog .side-head { position: sticky; top: 0; z-index: 1; background: var(--chronicle-surface); }

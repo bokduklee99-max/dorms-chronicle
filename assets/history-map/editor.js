@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=area-names-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing, groupAreaChoices } from './sheet-library.js?v=area-groups-1';
 import {
   W,
   mapHeight,
@@ -851,15 +851,28 @@ async function start() {
       '<div class="kind-places" data-scroll-key="' + type + '">' +
       (sections.join('') || '<p class="empty">결과 없음</p>') + '</div></section>';
   }
-  function shapeChoice(entry) {
+  function shapeChoice(entry, groupTitle) {
     const layer = historical.layers[entry.key];
     const available = layer?.d || layer?.original;
     const visible = doc.layerKeys?.includes(entry.key) && !doc.hiddenLayers?.includes(entry.key);
     const key = esc(entry.key);
     const caption = !available ? (layer?.loadFailed ? '도형 읽기 실패' : '도형 미등록') : visible ? '✓ 표시 중' : layer.original ? '원도 표시' : '＋ 추가';
+    const periodOnly = entry.name === groupTitle;
+    const label = periodOnly ? shapeLabel(esc(entry.period || '시기 미등록')) : shapeLabel(esc(entry.name), entry.period);
     return '<button class="choice" id="choice-shape-' + key + '" data-shape="' + key +
-      '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') + '>' +
-      shapeLabel(esc(entry.name), entry.period) + '<small>' + caption + '</small></button>';
+      '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') +
+      (periodOnly ? ' aria-label="' + esc([entry.name, entry.period, caption].filter(Boolean).join(' · ')) + '"' : '') +
+      '>' + label + '<small>' + caption + '</small></button>';
+  }
+  function areaChoice(group, scope) {
+    const [entry] = group;
+    if (group.length === 1) return shapeChoice(entry);
+    const id = 'area-group-' + scope + '-' + esc(entry.actorId);
+    const title = entry.actorName;
+    return '<details class="area-group" id="' + id + '"><summary class="choice" id="' + id + '-summary">' +
+      '<span>' + esc(title) + '</span><span class="area-group-meta"><small>' + group.length +
+      '개</small><span class="caret" aria-hidden="true"></span></span></summary>' +
+      '<div class="area-versions">' + group.map(version => shapeChoice(version, title)).join('') + '</div></details>';
   }
   const shapesByKey = new Map((library.shapes || []).map(entry => [entry.key, entry]));
   const packageLessons = packages.map(pkg => ({
@@ -899,8 +912,10 @@ async function start() {
       ? '<button class="lesson-add" id="choice-add-' + index + '" data-add-lesson="' + index +
         '" aria-label="' + title + ' 지점 전체 추가">지점 전체 추가</button>' : '';
     const regionRows = ['point', 'line', 'area'].map(type => {
+      const shapes = active.shapes.filter(shape => shape.type === type);
       const buttons = type === 'point' ? active.points.map(placeChoice)
-        : active.shapes.filter(shape => shape.type === type).map(shapeChoice);
+        : type === 'area' ? groupAreaChoices(shapes).map(group => areaChoice(group, 'lesson-' + index))
+          : shapes.map(shape => shapeChoice(shape));
       const content = buttons.length ? buttons.join('') : '<span class="lesson-region-empty">없음</span>';
       const labelId = 'lesson-region-' + type;
       return '<div class="lesson-region-row" role="group" aria-labelledby="' + labelId + '"><h5 id="' +
@@ -953,9 +968,14 @@ async function start() {
           : '검색 결과가 없습니다.';
     const choices = $('choices');
     if (!topic && library.source !== 'unavailable') {
-      for (const entry of library.shapes || []) {
-        if (![entry.name, entry.keywords, entry.kind, entry.period].some((value) => value?.includes(query))) continue;
-        addResult(entry.type, entry.kind, shapeChoice(entry));
+      const shapes = (library.shapes || []).filter(entry =>
+        [entry.name, entry.keywords, entry.kind, entry.period].some(value => value?.includes(query)));
+      for (const entry of shapes.filter(entry => entry.type === 'line')) {
+        addResult('line', entry.kind, shapeChoice(entry));
+      }
+      for (const group of groupAreaChoices(shapes.filter(entry => entry.type === 'area'))) {
+        const kind = group.every(entry => entry.kind === group[0].kind) ? group[0].kind : '영토';
+        addResult('area', kind, areaChoice(group, 'places'));
       }
       results.push(catalogColumn('point', '점', groups.point), catalogColumn('line', '선', groups.line),
         catalogColumn('area', '면', groups.area));
@@ -974,7 +994,12 @@ async function start() {
     }
     lastFilter = filter;
     choices.classList.toggle('by-kind', !topic && library.source !== 'unavailable');
+    const expandedAreas = [...choices.querySelectorAll('.area-group[open]')].map(group => group.id);
     choices.innerHTML = html;
+    for (const id of expandedAreas) {
+      const group = $(id);
+      if (group) group.open = true;
+    }
     for (const list of choices.querySelectorAll('[data-scroll-key]')) list.scrollTop = scroll.get(list.dataset.scrollKey) || 0;
     if (focusId) $(focusId)?.focus({ preventScroll: true });
   }
@@ -1009,13 +1034,14 @@ async function start() {
   document.addEventListener('pointerdown', (event) => {
     if (!catalog.contains(event.target)) closeCatalog();
   });
+  const catalogChoice = 'summary, button:not(:disabled):not(details:not([open]) button)';
   catalog.addEventListener('keydown', (event) => {
     if (event.isComposing) return;
     if (event.key === 'ArrowRight' && event.target.matches('[data-lesson]')) {
       event.preventDefault();
       selectedLesson = Number(event.target.dataset.lesson);
       pickerList();
-      $('lesson-regions')?.querySelector('.lesson-places button:not(:disabled)')?.focus();
+      $('lesson-regions')?.querySelector('.lesson-places')?.querySelector(catalogChoice)?.focus();
     } else if (event.key === 'ArrowLeft' && event.target.closest('#lesson-regions')) {
       event.preventDefault();
       $('choices').querySelector('[data-lesson][aria-pressed="true"]')?.focus();
@@ -1027,7 +1053,7 @@ async function start() {
     } else if (event.key === 'ArrowDown' && event.target === $('query')) {
       event.preventDefault();
       openCatalog();
-      $('choices').querySelector('button:not(:disabled)')?.focus();
+      $('choices').querySelector(catalogChoice)?.focus();
     }
   });
   $('themes').onclick = () => {

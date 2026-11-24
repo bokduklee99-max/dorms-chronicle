@@ -48,3 +48,5 @@
 남아시아·동남아시아 백지도는 Natural Earth 1:10m 육지 v5.1.1을 사용한다. 육지와 실제 해안선을 따로 잘라 그려 지도 자료의 사각 테두리가 해안선으로 표시되지 않도록 했다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/)
 
 전 지구 백지도의 대륙 윤곽은 Natural Earth 1:50m 육지 v4.1.0에서 추출했다. 날짜변경선에서 나뉜 폴리곤의 절단면과 투영 범위 끝에는 해안선을 그리지 않는다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/50m-physical-vectors/50m-land/)
+
+- `cliopatria-east-asia.geojson`은 Cliopatria(3400BCE–2024CE, CC BY 4.0)에서 한반도 삼국~조선(11개 주체, 49개 스냅샷)과 동아시아 이웃 왕조(18개 주체, 92개 스냅샷) 총 141개 영토 폴리곤을 0.04도 단순화해 하나의 FeatureCollection으로 묶은 파일이다.

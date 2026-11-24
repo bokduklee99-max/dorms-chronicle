@@ -209,6 +209,32 @@ export function cardRelationPaths(links, width) {
   });
 }
 
+export function relationChain(relations, edge) {
+  const relationIds = new Set([edge.id]);
+  const recordIds = new Set();
+  for (const [start, match, next] of [[edge.fromId, 'toId', 'fromId'], [edge.toId, 'fromId', 'toId']]) {
+    const byRecord = new Map();
+    for (const relation of relations) {
+      const id = relation[match];
+      if (!byRecord.has(id)) byRecord.set(id, []);
+      byRecord.get(id).push(relation);
+    }
+    const visited = new Set();
+    const pending = [start];
+    while (pending.length) {
+      const id = pending.pop();
+      if (visited.has(id)) continue;
+      visited.add(id);
+      recordIds.add(id);
+      for (const relation of byRecord.get(id) || []) {
+        relationIds.add(relation.id);
+        pending.push(relation[next]);
+      }
+    }
+  }
+  return {relationIds, recordIds};
+}
+
 export function matchSwimlaneEvents(events, rows = []) {
   const byId = new Map(rows.map(row => [row.id, row]));
   const key = ({date, title}) => JSON.stringify([date, title]);

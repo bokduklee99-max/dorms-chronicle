@@ -1,4 +1,4 @@
-import {importanceLabels,loadSwimlane,swimlaneDateRange,eventPeriods,packTimelineItems,cardRelationPaths} from '../swimlane-data.js';
+import {importanceLabels,loadSwimlane,swimlaneDateRange,eventPeriods,packTimelineItems,cardRelationPaths,relationChain} from '../swimlane-data.js';
 import {setupSwimlaneModal} from './swimlane-modal.js';
 
 const $=id=>document.getElementById(id);
@@ -47,7 +47,7 @@ async function init(){
  const requested=params.get('focus');
  const initial=/^\d{4}-(0[1-9]|1[0-2])$/.test(requested)?bounds(requested).start:null;
  let anchor=initial??Math.min(...events.map(e=>intervals.get(e.id).start)),size=initial?1:frame?.hasAttribute('data-package-draft')?0:36;
- let customRange=false,emptyLanes=false,selected='',selectedRelation='',preferred=null,anchors=new Map(),start,end,ticks,plotWidth;
+ let customRange=false,emptyLanes=false,selected='',relationFocus=null,preferred=null,anchors=new Map(),start,end,ticks,plotWidth;
  const labels={cause:'원인·계기',shift:'전환·변화',action:'활동·실행',succession:'계승',integration:'통합·편입',split:'분열·개편',background:'구조적 배경'};
  const kindLabel={period:'시기별 사건',arc:'사건군',theme:'주제'};
  const title=r=>r.title||r.name;
@@ -55,7 +55,7 @@ async function init(){
  const intersects=i=>i&&i.start<end&&i.end>start;
  const labelDate=r=>[r.date||r.start,r.end].filter(Boolean).join(' – ');
  let wheelRemainder=0;
- function setWindow(t,months,custom=false){anchor=t;size=months;customRange=custom;selected='';selectedRelation='';preferred=null;wheelRemainder=0;render();}
+ function setWindow(t,months,custom=false){anchor=t;size=months;customRange=custom;selected='';preferred=null;wheelRemainder=0;render();}
  function panMonths(months){
   const begin=monthOf(start),span=monthOf(end)-begin;
   const next=Math.max(min,Math.min(max-span,begin+months));
@@ -181,7 +181,7 @@ async function init(){
   if(!anchors.has(id))anchors.set(id,[]);
   anchors.get(id).push(node);
  }
- function select(id,node){selected=id;selectedRelation='';preferred=node;paintSelection();drawEdges();}
+ function select(id,node){selected=id;relationFocus=null;preferred=node;paintSelection();drawEdges();}
  function openRecord(record,node){
   select(record.id,node);
   open(role.get(record.id),record);
@@ -309,7 +309,7 @@ async function init(){
    return boxes.get(node);
   }
   const candidates=id=>selected===id&&preferred?.isConnected?[preferred]:anchors.get(id)||[];
-  const isActive=r=>selected===r.fromId||selected===r.toId;
+  const isActive=r=>relationFocus?.relationIds.has(r.id)||selected===r.fromId||selected===r.toId;
   const links=[];
   for(const rel of [...relations].sort((a,b)=>Number(isActive(a))-Number(isActive(b)))){
    let nearest=Infinity,pair;
@@ -329,18 +329,19 @@ async function init(){
   const paths=cardRelationPaths(links,origin.width);
   for(const [i,{rel}] of links.entries()){
    const d=paths[i];
-   const pressed=rel.id===selectedRelation;
-   const active=pressed||isActive(rel),marker=active?'active':'normal';
-   const path=svg('path',{class:'edge '+(rel.status==='draft'?'draft ':'')+(active?'focus':selected||selectedRelation?'muted':''),d,'marker-start':'url(#'+marker+'-start)','marker-end':'url(#'+marker+')','data-relation':rel.id});
+   const pressed=rel.id===relationFocus?.id;
+   const active=isActive(rel),marker=active?'active':'normal';
+   const path=svg('path',{class:'edge '+(rel.status==='draft'?'draft ':'')+(active?'focus':selected||relationFocus?'muted':''),d,'marker-start':'url(#'+marker+'-start)','marker-end':'url(#'+marker+')','data-relation':rel.id});
    const hit=svg('path',{class:'edge-hit',d,role:'button',tabindex:0,'data-relation':rel.id,'aria-pressed':String(pressed),'aria-label':rel.fromName+' → '+rel.toName});
    hit.onclick=()=>{
-    selectedRelation=rel.id;selected='';preferred=null;
+    relationFocus=pressed?null:{id:rel.id,...relationChain(relations,rel)};
+    selected='';preferred=null;
     paintSelection();drawEdges();
-    layer.querySelector('.edge-hit[aria-pressed="true"]')?.focus({preventScroll:true});
+    layer.querySelector('.edge-hit[data-relation="'+CSS.escape(rel.id)+'"]')?.focus({preventScroll:true});
    };
    hit.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!e.repeat)hit.onclick();}};
    layer.append(path,hit);
-   if(isActive(rel)){
+   if(pressed||(!relationFocus&&active)){
     const mid=path.getPointAtLength(path.getTotalLength()/2);
     const label=svg('text',{class:'edge-label',x:mid.x,y:mid.y-3});label.textContent=labels[rel.kind]||rel.label;layer.append(label);
    }
@@ -360,7 +361,10 @@ async function init(){
  }
  function paintSelection(){
   const panel=$('selection');panel.replaceChildren();
-  for(const node of $('lanes').querySelectorAll('button[data-record]'))node.setAttribute('aria-pressed',String(node.dataset.record===selected));
+  for(const node of $('lanes').querySelectorAll('button[data-record]')){
+   node.setAttribute('aria-pressed',String(node.dataset.record===selected));
+   node.toggleAttribute('data-chain',relationFocus?.recordIds.has(node.dataset.record)??false);
+  }
   const r=records.get(selected);if(!r)return;
   const head=make('div','selection-head');head.append(make('small','',labelDate(r)),make('b','',title(r)),button('상세 보기',()=>open(role.get(selected),r)));
   const related=relations.filter(rel=>rel.fromId===selected||rel.toId===selected);

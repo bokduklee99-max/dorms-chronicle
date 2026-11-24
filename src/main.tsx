@@ -15,7 +15,7 @@ import {CreatorCredit} from './CreatorCredit';
 import {useSheetHistory} from './use-sheet-history';
 import type {PackageSheet} from './package-catalog';
 import type {GeographySheet,SheetParser,SheetTables} from './package-content';
-import {filterPackage,loadWorkspaces,packageName,setupHref,views,type View,type Workspace} from './workspace-model';
+import {filterPackage,loadWorkspaces,packageName,setupHref,views,type Workspace} from './workspace-model';
 import './style.css';
 import '../assets/chronicle-theme.css';
 declare global {interface Window {HistorySource:{data:HistoryData;tables:SheetTables;media:Record<string,string>;config:PackageSheet&GeographySheet&{url:string;feedUrl:string;eventSheetId:number};SheetData:SheetParser;HistoryViews:{leadersDuring:(t:HistoryData['tenures'],id:string,b:EventRecord['bounds'])=>HistoryData['tenures'];eventLeaders:(e:EventRecord,a:HistoryData['actors'],t:HistoryData['tenures'])=>{country:HistoryData['actors'][number];people:{person:string;tenures:HistoryData['tenures']}[]}[]}}}}
@@ -24,6 +24,8 @@ const params=new URLSearchParams(location.search);
 const showroom=params.has('showroom')&&window.parent!==window;
 const workspaceId=params.get('workspace');
 const workspace=workspaceId?loadWorkspaces().find(item=>item.id===workspaceId):undefined;
+const timelineViews=[...views,{id:'territory',name:'영토 변화 지도'}] as const;
+type TimelineView=typeof timelineViews[number]['id'];
 
 function App({workspace}:{workspace?:Workspace}){
  const packageId=workspace?.packageId??(params.get('package')==='japan'?'japan':'cold-war');
@@ -69,9 +71,9 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  }
  const timelineTitle=workspace?`${workspace.school}의 ${selectedPackageName} 연표`:`${selectedPackageName} 연표`;
  useEffect(()=>{document.title=`${timelineTitle} · Dorms' Chronicle`;},[timelineTitle]);
- const [view,setView]=useState<View>(()=>views.find(v=>v.id===params.get('view'))?.id??workspace?.view??'timeline');
+ const [view,setView]=useState<TimelineView>(()=>timelineViews.find(v=>v.id===params.get('view'))?.id??workspace?.view??'timeline');
  const [requested,setRequested]=useState<{kind:'event'|'relation';id:string;external?:boolean}|null>(()=>{
-  const id=params.get('event');
+  const id=view==='territory'?null:params.get('event');
   return id?{kind:'event',id}:null;
  });
  const [context,setContext]=useState<{event:EventRecord;host:HTMLElement}|null>(null);
@@ -80,7 +82,7 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  const radarPanel=useRef<HTMLDivElement>(null);
  const [radarRecord,setRadarRecord]=useState('');
  const trigger=useRef<HTMLButtonElement|SVGGElement|null>(null);
- function changeView(next:View){if(next!==view){setRequested(null);setContext(null);setRadarRecord('');setDetailTopic(null);reader.current=null;}setView(next);const url=new URL(location.href);if(next==='timeline'&&!workspace)url.searchParams.delete('view');else url.searchParams.set('view',next);history.replaceState(null,'',url);}
+ function changeView(next:TimelineView){if(next!==view){setRequested(null);setContext(null);setRadarRecord('');setDetailTopic(null);reader.current=null;}setView(next);const url=new URL(location.href);if(next==='timeline'&&!workspace)url.searchParams.delete('view');else url.searchParams.set('view',next);history.replaceState(null,'',url);}
  function visit(id:string,button?:HTMLButtonElement|SVGGElement,kind:'event'|'relation'='event'){
   if(button&&!document.querySelector('#reader[open]'))trigger.current=button;
   setRequested({id,kind,external:!!button});
@@ -129,10 +131,13 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  return <><nav className="topbar" hidden={showroom}>
   <div className="lesson-nav-links"><a href={setupHref()}>← 수업 목록으로</a>{sample&&<a href="/classroom.html?sample=japan">학습 콘텐츠 열기 ↗</a>}</div>
   <a href="/">Dorms' Chronicle</a>{!workspace&&!sample&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
- <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{views.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=views[ev.key==='Home'?0:ev.key==='End'?views.length-1:(index+(ev.key==='ArrowRight'?1:-1)+views.length)%views.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
- {!data.events.length&&<p role="status">{pending?'시트에서 사건을 읽는 중이에요.':<>표시할 사건이 없어요. <a href={setupHref({workspace:workspace?.id})}>탐색 설정에서 구성을 확인해 주세요.</a></>}</p>}
+ <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{timelineViews.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=timelineViews[ev.key==='Home'?0:ev.key==='End'?timelineViews.length-1:(index+(ev.key==='ArrowRight'?1:-1)+timelineViews.length)%timelineViews.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
+ {view!=='territory'&&!data.events.length&&<p role="status">{pending?'시트에서 사건을 읽는 중이에요.':<>표시할 사건이 없어요. <a href={setupHref({workspace:workspace?.id})}>탐색 설정에서 구성을 확인해 주세요.</a></>}</p>}
  {view==='swimlane'&&data.events.length>0&&<SwimlaneTimeline lesson={pending?undefined:lesson} packageId={packageId} name={selectedPackageName}/>}
  {view==='radar'&&data.events.length>0&&<TimeSpaceRadar data={data} lesson={lesson} packageId={packageId} panelRef={radarPanel} activeId={radarRecord} onDismiss={()=>{setRequested(null);if(radarPanel.current?.firstChild)reader.current?.close();}} onVisit={visit}/>}
+ {view==='territory'&&<section id="panel-territory" role="tabpanel" aria-labelledby="tab-territory">
+  <iframe src="/territory-map.html" title="영토 변화 지도"/>
+ </section>}
  {view==='timeline'&&data.events.length>0&&(lesson&&!pending
   ? <BasicTimeline events={data.events} categories={lesson.categories} records={lesson.events} relations={lesson.relations} onVisit={visit}/>
   : <p role="status">기본 연표를 불러오는 중입니다.</p>)}

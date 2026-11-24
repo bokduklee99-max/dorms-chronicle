@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>영토 변화 지도 · DoRms' Chronicle</title>
+  <script>if (window === window.top) location.replace('./metro/?sample=japan&view=territory');</script>
+  <link rel="stylesheet" href="./assets/chronicle-theme.css">
+  <link rel="stylesheet" href="./assets/territory-map.css">
+</head>
+<body>
+  <main>
+    <div class="atlas-heading">
+      <h1>지도 범위</h1>
+      <div id="scope" class="atlas-options" role="group" aria-label="지도 범위" hidden>
+        <button type="button" data-scope="korea" aria-pressed="true">한반도·만주</button>
+        <button type="button" data-scope="eastAsia" aria-pressed="false">동아시아</button>
+        <button type="button" data-scope="china" aria-pressed="false">중국사</button>
+        <button type="button" data-scope="europe" aria-pressed="false">유럽·지중해</button>
+      </div>
+    </div>
+    <p id="status" role="status">지도를 불러오는 중입니다.</p>
+    <section id="atlas" aria-label="시대별 영토 탐색" hidden>
+      <figure class="atlas-frame">
+        <div class="atlas-layout">
+          <div class="atlas-transport" role="group" aria-label="시대와 연도 탐색">
+            <output id="year" for="year-range" aria-live="polite"></output>
+            <div class="atlas-playback">
+              <button id="previous" type="button" aria-label="이전 경계 변화">←</button>
+              <button id="play" type="button"><span aria-hidden="true">▶</span> 재생</button>
+              <button id="next" type="button" aria-label="다음 경계 변화">→</button>
+            </div>
+            <div id="eras" class="atlas-options" role="group" aria-label="시대 선택"></div>
+            <div class="atlas-scrubber">
+              <input id="year-range" type="range" step="1" list="era-ticks" aria-label="지도 연도">
+              <datalist id="era-ticks"></datalist>
+              <div aria-hidden="true"><span id="first-year"></span><span id="last-year"></span></div>
+            </div>
+          </div>
+          <svg id="atlas-map" role="img" aria-labelledby="map-title">
+            <title id="map-title">한반도·동아시아 영토 지도</title>
+            <g transform="scale(.78 1)">
+              <path id="land" fill-rule="evenodd" vector-effect="non-scaling-stroke"></path>
+              <g id="territories"></g>
+              <path id="rivers" vector-effect="non-scaling-stroke"></path>
+              <path id="lakes" fill-rule="evenodd"></path>
+              <g id="sea-labels" aria-hidden="true" text-anchor="middle">
+                <text x="122.7" y="-35.75">황해</text>
+                <text x="133.9" y="-39.2">동해</text>
+                <text x="126.4" y="-27.6">동중국해</text>
+              </g>
+            </g>
+            <g id="territory-labels" aria-hidden="true" text-anchor="middle" dominant-baseline="central"></g>
+          </svg>
+          <aside class="atlas-legend" aria-label="지도 범례">
+            <h2>표시된 영토</h2>
+            <ul id="legend"></ul>
+            <p id="empty" hidden>이 해에 표시할 수 있는 영역 자료가 없습니다.</p>
+            <p id="period" hidden></p>
+            <p id="gap" hidden></p>
+          </aside>
+        </div>
+      </figure>
+      <p class="atlas-source"><a href="https://doi.org/10.5281/zenodo.13363121">Bennett 외, Cliopatria</a>의 근사 경계를 <a href="https://www.naturalearthdata.com/downloads/10m-physical-vectors/">Natural Earth</a> 육지에 맞춰 표시했습니다. 적용 연도는 건국·멸망 연대와 다를 수 있으며, 빈 영역에는 표본 도형이 없습니다. <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
+    </section>
+  </main>
+  <script type="module" src="./assets/territory-map.js"></script>
+</body>
+</html>

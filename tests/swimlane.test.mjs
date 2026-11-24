@@ -4,7 +4,7 @@ import test from 'node:test';
 import '../sheets.js';
 import '../history.js';
 import {countryFlag} from '../assets/country-flag.js';
-import {buildSwimlane, lessonSwimlane, matchSwimlaneEvents, packTimelineItems, pointRelationPath, cardRelationPaths} from '../swimlane-data.js';
+import {buildSwimlane, lessonSwimlane, matchSwimlaneEvents, packTimelineItems, pointRelationPath, cardRelationPaths, relationChain} from '../swimlane-data.js';
 
 test('sheet events retain an optional end date and reject an inverted range', () => {
   const event = {사건ID: 'E1', 날짜: '1910', 종료일: '1918', 사건명: '토지 조사 사업', 주제: '정책', 중요도: ' core '};
@@ -108,6 +108,19 @@ test('incoming and outgoing arrows have independent, stable slots on the same ca
   assert.deepEqual(ends.map((p,i)=>i===0?p.slice(0,2):p.slice(-2)), [[60,50],[82,50],[38,50]]);
   assert.notEqual(ends[0][6], ends[1][0]);
   assert.deepEqual(cardRelationPaths([...links].reverse(),300).reverse(), paths);
+});
+
+test('a selected arrow traces earlier and later links without pulling in side branches', () => {
+  const selected = {id:'selected',fromId:'B',toId:'C'};
+  const relations = [selected,
+    {id:'earlier',fromId:'A',toId:'B'},
+    {id:'later',fromId:'C',toId:'D'},
+    {id:'cycle',fromId:'D',toId:'C'},
+    {id:'other-result',fromId:'B',toId:'E'},
+    {id:'other-cause',fromId:'F',toId:'C'}];
+  const chain = relationChain(relations, selected);
+  assert.deepEqual(chain.relationIds, new Set(['selected','earlier','later','cycle']));
+  assert.deepEqual(chain.recordIds, new Set(['A','B','C','D']));
 });
 
 test('lesson lanes and relations use only the displayed events and their selected topics',()=>{

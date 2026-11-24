@@ -62,9 +62,10 @@
 .pin.duration.continues::after{right:1px;transform:rotate(45deg)}
 .pin.duration.began-earlier::before{left:1px;transform:rotate(-135deg)}
 .event:hover,.year-events .event:hover{background:#e1ecdf}
-.event[aria-pressed=true],.era[aria-pressed=true]{background:#f8e3d4;border-color:#af4c2b;color:#713520}
-.span-event:is(:focus-visible,[aria-pressed=true]) .pin{color:#aa4b2b}
-.rail[aria-pressed=true]{background:#f1e3d1}
+:is(.event,.era):is([aria-pressed=true],[data-chain]){background:#f8e3d4;border-color:#af4c2b;color:#713520}
+:is(.event,.era,.rail)[data-chain]:not(:focus-visible){outline:1px solid #af4c2b;outline-offset:-1px}
+.span-event:is(:focus-visible,[aria-pressed=true],[data-chain]) .pin{color:#aa4b2b}
+.rail:is([aria-pressed=true],[data-chain]){background:#f1e3d1}
 #edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:4}.edge{fill:none;stroke:#487a70;stroke-width:1.5;opacity:.72}.edge.draft{stroke-dasharray:4 3}.edge.muted{opacity:.14}.edge.focus{stroke:#a94929;stroke-width:2.5;opacity:1}.edge-hit{fill:none;stroke:transparent;stroke-width:10;pointer-events:stroke;cursor:pointer}.edge-label{fill:#823519;stroke:#fffdf8;stroke-width:4;paint-order:stroke;font:600 12px var(--font-sans);text-anchor:middle}
 /* Trace the focused curve instead of outlining the SVG path's bounding box. */
 #edges .edge-hit:focus{outline:none}

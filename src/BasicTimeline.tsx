@@ -6,7 +6,7 @@ import './basic-timeline.css';
 const modes={arc:'사건군',theme:'주제',period:'시기'} as const;
 type Mode=keyof typeof modes;
 const modeOrder=Object.keys(modes) as Mode[];
-type Category={id:string;name:string;kind:string};
+type Category={id:string;name:string;kind:string;start?:string;end?:string};
 type Props={
  events:EventRecord[];
  categories:Category[];
@@ -26,6 +26,13 @@ function periodLabel(start:string,end:string){
  if(start===end)return dateLabel(start);
  if(/^\d{4}$/.test(start)&&/^\d{4}$/.test(end))return start+'–'+end+'년';
  return dateLabel(start)+' – '+dateLabel(end);
+}
+
+function filterLabel(category:Category){
+ if(category.kind!=='period')return category.name;
+ const {start,end}=category;
+ const range=start&&end?periodLabel(start,end):start?dateLabel(start)+'부터':end?dateLabel(end)+'까지':'';
+ return range?`${category.name} (${range})`:category.name;
 }
 
 export function BasicTimeline({events,categories,records,relations,onVisit}:Props){
@@ -107,7 +114,7 @@ export function BasicTimeline({events,categories,records,relations,onVisit}:Prop
    {filterGroups.map(({kind,options})=><div key={kind} role="group" aria-label={modes[kind]} className="bt-filter-group">
     <strong>{modes[kind]}</strong>
     <div>{options.map(category=><button type="button" key={category.id} aria-pressed={selected.includes(category.id)}
-     onClick={()=>toggleFilter(category,kind)}>{category.name}</button>)}</div>
+     onClick={()=>toggleFilter(category,kind)}>{filterLabel(category)}</button>)}</div>
    </div>)}
   </section>}
   {!visibleCount?<p role="status">{activeGroups.length?'선택한 조건에 맞는 사건이 없습니다.':'연결된 카테고리가 있는 사건이 없습니다.'}</p>:

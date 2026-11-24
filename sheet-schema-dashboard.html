@@ -1,0 +1,2233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>시트·열 화살표 관계 대시보드 · Dorms' Chronicle</title>
+  <link rel="stylesheet" href="./assets/chronicle-theme.css">
+  <link rel="stylesheet" href="./assets/data-guide-nav.css">
+  <style>
+    :root {
+      --bg: var(--chronicle-paper);
+      --surface: var(--chronicle-surface);
+      --sheet-head: #f1f3f4;
+      --sheet-grid: #dadce0;
+      --border: var(--chronicle-line);
+      --text: var(--chronicle-ink);
+      --muted: var(--chronicle-muted);
+      --catalog: #1a73e8;
+      --actors: #188038;
+      --geo: #d97706;
+      --rel: #7c3aed;
+      --danger: #d93025;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 11px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #1e293b;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--chronicle-tint); }
+    .btn[aria-pressed="true"], .btn-primary {
+      background: var(--chronicle-green);
+      border-color: var(--chronicle-green);
+      color: #fff;
+    }
+    .btn-primary:hover, .btn[aria-pressed="true"]:hover { background: var(--chronicle-green); }
+
+    .shell {
+      max-width: 1640px;
+      margin: 0 auto;
+      padding: 14px 18px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Global Cross-Sheet Value Search */
+    .global-search-bar {
+      position: sticky;
+      top: 8px;
+      z-index: 40;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .global-search-input {
+      flex: 1 1 12rem;
+      min-width: 0;
+      border: 0;
+      font-size: 0.88rem;
+      background: transparent;
+      color: #0f172a;
+    }
+    .global-search-meta {
+      font-size: 0.77rem;
+      color: #64748b;
+      white-space: nowrap;
+    }
+    .global-search-meta:empty, #btn-clear-global[hidden] { display: none; }
+    #sync-status { margin: 0; color: var(--muted); font-size: 0.85rem; }
+    .global-results {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .global-results[hidden] { display: none; }
+    .global-res-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .global-res-tab {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      cursor: pointer;
+    }
+    .global-res-tab[aria-pressed="true"] {
+      background: #1a73e8;
+      border-color: #1a73e8;
+      color: #fff;
+    }
+    .global-res-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 8px;
+      max-height: 290px;
+      overflow-y: auto;
+    }
+    .global-res-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      background: #fafaf9;
+      text-align: left;
+      cursor: pointer;
+    }
+    .global-res-item:hover { border-color: #1a73e8; background: #eff6ff; }
+    .global-res-item.is-active { border-color: #1a73e8; background: #dbeafe; box-shadow: 0 0 0 2px rgba(26,115,232,0.18); }
+    .global-res-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 0.74rem;
+    }
+    .global-res-badge {
+      font-weight: 800;
+      color: #1a73e8;
+      background: #e8f0fe;
+      padding: 1px 6px;
+      border-radius: 5px;
+    }
+    .global-res-snippet {
+      font-size: 0.77rem;
+      color: #1e293b;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .global-res-snippet mark {
+      background: #fef08a;
+      color: #0f172a;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+    /* Controls bar */
+    .control-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.77rem;
+      color: #475569;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch-line {
+      display: inline-block;
+      width: 22px;
+      height: 0;
+      border-top: 2.5px solid currentColor;
+    }
+    .swatch-line.is-dashed { border-top-style: dashed; }
+    .control-btns, .relation-modes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+    /* Spreadsheet Canvas */
+    .canvas-wrap {
+      position: relative;
+      background: #fbfaf7;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 18px;
+      overflow: hidden;
+    }
+    .arrow-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 15;
+    }
+    .arrow-labels {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .arrow-label-btn {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 999px;
+      border: 1.5px solid var(--edge-color, #475569);
+      background: rgba(255, 255, 255, 0.96);
+      color: #0f172a;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.12s, background 0.12s, opacity 0.12s;
+    }
+    .arrow-label-btn:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      background: #fff;
+      z-index: 30;
+    }
+    .arrow-label-btn.is-active {
+      background: var(--edge-color, #0f172a);
+      color: #fff;
+      z-index: 32;
+    }
+    .arrow-label-btn.is-dim { opacity: 0.22; }
+    .arrow-label-btn small { font-weight: 600; opacity: 0.8; font-size: 0.65rem; }
+
+    .rows-stack {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      gap: 64px;
+      width: 100%;
+    }
+    .sheet-row-group {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    /* Mini Google Sheet Card */
+    .mini-sheet {
+      flex: var(--col-weight, 3) 1 0;
+      min-width: 0;
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+      transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .mini-sheet.is-dim .sheet-tab-bar { background: var(--sheet-head); }
+    .mini-sheet.is-dim .sheet-dot { opacity: 0.5; }
+    .mini-sheet.is-selected {
+      border-color: var(--sheet-color);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--sheet-color) 14%, transparent);
+      opacity: 1;
+    }
+    .sheet-tab-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 2px 6px;
+      padding: 6px 9px;
+      background: color-mix(in srgb, var(--sheet-color) 10%, #ffffff);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .sheet-tab-btn {
+      display: flex;
+      white-space: nowrap;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 0;
+      padding: 0;
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #0f172a;
+      cursor: pointer;
+    }
+    .sheet-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      background: var(--sheet-color);
+      display: inline-block;
+    }
+    .sheet-tab-btn small, .sheet-tab-status { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+    .sheet-tab-status { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 8px; padding-inline-start: 15px; }
+    .sheet-tab-status .linked-count { color: #166534; }
+    .sheet-tab-status .match-count { color: #854d0e; }
+    .sheet-ext {
+      display: grid;
+      place-items: center;
+      min-width: 24px;
+      min-height: 24px;
+      font-size: 0.85rem;
+      color: #475569;
+      text-decoration: none;
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+    .sheet-ext:hover { background: rgba(15, 23, 42, 0.07); }
+
+    .mini-grid-wrap { overflow: hidden; }
+    .mini-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.69rem;
+      table-layout: fixed;
+    }
+    .mini-grid th {
+      position: relative;
+      background: var(--sheet-head);
+      border-right: 1px solid var(--sheet-grid);
+      border-bottom: 1.5px solid #cbd5e1;
+      padding: 0;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .mini-grid th:last-child, .mini-grid td:last-child { border-right: 0; }
+    .col-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 5px 5px;
+      background: none;
+      border: 0;
+      font-size: 0.69rem;
+      font-weight: 700;
+      color: #1f2937;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .col-btn span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .col-btn:hover { background: #e8eaed; }
+    .mini-grid th.is-col-hit .col-btn {
+      background: color-mix(in srgb, var(--sheet-color) 18%, #ffffff);
+      color: #0f172a;
+    }
+    .mini-grid th.is-col-active .col-btn {
+      background: var(--sheet-color);
+      color: #fff;
+    }
+    .col-letter {
+      font-size: 0.62rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .mini-grid th.is-col-active .col-letter { color: rgba(255,255,255,0.75); }
+    .key-badge {
+      font-size: 0.58rem;
+      font-weight: 800;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+    .key-pk { background: #fef3c7; color: #92400e; }
+    .key-fk { background: #dbeafe; color: #1d4ed8; }
+    .mini-grid td {
+      padding: 4px 5px;
+      border-right: 1px solid #eef0f2;
+      border-bottom: 1px solid #eef0f2;
+      color: #475569;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 760px) {
+      .mini-grid th.map-key-col { width: 52px; }
+    }
+    .mini-map-cell { display: flex; align-items: center; gap: 4px; }
+    .mini-map-cell > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .mini-grid tr:last-child td { border-bottom: 0; }
+    .mini-grid td.rn {
+      background: #f8f9fa;
+      color: #94a3b8;
+      text-align: center;
+      font-family: ui-monospace, monospace;
+      font-size: 0.66rem;
+      width: 24px;
+    }
+
+    /* Bottom Live Inspector */
+    .inspector {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ins-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .ins-head h2 { margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ins-relation { margin: 4px 0 0; font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+    .rel-strip { display: flex; flex-wrap: wrap; gap: 6px; }
+    .rel-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      font-size: 0.76rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #1e293b;
+      cursor: pointer;
+    }
+    .rel-chip.is-active { background: #eff6ff; border-color: #2563eb; color: #1e3a8a; }
+    .rel-chip.is-junction { border-style: dashed; border-color: #a78bfa; background: #f5f3ff; }
+    .rel-chip.is-junction.is-active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .rel-chip small { opacity: 0.78; }
+
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    .shape-type-options { display: flex; flex-wrap: wrap; gap: 4px; }
+    .search-box {
+      flex: 1 1 260px;
+      max-width: 440px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+    }
+    .pin-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      font-size: 0.8rem;
+      color: #1e3a8a;
+    }
+    .live-table-wrap {
+      max-height: 520px;
+      overflow: auto;
+      border: 1px solid #dadce0;
+      border-radius: 10px;
+    }
+    .live-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.79rem;
+    }
+    .live-table th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      text-align: left;
+      padding: 7px 10px;
+      background: var(--sheet-head);
+      border-right: 1px solid var(--sheet-grid);
+      border-bottom: 1.5px solid #cbd5e1;
+      color: #374151;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .live-table td {
+      padding: 6px 10px;
+      border-right: 1px solid #eef0f2;
+      border-bottom: 1px solid #eef0f2;
+      white-space: nowrap;
+      color: #1f2937;
+    }
+    .live-table tr:hover td { background: #f8fafc; }
+    .row-ext {
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .row-ext:hover { text-decoration: underline; }
+    .fk-link {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 2px 7px;
+      font-size: 0.75rem;
+      border-radius: 5px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      cursor: pointer;
+    }
+    .fk-link:hover { background: #dbeafe; }
+    .fk-link small { color: #475569; font-size: 0.7rem; }
+    .fk-warn { color: var(--danger); font-weight: 700; }
+    .live-table tbody tr { cursor: pointer; }
+    .live-table tbody tr.is-traced td { background: #eff6ff !important; }
+    .mini-grid tbody tr { cursor: pointer; }
+    .mini-grid tbody tr:hover td { background: #f1f5f9; }
+    .mini-grid tbody tr.is-origin-row td {
+      background: #dbeafe !important;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .mini-grid tbody tr.is-linked-row td {
+      background: #f0fdf4;
+      color: #0f172a;
+    }
+    .mini-grid tbody tr.is-linked-row:hover td { background: #dcfce7; }
+    .mini-grid tbody tr.is-search-row td {
+      background: #fefce8;
+      color: #0f172a;
+    }
+    .mini-grid tbody tr.is-search-row:hover td { background: #fef9c3; }
+    .mini-grid td mark {
+      background: #fde047;
+      color: #0f172a;
+      padding: 0 2px;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+    .canvas-trace-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: #eff6ff;
+      border: 1.5px solid #93c5fd;
+      font-size: 0.8rem;
+      color: #1e3a8a;
+      position: fixed;
+      inset-inline: max(12px, calc((100% - 1000px) / 2));
+      bottom: max(12px, env(safe-area-inset-bottom));
+      max-height: min(9rem, 35vh);
+      overflow: auto;
+      overflow-wrap: anywhere;
+      box-shadow: 0 4px 20px rgba(30, 58, 138, 0.14);
+      z-index: 50;
+    }
+    .canvas-trace-bar[hidden] { display: none; }
+    body:has(.canvas-trace-bar:not([hidden])) .shell { padding-bottom: 10rem; }
+    .trace-card {
+      border: 1.5px solid #93c5fd;
+      background: #f8fbff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .trace-card-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .trace-card-head h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .trace-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+      gap: 10px;
+    }
+    .trace-group {
+      background: #fff;
+      border: 1px solid #dbeafe;
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .trace-group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+    .trace-group-head span.dir-tag {
+      font-size: 0.66rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .trace-group-head span.dir-tag.is-jn {
+      background: #f5f3ff;
+      color: #6d28d9;
+    }
+    .trace-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .trace-node {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 7px;
+      font-size: 0.74rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #0f172a;
+      cursor: pointer;
+    }
+    .trace-node:hover { border-color: #1a73e8; background: #eff6ff; color: #1d4ed8; }
+    .trace-node small { color: #64748b; font-size: 0.68rem; }
+    .map-prev-btn {
+      display: inline-grid;
+      place-items: center;
+      flex: none;
+      min-width: 24px;
+      min-height: 24px;
+      margin-inline-start: 5px;
+      padding: 1px 3px;
+      font: inherit;
+      border-radius: 5px;
+      border: 1px solid #fcd34d;
+      background: #fffbeb;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    .mini-map-cell .map-prev-btn { margin-inline-start: 0; }
+    .mini-map-cell .map-prev-btn:focus-visible { outline-offset: -2px; }
+    .map-prev-btn:hover { background: #fef3c7; border-color: #f59e0b; }
+    dialog.map-modal {
+      width: min(820px, 94vw);
+      max-height: 90vh;
+      padding: 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+      background: #fff;
+      overflow: hidden;
+    }
+    dialog.map-modal::backdrop {
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+    }
+    .map-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #faf9f5;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .map-modal-head h3 { margin: 0; font-size: 0.96rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .map-modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      max-height: calc(90vh - 60px);
+    }
+    .map-stage {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      min-height: 300px;
+      background: #e9eff5;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .map-stage svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .map-preview-point {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 6.2px;
+      height: 6.2px;
+      border-radius: 50%;
+      background: #111;
+      pointer-events: none;
+    }
+    .map-stage img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .map-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+      font-size: 0.76rem;
+    }
+    .map-meta-cell {
+      padding: 7px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .map-meta-cell small { display: block; color: #64748b; font-size: 0.68rem; margin-bottom: 2px; }
+    .map-meta-cell strong { color: #0f172a; word-break: break-all; }
+    .empty-td { text-align: center; padding: 22px !important; color: #94a3b8; }
+    @media (max-width: 600px) {
+      .shell { padding-inline: 12px; gap: 10px; }
+      .canvas-wrap { padding-inline: 12px; }
+      .rows-stack, .sheet-row-group { gap: 44px; }
+      .sheet-row-group { flex-direction: column; align-items: stretch; }
+      .mini-sheet { flex: none; }
+      .inspector { padding: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mini-sheet, .arrow-label-btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#schema-content">본문으로 건너뛰기</a>
+  <header class="guide-nav">
+    <div class="guide-nav-inner">
+      <a class="wordmark" href="/">Dorms' Chronicle<span aria-hidden="true">✳</span></a>
+      <nav aria-label="연표 데이터">
+        <a href="./data-explorer.html#structure">데이터 구조</a>
+        <a href="./sheet-schema-dashboard.html" aria-current="page">시트 스키마</a>
+        <a href="./data-explorer.html#overview">연표 편집</a>
+        <a href="./data-explorer.html#event-relations">관계 편집</a>
+        <a href="./data-explorer.html#package-studio">패키지 제작실</a>
+        <a href="./data-explorer.html#examples">시각화 쇼룸</a>
+      </nav>
+      <a id="open-sheet" href="https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit" target="_blank" rel="noopener noreferrer">구글 시트 <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <main id="schema-content" class="shell" tabindex="-1" aria-label="시트 스키마 대시보드">
+    <section class="global-search-bar" aria-label="전체 시트 값 통합 검색">
+      <span style="font-size:0.95rem" aria-hidden="true">🔍</span>
+      <input type="search" id="global-search-input" class="global-search-input" aria-label="시트 전체 검색" placeholder="시트 전체 검색" autocomplete="off">
+      <span id="global-search-meta" class="global-search-meta"></span>
+      <button type="button" id="btn-clear-global" class="btn" hidden>지우기</button>
+    </section>
+    <p id="sync-status" role="status">시트를 불러오는 중입니다.</p>
+    <section id="global-results" class="global-results" hidden aria-label="통합 검색 결과"></section>
+
+    <section class="control-bar" aria-label="관계선">
+      <div class="control-btns">
+        <div class="relation-modes" role="group" aria-label="표시할 관계">
+          <button id="btn-mode-focus" type="button" class="btn" aria-pressed="true">선택한 시트·열</button>
+          <button id="btn-mode-all" type="button" class="btn" aria-pressed="false">모든 관계</button>
+        </div>
+        <button id="btn-meta-types" type="button" class="btn">유형설명 보기</button>
+      </div>
+      <div class="legend-row">
+        <span class="legend-item"><i class="swatch-line" style="color:#1a73e8" aria-hidden="true"></i> 직접 참조</span>
+        <span class="legend-item"><i class="swatch-line is-dashed" style="color:#7c3aed" aria-hidden="true"></i> 연결 시트</span>
+        <span id="meta-counts" class="legend-item"></span>
+      </div>
+    </section>
+
+    <section class="canvas-wrap" aria-label="시트 열 간 화살표 다이어그램">
+      <svg id="arrow-layer" class="arrow-layer" aria-hidden="true"></svg>
+      <div id="arrow-labels" class="arrow-labels"></div>
+      <div id="rows-stack" class="rows-stack"></div>
+    </section>
+
+    <section id="inspector" class="inspector" aria-label="실제 구글 시트 데이터 미리보기"></section>
+  </main>
+
+  <aside id="canvas-trace-bar" class="canvas-trace-bar" aria-label="선택한 행의 연결" hidden></aside>
+
+  <dialog id="map-preview-modal" class="map-modal" aria-labelledby="map-modal-title">
+    <div class="map-modal-head">
+      <h3 id="map-modal-title">지도 도형 미리보기</h3>
+      <div style="display:flex;gap:6px;align-items:center">
+        <a id="map-modal-sheet-link" class="btn" href="#" target="_blank" rel="noopener noreferrer">시트 행 열기 ↗</a>
+        <button type="button" class="btn btn-primary" id="btn-close-map-modal">닫기</button>
+      </div>
+    </div>
+    <div class="map-modal-body">
+      <div id="map-stage" class="map-stage">불러오는 중…</div>
+      <div id="map-meta-grid" class="map-meta-grid"></div>
+    </div>
+  </dialog>
+
+  <script>
+    const SPREADSHEET_ID = '1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0';
+    const SHEET_GIDS = {
+      유형설명: 1805815581, 패키지: 1965822688, 카테고리: 201117005, 사건: 201117001,
+      주체: 201117003, 직위: 1685936172, 재임: 201117004, 사건_주체: 201117006, 관계: 201117008,
+      사건_카테고리: 1859891208, 사건_패키지: 1675177887,
+      공간: 201117010, 영토변화: 201117011, 사건_공간: 201117012, 지도도형: 201117013, 지도뷰: 201117014,
+      주체_공간: 1813628837, 카테고리_공간: 1456709406,
+    };
+
+    // 10 core entity sheets arranged in 3 clean rows (like real spreadsheet tables)
+    const SHEET_ROWS = [
+      [
+        { tab: '패키지', color: '#1a73e8', pk: '패키지ID', labelCol: '패키지명', cols: ['패키지ID', '패키지명', '기본뷰ID'] },
+        { tab: '카테고리', color: '#1a73e8', pk: '카테고리ID', labelCol: '카테고리명', cols: ['카테고리ID', '패키지ID', '카테고리명', '카테고리유형'] },
+        { tab: '사건', color: '#1a73e8', pk: '사건ID', labelCol: '사건명', cols: ['사건ID', '사건명', '날짜', '종료일'] },
+      ],
+      [
+        { tab: '주체', color: '#188038', pk: '주체ID', labelCol: '주체명', cols: ['주체ID', '주체명', '구분', '국가코드'] },
+        { tab: '직위', color: '#188038', pk: '직위ID', labelCol: '직위명', cols: ['직위ID', '주체ID', '직위명'] },
+        { tab: '재임', color: '#188038', pk: '재임ID', labelCol: '주체ID', cols: ['재임ID', '주체ID', '직위ID', '시작일', '종료일'] },
+      ],
+      [
+        { tab: '공간', color: '#d97706', pk: '공간ID', labelCol: '공간명', cols: ['공간ID', '공간명', '공간유형', '상위공간ID', '지도참조키'] },
+        { tab: '영토변화', color: '#d97706', pk: '영토ID', labelCol: '주체ID', cols: ['영토ID', '주체ID', '영토유형', '시작일', '종료일', '지도참조키', '계기사건ID'] },
+      ],
+      [
+        { tab: '지도도형', color: '#d97706', pk: '지도참조키', labelCol: '기준시점', cols: ['지도참조키', '도형유형', '파일경로', '외부도형ID', '데이터형식'] },
+        { tab: '지도뷰', color: '#d97706', pk: '뷰ID', labelCol: '뷰명', cols: ['뷰ID', '뷰명', '배경지도키'] },
+      ],
+    ];
+    const CORE_SHEETS = SHEET_ROWS.flat();
+    const ALL_TABS = Object.keys(SHEET_GIDS);
+
+    // Relationships:
+    // kind: 'fk' (direct column-to-column FK) OR 'junction' (bridge/relation sheet rendered AS a labeled arrow!)
+    const ARROWS = [
+      // Direct FK arrows
+      { id: 'fk_cat_pkg', kind: 'fk', from: '카테고리', fromCol: '패키지ID', to: '패키지', toCol: '패키지ID', label: '소속 패키지', color: '#1a73e8' },
+      { id: 'fk_pkg_view', kind: 'fk', from: '패키지', fromCol: '기본뷰ID', to: '지도뷰', toCol: '뷰ID', label: '기본 지도뷰', color: '#1a73e8' },
+      { id: 'fk_off_act', kind: 'fk', from: '직위', fromCol: '주체ID', to: '주체', toCol: '주체ID', label: '소속 국가·기관', color: '#188038' },
+      { id: 'fk_ten_act', kind: 'fk', from: '재임', fromCol: '주체ID', to: '주체', toCol: '주체ID', label: '재임 인물', color: '#188038' },
+      { id: 'fk_ten_off', kind: 'fk', from: '재임', fromCol: '직위ID', to: '직위', toCol: '직위ID', label: '재임 직위', color: '#188038' },
+      { id: 'fk_sp_shape', kind: 'fk', from: '공간', fromCol: '지도참조키', to: '지도도형', toCol: '지도참조키', label: '공간 도형', color: '#d97706' },
+      { id: 'fk_terr_act', kind: 'fk', from: '영토변화', fromCol: '주체ID', to: '주체', toCol: '주체ID', label: '영토 주체', color: '#d97706' },
+      { id: 'fk_terr_shape', kind: 'fk', from: '영토변화', fromCol: '지도참조키', to: '지도도형', toCol: '지도참조키', label: '영토 폴리곤', color: '#d97706' },
+      { id: 'fk_terr_evt', kind: 'fk', from: '영토변화', fromCol: '계기사건ID', to: '사건', toCol: '사건ID', label: '계기 사건', color: '#d97706' },
+      { id: 'fk_view_shape', kind: 'fk', from: '지도뷰', fromCol: '배경지도키', to: '지도도형', toCol: '지도참조키', label: '배경 지도', color: '#d97706' },
+
+      // Junction / Bridge / Relation tables rendered directly as labeled arrows (NOT separate boxes!)
+      { id: 'jn_evt_pkg', kind: 'junction', viaTab: '사건_패키지', from: '사건', fromCol: '사건ID', to: '패키지', toCol: '패키지ID', viaFromCol: '사건ID', viaToCol: '패키지ID', label: '사건_패키지', color: '#7c3aed' },
+      { id: 'jn_evt_cat', kind: 'junction', viaTab: '사건_카테고리', from: '사건', fromCol: '사건ID', to: '카테고리', toCol: '카테고리ID', viaFromCol: '사건ID', viaToCol: '카테고리ID', label: '사건_카테고리', color: '#7c3aed' },
+      { id: 'jn_evt_act', kind: 'junction', viaTab: '사건_주체', from: '사건', fromCol: '사건ID', to: '주체', toCol: '주체ID', viaFromCol: '사건ID', viaToCol: '주체ID', label: '사건_주체 (역할)', color: '#7c3aed' },
+      { id: 'jn_evt_sp', kind: 'junction', viaTab: '사건_공간', from: '사건', fromCol: '사건ID', to: '공간', toCol: '공간ID', viaFromCol: '사건ID', viaToCol: '공간ID', label: '사건_공간 (역할)', color: '#7c3aed' },
+      { id: 'jn_act_sp', kind: 'junction', viaTab: '주체_공간', from: '주체', fromCol: '주체ID', to: '공간', toCol: '공간ID', viaFromCol: '주체ID', viaToCol: '공간ID', label: '주체_공간 (역할)', color: '#7c3aed' },
+      { id: 'jn_cat_sp', kind: 'junction', viaTab: '카테고리_공간', from: '카테고리', fromCol: '카테고리ID', to: '공간', toCol: '공간ID', viaFromCol: '카테고리ID', viaToCol: '공간ID', label: '카테고리_공간', color: '#7c3aed' },
+      { id: 'jn_rel', kind: 'junction', viaTab: '관계', from: '사건', fromCol: '사건ID', to: '사건', toCol: '사건ID', viaFromCol: '출발ID', viaToCol: '도착ID', label: '관계 (관계유형·설명)', color: '#9333ea' },
+    ];
+
+    const state = {
+      data: Object.fromEntries(ALL_TABS.map(t => [t, []])),
+      headers: Object.fromEntries(ALL_TABS.map(t => [t, []])),
+      mode: 'focus', // 'focus' | 'all'
+      selectedTab: '영토변화',
+      selectedCol: '',
+      selectedArrowId: '',
+      inspectTab: '영토변화', // can also be a junction tab like '사건_주체' or '유형설명'
+      pin: null, // { tab, col, val }
+      tracedRow: null, // { tab, origIdx }
+      globalQuery: '',
+      globalTabFilter: 'ALL',
+      search: '',
+      shapeType: '',
+      limit: 20,
+    };
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const sheetUrl = (tab, rowNum) => {
+      const gid = SHEET_GIDS[tab];
+      const base = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`;
+      return gid ? (rowNum ? `${base}#gid=${gid}&range=A${rowNum}` : `${base}#gid=${gid}`) : base;
+    };
+    const colLetter = i => String.fromCharCode(65 + i);
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], cell = '', quoted = false;
+      const src = text.replace(/^\uFEFF/, '');
+      for (let i = 0; i < src.length; i++) {
+        const ch = src[i];
+        if (quoted) {
+          if (ch === '"' && src[i + 1] === '"') { cell += '"'; i++; }
+          else if (ch === '"') quoted = false;
+          else cell += ch;
+        } else if (ch === '"') {
+          quoted = true;
+        } else if (ch === ',' || ch === '\n' || ch === '\r') {
+          row.push(cell); cell = '';
+          if (ch !== ',') { rows.push(row); row = []; if (ch === '\r' && src[i + 1] === '\n') i++; }
+        } else {
+          cell += ch;
+        }
+      }
+      if (cell || row.length) { row.push(cell); rows.push(row); }
+      return rows.filter(r => r.some(v => v.trim() !== ''));
+    }
+
+    let jsonpSeq = 0;
+    function fetchTabJSONP(tab, gid) {
+      return new Promise((resolve, reject) => {
+        const cb = '__clioGvizCb_' + (++jsonpSeq) + '_' + Date.now();
+        const script = document.createElement('script');
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error(`${tab} JSONP timeout`));
+        }, 12000);
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cb];
+          script.remove();
+        }
+        window[cb] = resp => {
+          cleanup();
+          try {
+            const table = resp?.table;
+            if (!table) return reject(new Error(`${tab} empty gviz table`));
+            const hdrs = table.cols.map(c => String(c.label || c.id || '').trim());
+            if (tab === '공간' && hdrs[0] === 'ㅇ') hdrs[0] = '공간ID';
+            const records = (table.rows || []).map(r => {
+              const obj = {};
+              hdrs.forEach((h, i) => {
+                if (!h) return;
+                const cell = r.c?.[i];
+                const raw = cell ? (cell.f ?? cell.v ?? '') : '';
+                obj[h] = String(raw ?? '').trim();
+              });
+              return obj;
+            }).filter(obj => Object.values(obj).some(v => v !== ''));
+            resolve({ headers: hdrs.filter(Boolean), records });
+          } catch (e) {
+            reject(e);
+          }
+        };
+        script.onerror = () => {
+          cleanup();
+          reject(new Error(`${tab} JSONP script error`));
+        };
+        script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?gid=${gid}&headers=1&tqx=out:json;responseHandler:${cb}`;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function fetchTab(tab) {
+      const gid = SHEET_GIDS[tab];
+      // 1) Primary: exact same export CSV endpoint & credentials: 'omit' used by sheets.js
+      try {
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}`;
+        const res = await fetch(url, { credentials: 'omit', cache: 'no-store' });
+        if (!res.ok) throw new Error(`${tab} HTTP ${res.status}`);
+        const text = await res.text();
+        if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+          throw new Error(`${tab} returned HTML instead of CSV`);
+        }
+        const rows = parseCSV(text);
+        if (!rows.length) return { headers: [], records: [] };
+        const hdrs = rows[0].map(h => h.trim());
+        if (tab === '공간' && hdrs[0] === 'ㅇ') hdrs[0] = '공간ID';
+        const records = rows.slice(1).map(r => {
+          const obj = {};
+          hdrs.forEach((h, i) => { if (h) obj[h] = (r[i] ?? '').trim(); });
+          return obj;
+        });
+        return { headers: hdrs.filter(Boolean), records };
+      } catch (primaryErr) {
+        // 2) Fallback: JSONP via <script> tag (works even when opened directly via file://)
+        return fetchTabJSONP(tab, gid);
+      }
+    }
+
+    async function loadAllSheets() {
+      const status = document.getElementById('sync-status');
+      let ok = 0;
+      await Promise.all(ALL_TABS.map(async tab => {
+        try {
+          const { headers, records } = await fetchTab(tab);
+          state.headers[tab] = headers;
+          state.data[tab] = records;
+          ok++;
+        } catch (err) {
+          console.error(tab, err);
+        }
+      }));
+      status.hidden = ok === ALL_TABS.length;
+      if (!status.hidden) {
+        status.textContent = ok
+          ? `일부 시트를 불러오지 못했습니다. ${ok}/${ALL_TABS.length}개 시트를 검색할 수 있습니다.`
+          : '시트를 불러오지 못했습니다. 페이지를 새로고침해 주세요.';
+      }
+      render();
+    }
+
+    function computeArrowStats() {
+      const pkMaps = new Map();
+      for (const s of CORE_SHEETS) {
+        const m = new Map();
+        (state.data[s.tab] || []).forEach((row, idx) => {
+          const v = row[s.pk];
+          if (v && !m.has(v)) m.set(v, { idx, label: row[s.labelCol] || v });
+        });
+        pkMaps.set(s.tab, m);
+      }
+      const stats = ARROWS.map(a => {
+        if (a.kind === 'junction') {
+          const rows = state.data[a.viaTab] || [];
+          return { ...a, count: rows.length, filled: rows.length, matched: rows.length, missing: 0 };
+        }
+        const targetSet = new Set((state.data[a.to] || []).map(r => r[a.toCol]).filter(Boolean));
+        let filled = 0, matched = 0;
+        for (const r of state.data[a.from] || []) {
+          const v = r[a.fromCol];
+          if (!v) continue;
+          filled++;
+          if (targetSet.has(v)) matched++;
+        }
+        return { ...a, count: matched, filled, matched, missing: filled - matched };
+      });
+      return { stats, pkMaps };
+    }
+
+    function getActiveArrows(stats, pkMaps) {
+      if (state.tracedRow && pkMaps) {
+        const traced = collectConnectedRowsBySheet(state.tracedRow.tab, state.tracedRow.origIdx, pkMaps);
+        if (traced.arrowIds.size) return stats.filter(a => traced.arrowIds.has(a.id));
+      }
+      if (state.selectedArrowId) return stats.filter(a => a.id === state.selectedArrowId);
+      if (state.mode === 'all') return stats;
+      return stats.filter(a => {
+        if (state.selectedCol) {
+          return (a.from === state.selectedTab && a.fromCol === state.selectedCol) ||
+                 (a.to === state.selectedTab && a.toCol === state.selectedCol);
+        }
+        return a.from === state.selectedTab || a.to === state.selectedTab;
+      });
+    }
+
+    const isMapKeyColumn = col => col === '지도참조키' || col === '배경지도키';
+
+    function mapPreviewButton(key) {
+      const label = esc(key + ' 지도 미리보기');
+      return `<button type="button" class="map-prev-btn" data-preview-map-key="${esc(key)}" aria-label="${label}" title="${label}" aria-haspopup="dialog">🗺</button>`;
+    }
+
+    function render() {
+      const { stats, pkMaps } = computeArrowStats();
+      const activeArrows = getActiveArrows(stats, pkMaps);
+      const activeArrowIds = new Set(activeArrows.map(a => a.id));
+      const fkByCol = new Map(stats.filter(a => a.kind === 'fk').map(a => [`${a.from}::${a.fromCol}`, a]));
+
+      const tracedInfo = state.tracedRow
+        ? collectConnectedRowsBySheet(state.tracedRow.tab, state.tracedRow.origIdx, pkMaps)
+        : null;
+
+      const traceBar = document.getElementById('canvas-trace-bar');
+      if (state.tracedRow && tracedInfo) {
+        const tTab = state.tracedRow.tab;
+        const tIdx = state.tracedRow.origIdx;
+        const tRow = (state.data[tTab] || [])[tIdx];
+        const totalLinkedSheets = [...tracedInfo.bySheet.keys()].filter(k => k !== tTab).length;
+        const totalLinkedRows = [...tracedInfo.bySheet.entries()].reduce((sum, [k, m]) => sum + (k === tTab ? 0 : m.size), 0);
+        traceBar.hidden = false;
+        traceBar.innerHTML = `
+          <span>🔗 <strong>${esc(tTab)} #${tIdx + 2} · ${esc(tRow ? rowDisplayLabel(tTab, tRow) : '')}</strong> · 연결된 <strong>${totalLinkedSheets}개 시트 · ${totalLinkedRows}행</strong></span>
+          <span style="display:flex;gap:6px">
+            <a class="btn" href="${esc(sheetUrl(tTab, tIdx + 2))}" target="_blank" rel="noopener noreferrer">구글 시트 행 열기 ↗</a>
+            <button type="button" class="btn btn-primary" id="btn-clear-canvas-trace">추적 해제</button>
+          </span>`;
+      } else {
+        traceBar.hidden = true;
+      }
+
+      const connectedTabs = new Set([state.selectedTab]);
+      if (tracedInfo) {
+        connectedTabs.clear();
+        tracedInfo.bySheet.forEach((_, k) => connectedTabs.add(k));
+      }
+      const connectedCols = new Set();
+      activeArrows.forEach(a => {
+        connectedTabs.add(a.from);
+        connectedTabs.add(a.to);
+        connectedCols.add(`${a.from}::${a.fromCol}`);
+        connectedCols.add(`${a.to}::${a.toCol}`);
+      });
+
+      // Global cross-sheet value search
+      const gq = state.globalQuery.trim().toLowerCase();
+      const globalHitsByTab = new Map();
+      const allGlobalHits = [];
+      if (gq) {
+        for (const tab of ALL_TABS) {
+          const rows = state.data[tab] || [];
+          rows.forEach((row, origIdx) => {
+            const matchedCols = [];
+            for (const [col, val] of Object.entries(row)) {
+              if (val && String(val).toLowerCase().includes(gq)) {
+                matchedCols.push({ col, val: String(val) });
+              }
+            }
+            if (matchedCols.length) {
+              const item = { tab, origIdx, rowNum: origIdx + 2, row, matchedCols };
+              allGlobalHits.push(item);
+              if (!globalHitsByTab.has(tab)) globalHitsByTab.set(tab, []);
+              globalHitsByTab.get(tab).push(item);
+            }
+          });
+        }
+      }
+      renderGlobalResults(gq, allGlobalHits, globalHitsByTab);
+
+      document.getElementById('meta-counts').textContent = `관계 ${activeArrows.length}/${stats.length}`;
+      document.getElementById('btn-mode-focus').setAttribute('aria-pressed', String(state.mode === 'focus'));
+      document.getElementById('btn-mode-all').setAttribute('aria-pressed', String(state.mode === 'all'));
+
+      document.getElementById('rows-stack').innerHTML = SHEET_ROWS.map(rowGroup => `
+        <div class="sheet-row-group">
+          ${rowGroup.map(s => {
+            const rows = state.data[s.tab] || [];
+            const tracedMap = tracedInfo ? tracedInfo.bySheet.get(s.tab) : null;
+            const tracedEntries = tracedMap ? [...tracedMap.values()] : [];
+            const searchHits = gq ? (globalHitsByTab.get(s.tab) || []) : [];
+            const isOriginSheet = state.tracedRow && state.tracedRow.tab === s.tab;
+
+            let previewEntries = [];
+            let extraCount = 0;
+            let extraLabel = '';
+            if (gq && tracedInfo) {
+              const merged = new Map();
+              searchHits.forEach(h => {
+                const tr = tracedMap?.get(h.origIdx);
+                const rc = tr ? (tr.isOrigin ? 'is-origin-row' : 'is-linked-row') : 'is-search-row';
+                merged.set(h.origIdx, { row: h.row, origIdx: h.origIdx, rowClass: rc, note: tr ? tr.note : '검색 일치' });
+              });
+              tracedEntries.forEach(e => {
+                if (!merged.has(e.origIdx) && rows[e.origIdx]) {
+                  merged.set(e.origIdx, { row: rows[e.origIdx], origIdx: e.origIdx, rowClass: e.isOrigin ? 'is-origin-row' : 'is-linked-row', note: e.note });
+                }
+              });
+              const allMerged = [...merged.values()];
+              previewEntries = allMerged.slice(0, 8);
+              extraCount = Math.max(0, allMerged.length - previewEntries.length);
+              extraLabel = `외 ${extraCount}건 더 있음`;
+            } else if (tracedInfo) {
+              previewEntries = tracedEntries.slice(0, 6).map(e => ({
+                row: rows[e.origIdx], origIdx: e.origIdx, rowClass: e.isOrigin ? 'is-origin-row' : 'is-linked-row', note: e.note
+              })).filter(e => e.row);
+              extraCount = Math.max(0, tracedEntries.length - previewEntries.length);
+              extraLabel = `외 연결 행 ${extraCount}건 더 있음`;
+            } else if (gq) {
+              previewEntries = searchHits.slice(0, 6).map(h => ({
+                row: h.row, origIdx: h.origIdx, rowClass: 'is-search-row', note: '검색 일치'
+              }));
+              extraCount = Math.max(0, searchHits.length - previewEntries.length);
+              extraLabel = `외 검색 결과 ${extraCount}건 더 있음`;
+            } else {
+              previewEntries = rows.slice(0, 3).map((row, idx) => ({
+                row, origIdx: idx, rowClass: '', note: ''
+              }));
+            }
+
+            const isSel = isOriginSheet || (!tracedInfo && !gq && s.tab === state.selectedTab) || (gq && searchHits.length > 0);
+            const isDim = (gq && tracedInfo)
+              ? (!searchHits.length && !tracedEntries.length)
+              : tracedInfo
+                ? !tracedEntries.length
+                : gq
+                  ? !searchHits.length
+                  : (state.mode === 'focus' && !connectedTabs.has(s.tab));
+            return `
+              <article class="mini-sheet ${isSel ? 'is-selected' : ''} ${isDim ? 'is-dim' : ''}" style="--sheet-color:${s.color};--col-weight:${s.cols.length}" data-sheet="${esc(s.tab)}">
+                <div class="sheet-tab-bar">
+                  <button type="button" class="sheet-tab-btn" data-select-sheet="${esc(s.tab)}">
+                    <i class="sheet-dot"></i>
+                    <span>${esc(s.tab)}</span>
+                    <small>${rows.length.toLocaleString()}행</small>
+                  </button>
+                  <a class="sheet-ext" href="${esc(sheetUrl(s.tab))}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.tab)} 시트 열기" title="구글 시트 열기">↗</a>
+                  ${(!isOriginSheet && tracedEntries.length) || (gq && searchHits.length) ? `<div class="sheet-tab-status">
+                    ${!isOriginSheet && tracedEntries.length ? `<span class="linked-count">연결 ${tracedEntries.length}행</span>` : ''}
+                    ${gq && searchHits.length ? `<span class="match-count">검색 ${searchHits.length}행</span>` : ''}
+                  </div>` : ''}
+                </div>
+                <div class="mini-grid-wrap">
+                  <table class="mini-grid">
+                    <thead>
+                      <tr>
+                        <th style="width:24px;text-align:center;color:#94a3b8;font-size:0.65rem">#</th>
+                        ${s.cols.map((col, ci) => {
+                          const isPk = s.pk === col;
+                          const isFk = fkByCol.has(`${s.tab}::${col}`);
+                          const colKey = `${s.tab}::${col}`;
+                          const isColAct = isSel && state.selectedCol === col;
+                          const isColHit = connectedCols.has(colKey);
+                          return `
+                            <th class="${isColAct ? 'is-col-active' : isColHit ? 'is-col-hit' : ''} ${isMapKeyColumn(col) ? 'map-key-col' : ''}" data-col-anchor="${esc(colKey)}">
+                              <button type="button" class="col-btn" data-select-sheet="${esc(s.tab)}" data-select-col="${esc(col)}" title="${esc(col)}">
+                                <span class="col-letter">${colLetter(ci)}</span>
+                                ${isPk ? '<span class="key-badge key-pk">PK</span>' : ''}${isFk ? '<span class="key-badge key-fk">FK</span>' : ''}
+                                <span>${esc(col)}</span>
+                              </button>
+                            </th>`;
+                        }).join('')}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${previewEntries.length ? previewEntries.map(e => `
+                        <tr class="${e.rowClass}" data-mini-row-tab="${esc(s.tab)}" data-mini-row-idx="${e.origIdx}" title="클릭하면 이 행과 연결된 행들을 각 시트 아래에 표시합니다${e.note ? ' (' + esc(e.note) + ')' : ''}">
+                          <td class="rn">${e.origIdx + 2}</td>
+                          ${s.cols.map(col => {
+                            const rawVal = e.row[col] || '';
+                            const cellHtml = (gq && rawVal) ? highlightMatch(rawVal, gq) : esc(rawVal || '—');
+                            if (isMapKeyColumn(col) && rawVal && pkMaps.get('지도도형')?.has(rawVal)) {
+                              return `<td title="${esc(rawVal)}"><div class="mini-map-cell"><span>${cellHtml}</span>${mapPreviewButton(rawVal)}</div></td>`;
+                            }
+                            return `<td title="${esc(rawVal)}">${cellHtml}</td>`;
+                          }).join('')}
+                        </tr>
+                      `).join('') + (extraCount > 0 ? `<tr><td colspan="${s.cols.length + 1}" style="text-align:center;color:${tracedInfo ? '#166534' : '#854d0e'};background:${tracedInfo ? '#f0fdf4' : '#fefce8'};font-weight:700;font-size:0.68rem">${extraLabel} (시트 제목 클릭)</td></tr>` : '')
+                      : `<tr><td colspan="${s.cols.length + 1}" style="text-align:center;color:#94a3b8;padding:8px">${tracedInfo ? '연결된 행 없음' : gq ? '검색 결과 없음' : '표시할 행 없음'}</td></tr>`}
+                    </tbody>
+                  </table>
+                </div>
+              </article>`;
+          }).join('')}
+        </div>
+      `).join('');
+
+      drawArrows(stats, activeArrowIds);
+      renderInspector(stats, pkMaps, fkByCol);
+      bindEvents();
+    }
+
+    function drawArrows(allStats, activeArrowIds) {
+      const wrap = document.querySelector('.canvas-wrap');
+      const svg = document.getElementById('arrow-layer');
+      const labelHost = document.getElementById('arrow-labels');
+
+      requestAnimationFrame(() => {
+        const wRect = wrap.getBoundingClientRect();
+        if (!wRect.width || !wRect.height) return;
+        svg.setAttribute('viewBox', `0 0 ${wRect.width} ${wRect.height}`);
+        svg.setAttribute('width', wRect.width);
+        svg.setAttribute('height', wRect.height);
+
+        const defs = `
+          <defs>
+            <marker id="ah-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#1a73e8" />
+            </marker>
+            <marker id="ah-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#188038" />
+            </marker>
+            <marker id="ah-amber" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+            </marker>
+            <marker id="ah-purple" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed" />
+            </marker>
+            <marker id="ah-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d93025" />
+            </marker>
+          </defs>`;
+
+        const markerFor = (color, missing) => {
+          if (missing) return 'url(#ah-red)';
+          if (color === '#1a73e8') return 'url(#ah-blue)';
+          if (color === '#188038') return 'url(#ah-green)';
+          if (color === '#d97706') return 'url(#ah-amber)';
+          return 'url(#ah-purple)';
+        };
+
+        const paths = [];
+        const labelsHtml = [];
+        const placedLabels = [];
+
+        const toRender = allStats.filter(a => activeArrowIds.has(a.id));
+
+        toRender.forEach((a, idx) => {
+          const fEl = wrap.querySelector(`[data-col-anchor="${CSS.escape(a.from + '::' + a.fromCol)}"]`);
+          const tEl = wrap.querySelector(`[data-col-anchor="${CSS.escape(a.to + '::' + a.toCol)}"]`);
+          if (!fEl || !tEl) return;
+
+          const f = fEl.getBoundingClientRect();
+          const t = tEl.getBoundingClientRect();
+          const stroke = a.missing ? '#d93025' : a.color;
+          const dash = a.kind === 'junction' ? 'stroke-dasharray="6 4"' : '';
+          const isExact = state.selectedArrowId === a.id;
+          const sw = isExact ? 2.8 : 1.9;
+
+          let d = '', lx = 0, ly = 0;
+
+          if (a.from === a.to && a.fromCol === a.toCol) {
+            // Self-loop arrow (e.g., 관계 on 사건.사건ID)
+            const cx = (f.left + f.right) / 2 - wRect.left;
+            const ty = f.top - wRect.top;
+            d = `M ${cx - 12} ${ty} C ${cx - 38} ${ty - 44}, ${cx + 38} ${ty - 44}, ${cx + 12} ${ty - 2}`;
+            lx = cx;
+            ly = ty - 34;
+          } else {
+            const fcX = (f.left + f.right) / 2 - wRect.left;
+            const fcY = (f.top + f.bottom) / 2 - wRect.top;
+            const tcX = (t.left + t.right) / 2 - wRect.left;
+            const tcY = (t.top + t.bottom) / 2 - wRect.top;
+
+            const sameRow = Math.abs(fcY - tcY) < 40;
+            const spread = ((idx % 5) - 2) * 14;
+
+            if (sameRow) {
+              // Arc above or below the row
+              const arcH = 32 + (idx % 3) * 16;
+              const yStart = f.top - wRect.top;
+              const yEnd = t.top - wRect.top;
+              const yMid = Math.min(yStart, yEnd) - arcH;
+              d = `M ${fcX.toFixed(1)} ${yStart.toFixed(1)} C ${fcX.toFixed(1)} ${yMid.toFixed(1)}, ${tcX.toFixed(1)} ${yMid.toFixed(1)}, ${tcX.toFixed(1)} ${yEnd.toFixed(1)}`;
+              lx = (fcX + tcX) / 2;
+              ly = yMid + 8;
+            } else {
+              const goingDown = tcY > fcY;
+              const y1 = (goingDown ? f.bottom : f.top) - wRect.top;
+              const y2 = (goingDown ? t.top : t.bottom) - wRect.top;
+              const midY = (y1 + y2) / 2 + spread;
+              d = `M ${fcX.toFixed(1)} ${y1.toFixed(1)} C ${fcX.toFixed(1)} ${midY.toFixed(1)}, ${tcX.toFixed(1)} ${midY.toFixed(1)}, ${tcX.toFixed(1)} ${y2.toFixed(1)}`;
+              lx = (fcX + tcX) / 2 + spread * 0.4;
+              ly = midY;
+            }
+          }
+
+          // Nudge label vertically if colliding with an already placed label
+          for (let tries = 0; tries < 6; tries++) {
+            const clash = placedLabels.some(p => Math.abs(p.x - lx) < 115 && Math.abs(p.y - ly) < 22);
+            if (!clash) break;
+            ly += (tries % 2 === 0 ? 22 : -22);
+          }
+          placedLabels.push({ x: lx, y: ly });
+
+          paths.push(`<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" ${dash} stroke-opacity="${isExact ? 1 : 0.82}" marker-end="${markerFor(a.color, a.missing)}" />`);
+          paths.push(`<circle cx="${(f.left + f.right)/2 - wRect.left}" cy="${(a.from === a.to ? f.top : (t.top > f.top ? f.bottom : f.top)) - wRect.top}" r="3" fill="${stroke}" />`);
+
+          const countText = a.kind === 'junction' ? `${a.count}건` : `${a.matched}/${a.filled}`;
+          labelsHtml.push(`
+            <button type="button" class="arrow-label-btn ${isExact ? 'is-active' : ''}"
+              style="left:${lx.toFixed(1)}px;top:${ly.toFixed(1)}px;--edge-color:${stroke}"
+              data-select-arrow="${esc(a.id)}"
+              title="${esc(a.from)}.${esc(a.fromCol)} → ${esc(a.to)}.${esc(a.toCol)}">
+              <span>${esc(a.label)}</span>
+              <small>${countText}</small>
+            </button>`);
+        });
+
+        svg.innerHTML = defs + paths.join('');
+        labelHost.innerHTML = labelsHtml.join('');
+
+        labelHost.querySelectorAll('[data-select-arrow]').forEach(btn => {
+          btn.onclick = () => {
+            const id = btn.dataset.selectArrow;
+            const arrow = allStats.find(a => a.id === id);
+            if (state.selectedArrowId === id) {
+              state.selectedArrowId = '';
+              state.inspectTab = state.selectedTab;
+            } else {
+              state.selectedArrowId = id;
+              state.inspectTab = arrow.kind === 'junction' ? arrow.viaTab : arrow.from;
+            }
+            state.pin = null;
+            state.limit = 20;
+            render();
+          };
+        });
+      });
+    }
+
+    function getSheetSpec(tab) {
+      return CORE_SHEETS.find(s => s.tab === tab);
+    }
+
+    function rowDisplayLabel(tab, row) {
+      const spec = getSheetSpec(tab);
+      if (spec) {
+        const lbl = row[spec.labelCol];
+        const pk = row[spec.pk];
+        if (lbl && pk && lbl !== pk) return `${lbl} (${pk})`;
+        return lbl || pk || '(값 없음)';
+      }
+      const vals = Object.values(row).filter(Boolean).slice(0, 3);
+      return vals.join(' · ') || '(값 없음)';
+    }
+
+    function traceRecordConnections(tab, origIdx, pkMaps) {
+      const rows = state.data[tab] || [];
+      const row = rows[origIdx];
+      if (!row) return { groups: [], arrowIds: new Set() };
+      const groups = [];
+      const arrowIds = new Set();
+
+      for (const a of ARROWS) {
+        if (a.kind === 'fk') {
+          // Outgoing FK: this row points to target table
+          if (a.from === tab) {
+            const val = row[a.fromCol];
+            if (val) {
+              const targetRows = state.data[a.to] || [];
+              const hits = [];
+              targetRows.forEach((tr, ti) => {
+                if (tr[a.toCol] === val) hits.push({ tab: a.to, origIdx: ti, label: rowDisplayLabel(a.to, tr), note: `${a.fromCol}=${val}` });
+              });
+              if (hits.length) {
+                arrowIds.add(a.id);
+                groups.push({ arrowId: a.id, kind: 'fk', dir: '참조 →', title: `${a.label} (${a.to})`, via: `${a.fromCol} → ${a.to}.${a.toCol}`, hits });
+              }
+            }
+          }
+          // Incoming FK: other table rows point to this row
+          if (a.to === tab) {
+            const val = row[a.toCol];
+            if (val) {
+              const srcRows = state.data[a.from] || [];
+              const hits = [];
+              srcRows.forEach((sr, si) => {
+                if (sr[a.fromCol] === val) hits.push({ tab: a.from, origIdx: si, label: rowDisplayLabel(a.from, sr), note: '' });
+              });
+              if (hits.length) {
+                arrowIds.add(a.id);
+                groups.push({ arrowId: a.id, kind: 'fk', dir: '← 피참조', title: `${a.from} (${a.label})`, via: `${a.from}.${a.fromCol} → ${a.toCol}`, hits });
+              }
+            }
+          }
+        } else if (a.kind === 'junction') {
+          const jRows = state.data[a.viaTab] || [];
+          // Special handling for polymorphic '관계' table
+          if (a.viaTab === '관계') {
+            const spec = getSheetSpec(tab);
+            const myId = spec ? row[spec.pk] : '';
+            if (!myId) continue;
+            const hits = [];
+            jRows.forEach((jr, ji) => {
+              if (jr['출발ID'] === myId) {
+                const toId = jr['도착ID'];
+                const rel = jr['관계유형'] || '관계';
+                hits.push({ tab: '관계', origIdx: ji, label: `→ [${rel}] ${toId}`, note: jr['설명'] || '' });
+              } else if (jr['도착ID'] === myId) {
+                const fromId = jr['출발ID'];
+                const rel = jr['관계유형'] || '관계';
+                hits.push({ tab: '관계', origIdx: ji, label: `← [${rel}] ${fromId}`, note: jr['설명'] || '' });
+              }
+            });
+            if (hits.length) {
+              arrowIds.add(a.id);
+              groups.push({ arrowId: a.id, kind: 'junction', dir: '관계 ↔', title: '관계 시트 연결', via: '관계(출발ID ↔ 도착ID)', hits });
+            }
+            continue;
+          }
+          // If inspecting a core table on either end of a junction
+          if (a.from === tab) {
+            const myVal = row[a.fromCol];
+            if (myVal) {
+              const hits = [];
+              jRows.forEach(jr => {
+                if (jr[a.viaFromCol] === myVal) {
+                  const targetId = jr[a.viaToCol];
+                  const hitMeta = pkMaps.get(a.to)?.get(targetId);
+                  const roleNote = jr['역할'] || jr['설명'] || '';
+                  if (hitMeta) {
+                    hits.push({ tab: a.to, origIdx: hitMeta.idx, label: hitMeta.label, note: roleNote });
+                  }
+                }
+              });
+              if (hits.length) {
+                arrowIds.add(a.id);
+                groups.push({ arrowId: a.id, kind: 'junction', dir: '연결 ↔', title: `${a.to} (${a.viaTab})`, via: `${a.viaTab} 경유`, hits });
+              }
+            }
+          }
+          if (a.to === tab && a.from !== a.to) {
+            const myVal = row[a.toCol];
+            if (myVal) {
+              const hits = [];
+              jRows.forEach(jr => {
+                if (jr[a.viaToCol] === myVal) {
+                  const targetId = jr[a.viaFromCol];
+                  const hitMeta = pkMaps.get(a.from)?.get(targetId);
+                  const roleNote = jr['역할'] || jr['설명'] || '';
+                  if (hitMeta) {
+                    hits.push({ tab: a.from, origIdx: hitMeta.idx, label: hitMeta.label, note: roleNote });
+                  }
+                }
+              });
+              if (hits.length) {
+                arrowIds.add(a.id);
+                groups.push({ arrowId: a.id, kind: 'junction', dir: '연결 ↔', title: `${a.from} (${a.viaTab})`, via: `${a.viaTab} 경유`, hits });
+              }
+            }
+          }
+          // If inspecting the junction row itself, show both endpoints
+          if (a.viaTab === tab) {
+            const fromVal = row[a.viaFromCol];
+            const toVal = row[a.viaToCol];
+            const h1 = pkMaps.get(a.from)?.get(fromVal);
+            const h2 = pkMaps.get(a.to)?.get(toVal);
+            const hits = [];
+            if (h1) hits.push({ tab: a.from, origIdx: h1.idx, label: `[${a.from}] ${h1.label}`, note: fromVal });
+            if (h2) hits.push({ tab: a.to, origIdx: h2.idx, label: `[${a.to}] ${h2.label}`, note: toVal });
+            if (hits.length) {
+              arrowIds.add(a.id);
+              groups.push({ arrowId: a.id, kind: 'junction', dir: '양쪽 연결 ↔', title: `${a.from} ↔ ${a.to}`, via: a.label, hits });
+            }
+          }
+        }
+      }
+      return { groups, arrowIds };
+    }
+
+    function collectConnectedRowsBySheet(tab, origIdx, pkMaps) {
+      const bySheet = new Map();
+      const arrowIds = new Set();
+      const addHit = (t, idx, isOrigin = false, note = '') => {
+        if (!CORE_SHEETS.some(s => s.tab === t)) return;
+        if (!bySheet.has(t)) bySheet.set(t, new Map());
+        const m = bySheet.get(t);
+        if (!m.has(idx) || isOrigin) m.set(idx, { origIdx: idx, isOrigin, note });
+      };
+
+      addHit(tab, origIdx, true, '선택 행');
+      const hop1 = traceRecordConnections(tab, origIdx, pkMaps);
+      hop1.arrowIds.forEach(id => arrowIds.add(id));
+      for (const g of hop1.groups) {
+        for (const h of g.hits) {
+          addHit(h.tab, h.origIdx, false, h.note || g.title);
+        }
+      }
+
+      // 2-hop propagation (주체 -> 영토변화 -> 지도도형, 사건 -> 공간 -> 지도도형 등)
+      const secondHopSources = [];
+      for (const [t, map] of bySheet.entries()) {
+        if (t === tab) continue;
+        if (['영토변화', '공간', '카테고리', '직위'].includes(t)) {
+          let count = 0;
+          for (const idx of map.keys()) {
+            if (count++ >= 12) break;
+            secondHopSources.push([t, idx]);
+          }
+        }
+      }
+      for (const [t2, idx2] of secondHopSources) {
+        const hop2 = traceRecordConnections(t2, idx2, pkMaps);
+        for (const g of hop2.groups) {
+          if (g.kind !== 'fk' || g.dir !== '참조 →') continue;
+          for (const h of g.hits) {
+            if (h.tab === tab) continue;
+            arrowIds.add(g.arrowId);
+            addHit(h.tab, h.origIdx, false, `${t2} 경유`);
+          }
+        }
+      }
+
+      return { bySheet, arrowIds };
+    }
+
+    const shapeTypeLabels = new Map([['', '전체'], ['point', '점'], ['line', '선'], ['area', '영역'], ['basemap', '배경지도']]);
+
+    function renderInspector(allStats, pkMaps, fkByCol) {
+      const tab = state.inspectTab;
+      const rows = state.data[tab] || [];
+      const isShapes = tab === '지도도형';
+      const shapeTypes = new Map(shapeTypeLabels);
+      if (isShapes) {
+        for (const {도형유형: type} of rows) {
+          if (type && !shapeTypes.has(type)) shapeTypes.set(type, type);
+        }
+      }
+      const hdrs = (state.headers[tab]?.length ? state.headers[tab] : Object.keys(rows[0] || {})).slice(0, 10);
+      const selArrow = state.selectedArrowId ? allStats.find(a => a.id === state.selectedArrowId) : null;
+      const relatedArrows = allStats.filter(a => a.from === state.selectedTab || a.to === state.selectedTab || a.viaTab === tab);
+
+      // Build FK lookup for junction tables too!
+      const fkColsForTab = new Map();
+      for (const a of allStats) {
+        if (a.kind === 'fk' && a.from === tab) fkColsForTab.set(a.fromCol, { to: a.to, toCol: a.toCol });
+        if (a.kind === 'junction' && a.viaTab === tab) {
+          fkColsForTab.set(a.viaFromCol, { to: a.from, toCol: a.fromCol });
+          fkColsForTab.set(a.viaToCol, { to: a.to, toCol: a.toCol });
+        }
+      }
+
+      const q = state.search.trim().toLowerCase();
+      const filtered = [];
+      rows.forEach((row, origIdx) => {
+        if (isShapes && state.shapeType && row.도형유형 !== state.shapeType) return;
+        if (state.pin && state.pin.tab === tab && row[state.pin.col] !== state.pin.val) return;
+        if (selArrow && selArrow.kind === 'fk' && selArrow.from === tab && !row[selArrow.fromCol]) return;
+        if (q && !Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q))) return;
+        filtered.push({ row, origIdx });
+      });
+      const shown = filtered;
+
+      document.getElementById('inspector').innerHTML = `
+        <div class="ins-head">
+          <div>
+            <h2>
+              <span>${esc(tab)}</span>
+              <small style="color:var(--muted);font-weight:600">${rows.length.toLocaleString()}행</small>
+            </h2>
+            ${selArrow ? `<p class="ins-relation">${esc(selArrow.from)}.${esc(selArrow.fromCol)} → ${esc(selArrow.to)}.${esc(selArrow.toCol)}</p>` : ''}
+          </div>
+          <a class="btn btn-primary" href="${esc(sheetUrl(tab))}" target="_blank" rel="noopener noreferrer">시트에서 열기 ↗</a>
+        </div>
+
+        <div class="rel-strip">
+          ${relatedArrows.map(a => `
+            <button type="button" class="rel-chip ${a.kind === 'junction' ? 'is-junction' : ''} ${state.selectedArrowId === a.id ? 'is-active' : ''}" data-chip-arrow="${esc(a.id)}" aria-pressed="${state.selectedArrowId === a.id}" title="${esc(a.from)}.${esc(a.fromCol)} → ${esc(a.to)}.${esc(a.toCol)}">
+              <strong>${esc(a.label)}</strong>
+              <small>(${a.kind === 'junction' ? a.count + '건' : a.matched + '/' + a.filled})</small>
+            </button>
+          `).join('')}
+        </div>
+
+        ${state.pin && state.pin.tab === tab ? `
+          <div class="pin-bar">
+            <span>추적 중인 값: <strong>${esc(state.pin.tab)}.${esc(state.pin.col)} = ${esc(state.pin.val)}</strong></span>
+            <button type="button" class="btn" id="btn-unpin">필터 해제</button>
+          </div>` : ''}
+
+        <div class="toolbar">
+          ${isShapes ? `<div class="shape-type-options" role="group" aria-label="도형유형">
+            ${[...shapeTypes].map(([type, label]) => `<button type="button" class="btn" data-shape-type="${esc(type)}"
+              aria-pressed="${state.shapeType === type}">${esc(label)}</button>`).join('')}
+          </div>` : ''}
+          <input type="search" id="ins-search" class="search-box" aria-label="${esc(tab)} 시트 검색" placeholder="${esc(tab)} 시트 검색" value="${esc(state.search)}">
+          <span style="font-size:0.78rem;color:#64748b">${filtered.length.toLocaleString()}행</span>
+        </div>
+
+        <div class="live-table-wrap">
+          <table class="live-table">
+            <thead>
+              <tr>
+                <th>행</th>
+                ${hdrs.map((h, i) => `<th><span style="color:#94a3b8;margin-right:4px">${colLetter(i)}</span>${esc(h)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${shown.length ? shown.map(({ row, origIdx }) => {
+                const rnum = origIdx + 2;
+                return `
+                  <tr class="${state.tracedRow && state.tracedRow.tab === tab && state.tracedRow.origIdx === origIdx ? 'is-traced' : ''}" data-click-row-tab="${esc(tab)}" data-click-row-idx="${origIdx}">
+                    <td><a class="row-ext" href="${esc(sheetUrl(tab, rnum))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">#${rnum} ↗</a></td>
+                    ${hdrs.map(col => {
+                      const val = row[col] || '';
+                      const fk = fkColsForTab.get(col);
+                      if (val && fk) {
+                        const hit = pkMaps.get(fk.to)?.get(val);
+                        const previewBtn = (fk.to === '지도도형') ? mapPreviewButton(val) : '';
+                        if (hit) {
+                          return `<td><button type="button" class="fk-link" data-jump-tab="${esc(fk.to)}" data-jump-col="${esc(fk.toCol)}" data-jump-val="${esc(val)}">${esc(val)}${hit.label !== val ? `<small>${esc(hit.label)}</small>` : ''}</button>${previewBtn}</td>`;
+                        }
+                        return `<td><span class="fk-warn" title="${esc(fk.to)} 시트에 없는 값">${esc(val)} ⚠</span></td>`;
+                      }
+                      if (val && tab === '지도도형' && col === '지도참조키') {
+                        return `<td><strong>${esc(val)}</strong>${mapPreviewButton(val)}</td>`;
+                      }
+                      if (/^https?:\/\//.test(val)) {
+                        return `<td><a class="row-ext" href="${esc(val)}" target="_blank" rel="noopener noreferrer">${esc(val.length > 36 ? val.slice(0, 36) + '…' : val)} ↗</a></td>`;
+                      }
+                      return `<td title="${esc(val)}">${esc(val.length > 42 ? val.slice(0, 42) + '…' : val || '—')}</td>`;
+                    }).join('')}
+                  </tr>`;
+              }).join('') : `<tr><td colspan="${hdrs.length + 1}" class="empty-td">표시할 시트 행이 없습니다.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+
+      `;
+    }
+
+    function highlightMatch(text, query) {
+      const safe = esc(text);
+      if (!query) return safe;
+      const idx = text.toLowerCase().indexOf(query);
+      if (idx < 0) return safe;
+      return esc(text.slice(0, idx)) + '<mark>' + esc(text.slice(idx, idx + query.length)) + '</mark>' + esc(text.slice(idx + query.length));
+    }
+
+    function renderGlobalResults(gq, allHits, byTab) {
+      const box = document.getElementById('global-results');
+      const meta = document.getElementById('global-search-meta');
+      const clearBtn = document.getElementById('btn-clear-global');
+      if (!gq) {
+        box.hidden = true;
+        clearBtn.hidden = true;
+        meta.textContent = '';
+        return;
+      }
+      clearBtn.hidden = false;
+      meta.textContent = `${byTab.size}개 시트 · 총 ${allHits.length.toLocaleString()}건 일치`;
+      box.hidden = false;
+
+      if (!allHits.length) {
+        box.innerHTML = `<div style="font-size:0.82rem;color:#64748b;padding:4px 2px">"<strong>${esc(state.globalQuery)}</strong>"와 일치하는 값이 18개 시트에 없습니다.</div>`;
+        return;
+      }
+
+      if (state.globalTabFilter !== 'ALL' && !byTab.has(state.globalTabFilter)) {
+        state.globalTabFilter = 'ALL';
+      }
+      const tabs = [...byTab.entries()].sort((a, b) => b[1].length - a[1].length);
+      const visible = state.globalTabFilter === 'ALL' ? allHits : (byTab.get(state.globalTabFilter) || []);
+      const capped = visible.slice(0, 36);
+
+      box.innerHTML = `
+        <div class="global-res-tabs">
+          <button type="button" class="global-res-tab" data-gtab="ALL" aria-pressed="${state.globalTabFilter === 'ALL'}">전체 (${allHits.length})</button>
+          ${tabs.map(([t, arr]) => `<button type="button" class="global-res-tab" data-gtab="${esc(t)}" aria-pressed="${state.globalTabFilter === t}">${esc(t)} (${arr.length})</button>`).join('')}
+        </div>
+        <div class="global-res-list">
+          ${capped.map(hit => {
+            const first = hit.matchedCols[0];
+            const idCol = Object.keys(hit.row)[0] || first.col;
+            const idVal = hit.row[idCol] || first.val;
+            return `
+              <div class="global-res-item ${state.tracedRow && state.tracedRow.tab === hit.tab && state.tracedRow.origIdx === hit.origIdx ? 'is-active' : ''}" data-gjump-tab="${esc(hit.tab)}" data-gjump-col="${esc(first.col)}" data-gjump-val="${esc(first.val)}" data-gjump-idx="${hit.origIdx}">
+                <div class="global-res-top">
+                  <span class="global-res-badge">${esc(hit.tab)} · ${esc(first.col)}</span>
+                  <a class="row-ext" href="${esc(sheetUrl(hit.tab, hit.rowNum))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">#${hit.rowNum} ↗</a>
+                </div>
+                <div class="global-res-snippet">${highlightMatch(first.val, gq)}</div>
+                ${idCol !== first.col ? `<div style="font-size:0.7rem;color:#64748b">${esc(idCol)}: ${esc(idVal)}</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+        ${visible.length > capped.length ? `<div style="font-size:0.74rem;color:#64748b">상위 ${capped.length}건만 표시 중입니다. 위 시트 탭을 누르거나 검색어를 더 구체화해 보세요.</div>` : ''}
+      `;
+
+      box.querySelectorAll('[data-gtab]').forEach(btn => {
+        btn.onclick = () => { state.globalTabFilter = btn.dataset.gtab; render(); };
+      });
+      box.querySelectorAll('[data-gjump-tab]').forEach(el => {
+        el.onclick = () => {
+          const t = el.dataset.gjumpTab;
+          const col = el.dataset.gjumpCol;
+          const val = el.dataset.gjumpVal;
+          const isCore = CORE_SHEETS.some(s => s.tab === t);
+          if (isCore) {
+            state.selectedTab = t;
+            state.selectedCol = col;
+            state.selectedArrowId = '';
+          } else {
+            const arrow = ARROWS.find(a => a.viaTab === t);
+            state.selectedArrowId = arrow ? arrow.id : '';
+          }
+          const idx = Number(el.dataset.gjumpIdx);
+          if (state.tracedRow && state.tracedRow.tab === t && state.tracedRow.origIdx === idx) {
+            state.tracedRow = null;
+          } else {
+            setTracedRow(t, idx);
+          }
+          state.inspectTab = t;
+          state.pin = null;
+          state.limit = 20;
+          render();
+          document.querySelector('.canvas-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+      });
+    }
+
+    function findMiniRow(tab, idx) {
+      return document.querySelector(`[data-mini-row-tab="${CSS.escape(tab)}"][data-mini-row-idx="${idx}"]`);
+    }
+
+    function renderKeepingMiniRow(row) {
+      const top = row?.getBoundingClientRect().top;
+      render();
+      if (top === undefined || top < 0 || top >= window.innerHeight) return;
+      const current = findMiniRow(row.dataset.miniRowTab, row.dataset.miniRowIdx);
+      if (current) window.scrollBy(0, current.getBoundingClientRect().top - top);
+    }
+
+    function setTracedRow(tab, origIdx) {
+      state.tracedRow = { tab, origIdx };
+      if (tab === '지도도형' && state.shapeType && state.data[tab][origIdx]?.도형유형 !== state.shapeType) {
+        state.shapeType = '';
+      }
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('[data-shape-type]').forEach(button => {
+        button.onclick = () => {
+          state.shapeType = button.dataset.shapeType;
+          render();
+          document.querySelector('[data-shape-type][aria-pressed="true"]')?.focus({ preventScroll: true });
+        };
+      });
+      document.querySelectorAll('[data-select-sheet]').forEach(btn => {
+        btn.onclick = () => {
+          const tab = btn.dataset.selectSheet;
+          const col = btn.dataset.selectCol || '';
+          state.selectedCol = (state.selectedTab === tab && state.selectedCol === col) ? '' : col;
+          state.selectedTab = tab;
+          state.inspectTab = tab;
+          state.selectedArrowId = '';
+          state.pin = null;
+          state.limit = 20;
+          render();
+        };
+      });
+      document.querySelectorAll('[data-chip-arrow]').forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.dataset.chipArrow;
+          const a = ARROWS.find(x => x.id === id);
+          if (state.selectedArrowId === id) {
+            state.selectedArrowId = '';
+            state.inspectTab = state.selectedTab;
+          } else {
+            state.selectedArrowId = id;
+            state.inspectTab = a.kind === 'junction' ? a.viaTab : a.from;
+          }
+          state.pin = null;
+          state.limit = 20;
+          render();
+        };
+      });
+      document.querySelectorAll('[data-preview-map-key]').forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          openMapPreview(btn.dataset.previewMapKey);
+        };
+      });
+      document.querySelectorAll('[data-jump-tab]').forEach(btn => {
+        btn.onclick = () => {
+          const t = btn.dataset.jumpTab;
+          state.selectedTab = t;
+          state.selectedCol = btn.dataset.jumpCol;
+          state.inspectTab = t;
+          state.selectedArrowId = '';
+          state.pin = { tab: t, col: btn.dataset.jumpCol, val: btn.dataset.jumpVal };
+          if (t === '지도도형') state.shapeType = '';
+          state.search = '';
+          state.limit = 20;
+          render();
+        };
+      });
+      document.getElementById('btn-mode-focus').onclick = () => { state.mode = 'focus'; state.selectedArrowId = ''; render(); };
+      document.getElementById('btn-mode-all').onclick = () => { state.mode = 'all'; state.selectedArrowId = ''; render(); };
+      document.getElementById('btn-meta-types').onclick = () => { state.inspectTab = '유형설명'; state.selectedArrowId = ''; state.pin = null; render(); };
+
+      document.querySelectorAll('[data-click-row-tab]').forEach(tr => {
+        tr.onclick = e => {
+          if (e.target.closest('button, a')) return;
+          const t = tr.dataset.clickRowTab;
+          const idx = Number(tr.dataset.clickRowIdx);
+          if (state.tracedRow && state.tracedRow.tab === t && state.tracedRow.origIdx === idx) {
+            state.tracedRow = null;
+          } else {
+            setTracedRow(t, idx);
+            if (CORE_SHEETS.some(s => s.tab === t)) state.selectedTab = t;
+          }
+          render();
+        };
+      });
+      document.querySelectorAll('[data-trace-hop-tab]').forEach(btn => {
+        btn.onclick = () => {
+          const t = btn.dataset.traceHopTab;
+          const idx = Number(btn.dataset.traceHopIdx);
+          state.inspectTab = t;
+          if (CORE_SHEETS.some(s => s.tab === t)) {
+            state.selectedTab = t;
+            state.selectedCol = '';
+            state.selectedArrowId = '';
+          } else {
+            const arrow = ARROWS.find(a => a.viaTab === t);
+            state.selectedArrowId = arrow ? arrow.id : '';
+          }
+          setTracedRow(t, idx);
+          state.pin = null;
+          state.search = '';
+          render();
+        };
+      });
+      document.querySelectorAll('[data-mini-row-tab]').forEach(tr => {
+        tr.onclick = () => {
+          const t = tr.dataset.miniRowTab;
+          const idx = Number(tr.dataset.miniRowIdx);
+          if (state.tracedRow && state.tracedRow.tab === t && state.tracedRow.origIdx === idx) {
+            state.tracedRow = null;
+          } else {
+            setTracedRow(t, idx);
+            state.selectedTab = t;
+            state.inspectTab = t;
+            state.selectedArrowId = '';
+            state.pin = null;
+          }
+          renderKeepingMiniRow(tr);
+        };
+      });
+      const clearCanvasTrace = document.getElementById('btn-clear-canvas-trace');
+      if (clearCanvasTrace) clearCanvasTrace.onclick = () => {
+        const row = findMiniRow(state.tracedRow.tab, state.tracedRow.origIdx);
+        state.tracedRow = null;
+        renderKeepingMiniRow(row);
+      };
+
+      const closeTrace = document.getElementById('btn-close-trace');
+      if (closeTrace) closeTrace.onclick = () => { state.tracedRow = null; render(); };
+
+      const unpin = document.getElementById('btn-unpin');
+      if (unpin) unpin.onclick = () => { state.pin = null; render(); };
+
+      const more = document.getElementById('btn-more');
+      if (more) more.onclick = () => { state.limit += 25; render(); };
+
+      const search = document.getElementById('ins-search');
+      if (search) {
+        search.oninput = e => {
+          state.search = e.target.value;
+          state.limit = 20;
+          render();
+          const el = document.getElementById('ins-search');
+          if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+        };
+      }
+    }
+
+    const assetJsonCache = new Map();
+    async function loadLocalJson(relPath) {
+      if (assetJsonCache.has(relPath)) return assetJsonCache.get(relPath);
+      const res = await fetch(relPath);
+      if (!res.ok) throw new Error(`파일을 불러올 수 없습니다 (${res.status}): ${relPath}`);
+      const json = await res.json();
+      assetJsonCache.set(relPath, json);
+      return json;
+    }
+
+    function geomBBox(geom) {
+      let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
+      const walk = c => {
+        if (typeof c[0] === 'number') {
+          if (c[0] < w) w = c[0];
+          if (c[0] > e) e = c[0];
+          if (c[1] < s) s = c[1];
+          if (c[1] > n) n = c[1];
+        } else if (Array.isArray(c)) {
+          c.forEach(walk);
+        }
+      };
+      if (geom?.coordinates) walk(geom.coordinates);
+      return [w, s, e, n];
+    }
+
+    function pickContextBasemap([w, s, e, n]) {
+      const cx = (w + e) / 2, cy = (s + n) / 2;
+      const span = Math.max(e - w, n - s);
+      if (cx >= 123 && cx <= 132 && cy >= 32 && cy <= 43 && span < 12) return 'korea.json';
+      if (cx >= 70 && cx <= 150 && cy >= 15 && cy <= 56) return 'east-asia.json';
+      if (cx >= -15 && cx <= 48 && cy >= 30 && cy <= 72) return 'europe.json';
+      if (cx >= 25 && cx <= 65 && cy >= 12 && cy <= 42) return 'middle-east.json';
+      if (cx >= -140 && cx <= -30) return 'americas.json';
+      return 'europe.json';
+    }
+
+    function geoToSvgPath(geom, lonScale = 0.78) {
+      const ringToD = (ring, close) => {
+        if (!ring?.length) return '';
+        const parts = ring.map(([lon, lat], i) => `${i === 0 ? 'M' : 'L'}${(lon * lonScale).toFixed(3)},${(-lat).toFixed(3)}`);
+        return parts.join(' ') + (close ? ' Z' : '');
+      };
+      if (geom.type === 'Polygon') return geom.coordinates.map(r => ringToD(r, true)).join(' ');
+      if (geom.type === 'MultiPolygon') return geom.coordinates.flatMap(poly => poly.map(r => ringToD(r, true))).join(' ');
+      if (geom.type === 'LineString') return ringToD(geom.coordinates, false);
+      if (geom.type === 'MultiLineString') return geom.coordinates.map(r => ringToD(r, false)).join(' ');
+      return '';
+    }
+
+    const previewContextRegions = new Map([
+      ['geo_middle_east', 'middle-east'], ['geo_south_asia', 'south-asia'],
+      ['geo_israel', 'israel'], ['geo_afghanistan', 'afghanistan'],
+      ['geo_iran', 'iran'], ['geo_india_pakistan', 'india-pakistan'],
+    ]);
+    const previewTerritories = new Set([
+      'geo_north_vietnam', 'geo_south_vietnam', 'geo_roc_taiwan', 'geo_nato_1949', 'geo_nato_1982',
+    ]);
+    const localPreviewPath = /^(?:\.\/|\/)?assets\/event-geometry\//;
+    let mapPreviewRequest = 0;
+
+    function mapPreviewSource(value) {
+      if (!value) return null;
+      if (/^data:image\/svg\+xml(?:;base64)?,/i.test(value)) return { url: value, image: true };
+      if (/^data:application\/(?:geo\+json|json)(?:;base64)?,/i.test(value)) return { url: value, image: false };
+      let url;
+      try { url = new URL(value, location.href); }
+      catch { return null; }
+      const local = url.origin === location.origin && localPreviewPath.test(value);
+      if ((!local && url.protocol !== 'https:') || url.username || url.password) return null;
+      if (url.pathname.endsWith('.svg')) return { url: url.href, image: true };
+      if (url.pathname.endsWith('.geojson')) return { url: url.href, image: false };
+      return null;
+    }
+
+    async function loadMapPreview(shape) {
+      const file = shape['파일경로']?.trim() || '';
+      const dataUrl = shape['지도데이터URL']?.trim() || '';
+      const localFile = localPreviewPath.test(file);
+      const sources = new Set([...(localFile ? [file, dataUrl] : [dataUrl, file]), shape['원본SVG']?.trim()]);
+      const extId = shape['외부도형ID']?.trim();
+      let failure;
+      for (const value of sources) {
+        const source = mapPreviewSource(value);
+        if (!source) continue;
+        try {
+          if (source.image) {
+            const image = new Image();
+            image.alt = shape['지도참조키'] + ' 지도';
+            image.src = source.url;
+            await image.decode();
+            return { image };
+          }
+          const data = await loadLocalJson(source.url);
+          const features = data.type === 'FeatureCollection' ? data.features : [data];
+          const feature = source.url.startsWith('data:') && data.type !== 'FeatureCollection'
+            ? (data.type === 'Feature' ? data : { geometry: data })
+            : (extId ? features.find(f => String(f.id) === extId || String(f.properties?.id) === extId) : features[0]);
+          if (!feature?.geometry) throw new Error('파일에 등록된 도형 ID를 찾을 수 없습니다.');
+          return { feature };
+        } catch (error) {
+          failure = source.image ? new Error('등록된 SVG 이미지를 불러오지 못했습니다.') : error;
+        }
+      }
+
+      const key = shape['지도참조키'];
+      const region = previewContextRegions.get(key);
+      if (region) {
+        const context = await loadLocalJson('./assets/event-geometry/context/' + region + '.json');
+        return { context };
+      }
+      if (previewTerritories.has(key)) {
+        const { features } = await loadLocalJson('./assets/event-geometry/schema-preview-territories.geojson');
+        const feature = features.find(item => item.id === key);
+        if (feature) return { feature, date: feature.properties.date };
+      }
+      throw failure || new Error(file || dataUrl
+        ? '등록된 주소에서 SVG 또는 GeoJSON 미리보기를 만들 수 없습니다.'
+        : '이 지도참조키의 미리보기 자료가 등록되어 있지 않습니다.');
+    }
+
+    function contextPreviewMarkup({ box, land, countries, lakes, rivers, selected }, mapKey) {
+      return `<svg viewBox="${box.join(' ')}" role="img" aria-label="${esc(mapKey)} 지도">
+        <path d="${land || ''}" fill="#ece7dc" fill-rule="evenodd" />
+        ${(countries || []).map(d => `<path d="${d}" fill="none" stroke="#8d9685" stroke-width=".7" vector-effect="non-scaling-stroke" />`).join('')}
+        <path d="${lakes || ''}" fill="#d6e6f2" fill-rule="evenodd" />
+        <path d="${rivers || ''}" fill="none" stroke="#9dbbd4" stroke-width=".6" vector-effect="non-scaling-stroke" />
+        ${(selected || []).map(d => `<path d="${d}" fill="#d97706" fill-opacity=".48" stroke="#92400e" stroke-width="1.5" fill-rule="evenodd" vector-effect="non-scaling-stroke" />`).join('')}
+      </svg>`;
+    }
+
+    async function openMapPreview(mapKey) {
+      const request = ++mapPreviewRequest;
+      const modal = document.getElementById('map-preview-modal');
+      const titleEl = document.getElementById('map-modal-title');
+      const stage = document.getElementById('map-stage');
+      const metaGrid = document.getElementById('map-meta-grid');
+      const sheetLink = document.getElementById('map-modal-sheet-link');
+
+      const shapes = state.data['지도도형'] || [];
+      const idx = shapes.findIndex(r => r['지도참조키'] === mapKey);
+      const shape = idx >= 0 ? shapes[idx] : null;
+      if (!shape) {
+        titleEl.textContent = `🗺 ${mapKey}`;
+        stage.innerHTML = `<div style="padding:20px;color:#b91c1c;font-size:0.85rem">지도도형 시트에서 <strong>${esc(mapKey)}</strong>를 찾지 못했습니다.</div>`;
+        metaGrid.innerHTML = '';
+        modal.showModal();
+        return;
+      }
+
+      const rowNum = idx + 2;
+      sheetLink.href = sheetUrl('지도도형', rowNum);
+      titleEl.innerHTML = `<span>🗺 ${esc(mapKey)}</span> <span class="pill">${esc(shape['도형유형'] || 'shape')}</span> <small style="color:#64748b;font-weight:600">${esc(shape['기준시점'] || '')}</small>`;
+      stage.innerHTML = '<div style="color:#475569;font-size:0.84rem">지도 도형과 배경지도를 불러오는 중…</div>';
+      metaGrid.innerHTML = [
+        ['도형유형', shape['도형유형']],
+        ['데이터형식', shape['데이터형식']],
+        ['파일경로', shape['파일경로']],
+        ['외부도형ID', shape['외부도형ID']],
+        ['좌표상태', shape['좌표상태']],
+        ['출처', shape['출처']],
+      ].map(([k, v]) => `<div class="map-meta-cell"><small>${esc(k)}</small><strong>${esc(v || '—')}</strong></div>`).join('');
+
+      modal.showModal();
+
+      const isCurrent = () => modal.open && request === mapPreviewRequest;
+      try {
+        const { image, feature: feat, context, date } = await loadMapPreview(shape);
+        if (!isCurrent()) return;
+        if (image) {
+          stage.replaceChildren(image);
+          return;
+        }
+        if (context) {
+          stage.innerHTML = contextPreviewMarkup(context, mapKey);
+          const basis = context.selected?.length ? '국경 기준일' : '권역 참고도';
+          metaGrid.innerHTML += `<div class="map-meta-cell"><small>${basis}</small><strong>${esc(context.date || '—')}</strong></div>`;
+          return;
+        }
+
+        const geom = feat.geometry;
+        const bbox = geomBBox(geom);
+        const [w, s, e, n] = bbox;
+        const lonScale = 0.78;
+
+        let terrain = null;
+        const ctxFile = pickContextBasemap(bbox);
+        try {
+          terrain = await loadLocalJson('./assets/event-geometry/context/' + ctxFile);
+        } catch {}
+
+        if (!isCurrent()) return;
+        if (![w,s,e,n].every(Number.isFinite)) throw new Error('도형의 좌표를 확인해 주세요.');
+
+        const isPoint = geom.type === 'Point';
+        const padX = isPoint ? 6 : Math.max(2.5, (e - w) * 0.28);
+        const padY = isPoint ? 4 : Math.max(2.0, (n - s) * 0.28);
+        const minX = (w - padX) * lonScale;
+        const maxX = (e + padX) * lonScale;
+        const minY = -(n + padY);
+        const maxY = -(s - padY);
+        const vbW = Math.max(1, maxX - minX);
+        const vbH = Math.max(1, maxY - minY);
+
+        const bgSvg = terrain ? `
+          <g transform="scale(${lonScale} 1)">
+            <path d="${terrain.land || ''}" fill="#ece7dc" stroke="#b8b09c" stroke-width="0.6" fill-rule="evenodd" vector-effect="non-scaling-stroke" />
+            <path d="${terrain.rivers || ''}" fill="none" stroke="#9dbbd4" stroke-width="0.5" vector-effect="non-scaling-stroke" />
+            <path d="${terrain.lakes || ''}" fill="#d6e6f2" stroke="none" fill-rule="evenodd" />
+          </g>` : '';
+
+        let shapeSvg = '';
+        if (geom.type.includes('Line')) {
+          const d = geoToSvgPath(geom, lonScale);
+          shapeSvg = `<path d="${d}" fill="none" stroke="#dc2626" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`;
+        } else if (!isPoint) {
+          const d = geoToSvgPath(geom, lonScale);
+          shapeSvg = `<path d="${d}" fill="#d97706" fill-opacity="0.48" stroke="#92400e" stroke-width="1.8" fill-rule="evenodd" vector-effect="non-scaling-stroke" />`;
+        }
+
+        stage.innerHTML = `
+          <svg viewBox="${minX} ${minY} ${vbW} ${vbH}" preserveAspectRatio="xMidYMid meet">
+            <rect x="${(minX - vbW).toFixed(2)}" y="${(minY - vbH).toFixed(2)}" width="${(vbW * 3).toFixed(2)}" height="${(vbH * 3).toFixed(2)}" fill="#dbe8f4" />
+            ${bgSvg}
+            ${shapeSvg}
+          </svg>
+          ${isPoint ? '<span class="map-preview-point" aria-hidden="true"></span>' : ''}`;
+
+        const extraInfo = isPoint
+          ? `경도 ${geom.coordinates[0].toFixed(4)}, 위도 ${geom.coordinates[1].toFixed(4)}`
+          : `범위 [${w.toFixed(1)}°~${e.toFixed(1)}°E, ${s.toFixed(1)}°~${n.toFixed(1)}°N]` + (feat.properties?.area_km2 ? ` · 면적 ${Number(feat.properties.area_km2).toLocaleString()} km²` : '');
+        if (date) metaGrid.innerHTML += `<div class="map-meta-cell"><small>국경 기준일 · CShapes 2.1</small><strong>${esc(date)}</strong></div>`;
+        metaGrid.innerHTML += `<div class="map-meta-cell"><small>실제 지오메트리 정보</small><strong>${esc(extraInfo)}</strong></div>`;
+      } catch (err) {
+        if (!isCurrent()) return;
+        stage.innerHTML = `<div style="padding:20px;text-align:center;color:#991b1b;font-size:0.84rem">
+          <strong>도형을 불러오지 못했습니다.</strong><br>
+          <span>${esc(err.message)}</span>
+        </div>`;
+      }
+    }
+
+    document.getElementById('btn-close-map-modal').onclick = () => document.getElementById('map-preview-modal').close();
+    document.getElementById('map-preview-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) e.currentTarget.close();
+    });
+
+    const gInput = document.getElementById('global-search-input');
+    const searchBar = gInput.closest('.global-search-bar');
+    const searchResults = document.getElementById('global-results');
+    new ResizeObserver(() => {
+      document.documentElement.style.scrollPaddingTop = `${searchBar.offsetHeight + 16}px`;
+    }).observe(searchBar);
+    gInput.addEventListener('input', e => {
+      state.globalQuery = e.target.value;
+      state.globalTabFilter = 'ALL';
+      state.tracedRow = null;
+      render();
+      if (!searchResults.hidden && searchResults.getBoundingClientRect().top < searchBar.getBoundingClientRect().bottom) {
+        searchResults.scrollIntoView({ block: 'start' });
+      }
+    });
+    document.getElementById('btn-clear-global').onclick = () => {
+      state.globalQuery = '';
+      state.globalTabFilter = 'ALL';
+      gInput.value = '';
+      render();
+      gInput.focus();
+    };
+    window.addEventListener('resize', () => render());
+    loadAllSheets();
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {cpSync,existsSync,readFileSync,rmSync,mkdirSync,statSync} from 'node:fs';
 import {join} from 'node:path';
 
-const pages=['index.html','example/index.html','classroom.html','data-explorer.html','package-studio.html','lens.html','visual-ideas.html','japan.html','swimlane.html','swimlane-focus.html','event-map-demo.html','cuba-story.html','berlin-story.html','asia-stories.html'];
+const pages=['index.html','example/index.html','classroom.html','data-explorer.html','sheet-schema-dashboard.html','package-studio.html','lens.html','visual-ideas.html','japan.html','swimlane.html','swimlane-focus.html','event-map-demo.html','cuba-story.html','berlin-story.html','asia-stories.html','territory-map.html'];
 const scripts=['app.js','constellation-layout.js','data.js','history.js','lens-layout.js','lens.js','sheet-config.js','sheet-snapshot.js','sheets.js','views.js','visual-ideas.js','japan-board.js','swimlane-data.js','event-map-links.js'];
 const styles=['style.css','design.css','views.css','data-explorer.css','lens.css','japan-board.css'];
 // Publish an explicit file list so working notes and source backups stay local.
@@ -11,7 +11,8 @@ mkdirSync('dist');
 for(const file of [...pages,...scripts,...styles,'assets','metro'])cpSync(file,join('dist',file),{recursive:true});
 for(const page of [...pages,'metro/index.html']){
  const base=new URL(page,'https://chronicle.local/');
- for(const [,ref] of readFileSync(join('dist',page),'utf8').matchAll(/(?:src|href)=["']([^"']+)["']/g)){
+ const html=readFileSync(join('dist',page),'utf8').replace(/(<script\b[^>]*>)[\s\S]*?<\/script\s*>/gi,'$1');
+ for(const [,ref] of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)){
   const url=new URL(ref,base);
   if(url.origin!==base.origin)continue;
   let file=join('dist',decodeURIComponent(url.pathname));

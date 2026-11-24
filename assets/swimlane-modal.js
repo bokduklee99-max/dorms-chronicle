@@ -206,12 +206,14 @@ export function setupSwimlaneModal({events,categories,actors,detailActors=actors
  }
  function linked(r){
   const band=make('div','links-grid');
+  let hasBackground=false;
   for(const incoming of [true,false]){
    const items=relations.filter(rel=>(incoming?rel.toId:rel.fromId)===r.id);
    if(!items.length)continue;
    const branch=make('div',incoming?'incoming':'outgoing');
    const lists=new Map();
    for(const rel of items){
+    if(r.view==='event'&&rel.kind==='background')hasBackground=true;
     const role=rolesFor(rel)[incoming?0:1];
     if(!lists.has(role)){
      const list=make('ul','connection-list');
@@ -225,8 +227,8 @@ export function setupSwimlaneModal({events,categories,actors,detailActors=actors
    }
    band.append(branch);
   }
-  if(band.childElementCount===2){
-   band.firstElementChild.after(make('span','relation-pivot',title(r)));
+  if(band.childElementCount===2||hasBackground){
+   band.insertBefore(make('span','relation-pivot',title(r)),band.querySelector('.outgoing'));
   }else if(band.childElementCount===1){
    band.classList.add('role-groups');
    band.replaceChildren(...band.firstElementChild.children);

@@ -1,3 +1,5 @@
+@import url("./assets/data-guide-nav.css");
+
 .chronicle-data {
   --data-edge: clamp(16px, 4vw, 54px);
   min-height: 100vh;
@@ -6,16 +8,6 @@
   font-family: Pretendard, system-ui, sans-serif;
 }
 [hidden] { display: none !important }
-.skip-link { position: fixed; top: 10px; left: 10px; z-index: 70; padding: 10px; background: var(--chronicle-surface); transform: translateY(-180%) }
-.skip-link:focus { transform: none }
-.guide-nav { border-bottom: 1px solid var(--chronicle-line); background: var(--chronicle-paper) }
-.guide-nav-inner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding-inline: var(--data-edge); min-height: 76px }
-.wordmark { width: fit-content; font: 600 clamp(19px, 2.4vw, 25px) Georgia, serif; letter-spacing: -.04em; white-space: nowrap }
-.wordmark span { margin-left: 7px; color: var(--chronicle-accent) }
-.guide-nav nav { display: flex; gap: 24px; min-height: inherit }
-.guide-nav nav a { display: grid; place-items: center; border-bottom: 2px solid transparent; color: var(--chronicle-muted); white-space: nowrap }
-.guide-nav nav a[aria-current=page] { border-color: var(--chronicle-accent); color: var(--chronicle-ink); font-weight: 600 }
-.guide-nav #open-sheet { justify-self: end }
 #main-content { max-width: 1536px; margin: auto; padding: clamp(24px, 5vw, 56px) var(--data-edge) 48px }
 #main-content.examples-active > :not(#example-view) { display: none }
 #example-view .dashboard-heading p { margin-top: 10px; color: var(--chronicle-muted) }
@@ -424,11 +416,6 @@
 #confirm-modal { max-width: min(420px, calc(100% - 32px)); margin: auto; padding: 22px; border: 1px solid var(--chronicle-line); border-radius: 8px; background: var(--chronicle-surface); color: var(--chronicle-ink) }
 #confirm-title { font-size: 21px; font-weight: 600 }
 #confirm-modal .dashboard-actions { justify-content: end }
-@media (max-width: 760px) {
-  .guide-nav-inner { grid-template-columns: 1fr 1fr; padding-top: 12px; gap: 2px 10px }
-  .guide-nav nav { grid-column: 1 / -1; grid-row: 2; min-width: 0; overflow-x: auto; min-height: 48px; gap: clamp(8px, 2.5vw, 24px); font-size: 14px }
-  .guide-nav #open-sheet { grid-column: 2; grid-row: 1 }
-}
 @media (prefers-reduced-motion: reduce) { .dashboard-sidebar { transition: none } }
 @media (min-width: 740px) and (max-width: 1023px) {
   #hierarchy-svg { display: block }
@@ -691,7 +678,7 @@
 #main-content.studio-active{max-width:none;padding:0}
 .chronicle-data:has(#main-content.studio-active) .guide-nav-inner{padding-inline:clamp(12px,2.6vw,36px)}
 .chronicle-data:has(#main-content.studio-active) #open-sheet{white-space:nowrap}
-@media(min-width:761px) and (max-width:1000px){
+@media(min-width:841px) and (max-width:1000px){
   .chronicle-data:has(#main-content.studio-active) .guide-nav-inner{grid-template-columns:auto minmax(0,1fr) auto;gap:12px;min-height:62px}
   .chronicle-data:has(#main-content.studio-active) .guide-nav nav{justify-content:center;gap:clamp(10px,1.6vw,16px);font-size:14px}
 }

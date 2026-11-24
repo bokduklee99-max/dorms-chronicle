@@ -38,4 +38,7 @@
 - `china-proper.geojson`은 CShapes 2.1(`independence-asia.svg`)의 1921–1945년 중화민국 영역(`gwcode=710`, ID `CHINA_PROPER`)을 경위도 GeoJSON MultiPolygon으로 추출한 도형이다.
 - `iron-curtain.geojson`은 냉전기 유럽의 발트해(뤼베크)에서 아드리아해(트리에스테)까지 이어지는 동서 분단선(`IRON_CURTAIN`)을 경위도 GeoJSON LineString으로 정리한 도형이다.
 
-- `cliopatria-east-asia.geojson`은 Cliopatria(3400BCE–2024CE, CC BY 4.0)에서 한반도 삼국~조선(11개 주체, 49개 스냅샷)과 동아시아 이웃 왕조(18개 주체, 92개 스냅샷) 총 141개 영토 폴리곤을 0.04도 단순화해 하나의 FeatureCollection으로 묶은 파일이다.
+- `cliopatria-east-asia.geojson`은 Cliopatria(3400BCE–2024CE, CC BY 4.0)에서 한반도 삼국~조선(11개 주체, 49개 스냅샷)과 동아시아 이웃 왕조(18개 주체, 92개 스냅샷) 총 141개 영토 폴리곤을 0.04도 단순화해 하나의 FeatureCollection으로 묶은 파일이다. [영토 변화 지도](../../territory-map.html)는 `fromYear`와 `toYear`를 양 끝이 포함되는 적용 연도로 읽고 Feature ID를 `boundary_versions.feature_id`로 연결한다. 이 표본의 근사 통제 범위는 검토 상태가 `draft`이며, 고려 영역처럼 적용 기간이 비는 구간도 있다. [Cliopatria 원본](https://doi.org/10.5281/zenodo.13363121) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+- `cliopatria-europe.geojson`: Cliopatria(CC BY 4.0) 기반 유럽·지중해 세계사 48개 정치체(고대 지중해·게르만·이슬람 지중해·중세 유럽 왕국·근세·근대) 1,735개 전 시점 영토 폴리곤(0.07도 단순화, 유럽·지중해 권역 필터링).
+- `cliopatria-china.geojson`: Cliopatria(CC BY 4.0) 기반 중국사 39개 왕조(상·주·춘추전국~중화인민공화국) 404개 전 시점 영토 폴리곤(0.05도 단순화).
+- 지도에서 읽는 `cliopatria-east-asia-land-clipped.geojson`은 위 표본을 배경과 같은 `context/east-asia.json`의 Natural Earth 1:10m 육지 도형과 교차한 판본이다. 141개 Feature의 ID와 적용 기간을 유지한다. 원본 표본이나 육지 도형을 갱신하면 Shapely 2가 설치된 Python 환경에서 `python3 scripts/clip-territory-coast.py`를 실행해 새 파일을 만든다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/)

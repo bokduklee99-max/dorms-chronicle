@@ -37,3 +37,5 @@
 
 - `china-proper.geojson`은 CShapes 2.1(`independence-asia.svg`)의 1921–1945년 중화민국 영역(`gwcode=710`, ID `CHINA_PROPER`)을 경위도 GeoJSON MultiPolygon으로 추출한 도형이다.
 - `iron-curtain.geojson`은 냉전기 유럽의 발트해(뤼베크)에서 아드리아해(트리에스테)까지 이어지는 동서 분단선(`IRON_CURTAIN`)을 경위도 GeoJSON LineString으로 정리한 도형이다.
+
+- `cliopatria-east-asia.geojson`은 Cliopatria(3400BCE–2024CE, CC BY 4.0)에서 한반도 삼국~조선(11개 주체, 49개 스냅샷)과 동아시아 이웃 왕조(18개 주체, 92개 스냅샷) 총 141개 영토 폴리곤을 0.04도 단순화해 하나의 FeatureCollection으로 묶은 파일이다.

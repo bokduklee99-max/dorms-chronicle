@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>역사 지도 제작실 · Chronicle</title>
+    <link rel="stylesheet" href="./atlas.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand"><span class="brand-icon" data-icon="atlas"></span><span>Chronicle</span></div>
+      <span class="brand-divider"></span>
+      <h1>역사 지도 제작실</h1>
+      <nav>
+        <a href="../../history-map.html">기존 편집기 <i data-icon="external"></i></a
+        ><button id="export" class="dark"><i data-icon="download"></i>지도 내보내기</button>
+      </nav>
+    </header>
+    <main>
+      <aside class="side" aria-label="지도 구성">
+        <div class="side-head">
+          <h2>지도 구성</h2>
+          <button class="add" id="browse"><i data-icon="plus"></i>지명 추가</button>
+        </div>
+        <section class="pins">
+          <h3>표시한 지점 <span id="count"></span></h3>
+          <div id="pins"></div>
+        </section>
+        <section class="inspector" id="inspect" aria-label="선택한 지점"></section>
+        <a class="source" id="source" target="_blank" rel="noreferrer"
+          ><i data-icon="sheet"></i><span>시트 연결 중…</span><i data-icon="external"></i
+        ></a>
+      </aside>
+      <section class="work" aria-label="지도 편집">
+        <div class="doc-head">
+          <div>
+            <div class="category"></div>
+            <h2 id="title">역사 지도</h2>
+          </div>
+          <button id="themes"><i data-icon="layers"></i>주제 변경</button>
+        </div>
+        <div class="stage">
+          <div class="stage-tools">
+            <div class="modes" aria-label="지도 도구" role="group">
+              <button id="select" aria-pressed="true"><i data-icon="pointer"></i>선택·이동</button
+              ><button id="manual" aria-pressed="false"><i data-icon="pin"></i>직접 찍기</button>
+            </div>
+            <div class="end-tools">
+              <button id="undo" title="마지막 편집 되돌리기" disabled><i data-icon="undo"></i>되돌리기</button
+              ><button id="labels" aria-pressed="true" title="지도 위 지명 표시">
+                <span aria-hidden="true">Aa</span> 지명
+              </button>
+            </div>
+          </div>
+          <div class="paper-desk">
+            <svg
+              id="atlas"
+              data-layout="portrait"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-label="편집 지도"
+              role="group"
+              tabindex="0"
+              viewBox="0 0 900 610"
+            ></svg>
+          </div>
+          <div class="stage-foot">
+            <span class="legend"><b></b>표시한 지점 <b></b>선택한 지점</span>
+            <div class="zoom">
+              <button id="minus" aria-label="축소">−</button
+              ><button id="reset" title="전체 지점에 맞추기">100%</button
+              ><button id="plus" aria-label="확대">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="status" role="status" id="status">지도를 불러오는 중입니다.</div>
+      </section>
+    </main>
+    <dialog id="picker" aria-labelledby="picker-title">
+      <div class="dialog-head">
+        <h2 id="picker-title"></h2>
+        <button id="close" aria-label="닫기">×</button>
+      </div>
+      <label class="search"
+        ><i data-icon="search"></i><input id="query" type="search" aria-label="검색"
+      /></label>
+      <div id="choices"></div>
+    </dialog>
+    <script src="../../sheet-config.js"></script>
+    <script src="../../sheets.js"></script>
+    <script type="module" src="./atlas.js"></script>
+  </body>
+</html>

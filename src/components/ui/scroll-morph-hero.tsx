@@ -1,11 +1,6 @@
-/// <reference types="vite/client" />
 import {useEffect,useRef,useState} from 'react';
 import {motion,useMotionValueEvent,useReducedMotion,useScroll} from 'framer-motion';
 import {heroPosition,type ChronicleCard} from '../../landing-model';
-
-const hasMapEditor=Object.keys(import.meta.glob('/history-map.html',{query:'?raw'})).length>0;
-const localPreview=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-const mapHref=hasMapEditor?'/history-map.html':localPreview?'http://127.0.0.1:4317/history-map.html':undefined;
 
 export default function ScrollMorphHero({cards}:{cards:ChronicleCard[]}){
  const section=useRef<HTMLElement>(null),stage=useRef<HTMLDivElement>(null);
@@ -27,7 +22,7 @@ export default function ScrollMorphHero({cards}:{cards:ChronicleCard[]}){
     <p>사건과 인물을 따라 역사의 흐름을 읽다.</p>
     <div className="hero-actions">
      <a className="primary-link" href="/?setup=1">연표 보기 <span aria-hidden="true">↗</span></a>
-     {mapHref&&<a className="primary-link map-link" href={mapHref}>지도 만들기 <span aria-hidden="true">↗</span></a>}
+     <a className="primary-link map-link" href="/history-map.html">지도 만들기 <span aria-hidden="true">↗</span></a>
     </div>
    </motion.div>
    <div className="orbit-cards">

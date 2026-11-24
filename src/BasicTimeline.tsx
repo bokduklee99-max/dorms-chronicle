@@ -49,6 +49,8 @@ export function BasicTimeline({events,categories,records,relations,onVisit}:Prop
   if(!activeGroups.length)setChoice(kind);
   setSelected(ids=>ids.includes(category.id)?ids.filter(id=>id!==category.id):[...ids,category.id]);
  }
+ const mapTopics=selected.length?selected:categories.map(c=>c.id);
+ const mapQuery=new URLSearchParams(mapTopics.map(id=>['topic',id]));
  const relatedContext=useMemo(()=>{
   const byId=new Map(records.map(record=>[record.id,record]));
   const context=new Map<string,{peer:string;body:string}>();
@@ -109,6 +111,7 @@ export function BasicTimeline({events,categories,records,relations,onVisit}:Prop
   )}</nav>}
   {filterGroups.length>0&&<section className="bt-filters" aria-label="카테고리 필터">
    <header><h3>카테고리 필터</h3>
+    <a className="bt-atlas" href={'/history-map.html?'+mapQuery} target="_blank" rel="noreferrer">지도 제작실에서 열기 ↗</a>
     <button type="button" disabled={!activeGroups.length} onClick={()=>setSelected([])}>선택 해제</button>
    </header>
    {filterGroups.map(({kind,options})=><div key={kind} role="group" aria-label={modes[kind]} className="bt-filter-group">

@@ -99,6 +99,8 @@ function renderTimeline() {
   const events = allEvents().filter(event => state.filter === 'all' || event.topicIds?.includes(state.filter));
   if(events.length&&!events.some(event=>event.id===state.eventId)){state.eventId=events[0].id;state.year=events[0].year;}
   $$('[data-filter]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.filter === state.filter)));
+  const mapTopics=state.filter==='all'?viewData.topics.map(t=>t.topic_id):[state.filter];
+  $('#timeline-atlas').href='/history-map.html?'+new URLSearchParams(mapTopics.map(id=>['topic',id]));
   const extra=$('#other-topic-buttons [aria-pressed="true"]');
   $('#more-topics').textContent=extra?extra.textContent:'다른 주제';
   $('#more-topics').classList.toggle('has-selection',Boolean(extra));

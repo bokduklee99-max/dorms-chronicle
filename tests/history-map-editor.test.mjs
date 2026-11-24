@@ -1,0 +1,211 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { W, canvasFrame, camera, comparisonYears, zoomView, definitions, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+
+const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
+const bases = data('bases.json');
+const packed = (file) =>
+  JSON.parse(gunzipSync(readFileSync(new URL('../assets/history-map/' + file, import.meta.url))));
+const places = [
+  { lon: 126.978, lat: 37.5665 },
+  { lon: -77.0369, lat: 38.9072 },
+  { lon: 0, lat: 0 },
+];
+test('clicking a projected point gives the same coordinates for each extent', () => {
+  for (const key of Object.keys(presets)) {
+    const view = camera(key);
+    for (const p of places) {
+      const height = mapHeight(view);
+      const [lon, lat] = ll(view, ...xy(view, p.lon, p.lat, height), height);
+      assert.ok(Math.abs(lon - p.lon) < 1e-8 && Math.abs(lat - p.lat) < 1e-8);
+    }
+  }
+});
+
+test('responsive frames show new geography at the edges with the saved camera centered', () => {
+  for (const [base, width, height] of [['korea', 880, 480], ['east', 360, 560]]) {
+    const view = camera(base), baseHeight = mapHeight(view);
+    const frame = canvasFrame(view, width, height);
+    assert.ok(Math.abs(frame.width / frame.height - width / height) < 1e-9);
+    assert.equal(frame.x + frame.width / 2, W / 2);
+    assert.equal(frame.y + frame.height / 2, baseHeight / 2);
+    const [lon, lat] = ll(view, frame.x + 12, frame.y + 12, baseHeight);
+    const doc = { view, points: [{ lon, lat, name: '가장자리' }], notes: [], routes: [] };
+    assert.doesNotMatch(draw(doc, bases), /data-point="0"/);
+    assert.match(draw(doc, bases, 1, null, null, frame), /data-point="0"/);
+  }
+});
+
+test('user annotations are escaped in exported SVG', () => {
+  const note = { name: '<script>&', lat: 37, lon: 127 };
+  const svg = draw(
+    { title: note.name, view: camera('korea'), points: [note], notes: [note], routes: [] },
+    bases,
+  );
+  assert.ok(svg.includes('&lt;script&gt;&amp;'));
+  assert.ok(!svg.includes('<script>'));
+});
+
+test('hidden points omit their mark and label without shifting the editor selection', () => {
+  const doc = {
+    view: camera('korea'),
+    points: [
+      { ...places[0], name: '숨긴 지명', hidden: true },
+      { ...places[0], name: '표시한 지명' },
+    ],
+    notes: [],
+    routes: [],
+  };
+  const svg = draw(doc, bases, 1, { kind: 'points', index: 1 });
+  assert.doesNotMatch(svg, /숨긴 지명|data-point="0"/);
+  assert.match(svg, /data-point="1"/);
+  assert.match(svg, /data-selection/);
+  doc.points[0].hidden = false;
+  assert.match(draw(doc, bases), /숨긴 지명/);
+});
+
+test('portrait editing and export share geography but only the editor marks the selected point', () => {
+  const {
+    bbox: [west, , , north],
+  } = bases.korea;
+  const doc = {
+    view: camera('korea'),
+    points: [{ lon: 127, lat: 37, name: '수도' }],
+    routes: [
+      [
+        [127, 37],
+        [128, 38],
+      ],
+    ],
+    notes: [],
+  };
+  const [x, y] = xy(doc.view, west, north, mapHeight(doc.view));
+  assert.ok(Math.abs(x) < 0.001 && Math.abs(y) < 0.001);
+  assert.match(draw(doc, bases, 1, { kind: 'points', index: 0 }), /data-selection/);
+  const image = draw(doc, bases);
+  assert.doesNotMatch(image, /data-selection/);
+  assert.match(image, /<polyline/);
+});
+
+
+test('packaged backgrounds contain every registered edition and both modern boundary levels', () => {
+  const editions = packed('editions.json.gz');
+  const boundaries = packed('boundaries.json.gz');
+  assert.equal(Object.keys(editions).length, 55);
+  for (const year of [-123000, 400, 1945, 1980, 2010]) {
+    const key = 'world_' + (year < 0 ? 'bc' : '') + Math.abs(year);
+    assert.equal(editions[key].year, year);
+  }
+  for (const edition of Object.values(editions)) {
+    assert.ok(edition.paths.length > 0);
+    assert.ok(edition.paths.every((d) => d.startsWith('M') && d.endsWith('Z')));
+  }
+  assert.deepEqual(Object.keys(boundaries).sort(), ['countries', 'provinces']);
+  for (const path of Object.values(boundaries)) assert.match(path, /^M[-.,0-9LM]+$/);
+});
+
+test('historical borders and modern first-level boundaries can be selected independently', () => {
+  const history = {
+    editions: { old: { name: '시대별 배경', paths: ['M1,1L2,2Z'] } },
+    boundaries: { countries: 'M1,1L2,2', provinces: 'M3,3L4,4' },
+    layers: {},
+  };
+  const doc = { view: camera('korea'), points: [], notes: [], routes: [] };
+  function svg(options) {
+    return historicalDefinitions(history, options.edition, [], options) +
+      draw({ ...doc, ...options }, bases, 1, null, history);
+  }
+  assert.match(svg({}), /href="#modern-borders"/);
+  assert.doesNotMatch(svg({}), /href="#modern-provinces"/);
+  for (const edition of ['old', undefined]) {
+    for (const countryBorders of [true, false]) {
+      for (const provinceBorders of [true, false]) {
+        const image = svg({ edition, countryBorders, provinceBorders });
+        assert.equal(image.includes('href="#historic-land"'), !!edition);
+        assert.equal(image.includes('href="#modern-borders"'), !edition && countryBorders);
+        assert.equal(image.includes('href="#modern-provinces"'), provinceBorders);
+        if (edition) {
+          assert.match(image, /<use href="#historic-polygons" fill="#111" stroke="#111"/);
+          assert.equal(image.includes('fill="#fff" stroke="#576367"'), countryBorders);
+        }
+      }
+    }
+  }
+});
+
+test('the packaged provincial lines cross the shared borders of neighboring East Asian regions', () => {
+  // Midpoints sampled from the unsimplified shared edges in Natural Earth Admin 1.
+  const samples = [
+    ['Hebei–Shandong', 116.27883, 37.55013],
+    ['Guangdong–Fujian', 116.75625, 24.59404],
+    ['Tokyo–Saitama', 139.39163, 35.75415],
+    ['Seoul–Gyeonggi', 127.17641, 37.55766],
+  ];
+  const lines = packed('boundaries.json.gz').provinces.split('M').slice(1)
+    .map((line) => line.split('L').map((vertex) => vertex.split(',').map(Number)));
+  for (const [name, lon, lat] of samples) {
+    const y = -Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * 180 / Math.PI;
+    const near = lines.some((line) => line.some(([x2, y2], i) => {
+      if (!i) return false;
+      const [x1, y1] = line[i - 1];
+      const dx = x2 - x1, dy = y2 - y1;
+      const t = Math.max(0, Math.min(1, ((lon - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy || 1)));
+      return Math.hypot(lon - x1 - t * dx, y - y1 - t * dy) < 0.015;
+    }));
+    assert.ok(near, name);
+  }
+});
+
+
+test('switching to an outline retains comparison years and older saved maps recover their active year', () => {
+  const editions = { world_1945: { paths: ['M1,1Z'] }, world_1980: { paths: ['M2,2Z'] } };
+  assert.deepEqual(comparisonYears({}, editions), []);
+  assert.deepEqual(comparisonYears({ background: 'world_1945' }, editions), ['world_1945']);
+  const backgroundYears = ['world_1945', 'missing', 'world_1980', 'world_1945'];
+  for (const background of ['outline', 'world_1945']) {
+    assert.deepEqual(comparisonYears({ background, backgroundYears }, editions), ['world_1945', 'world_1980']);
+  }
+});
+
+
+test('zoom keeps the same geography under a pointer or moving pinch center across map layouts', () => {
+  for (const base of ['east', 'korea']) {
+    const view = camera(base), h = mapHeight(view);
+    const from = [205, h * 0.61];
+    for (const to of [from, [295, h * 0.58]]) {
+      const point = ll(view, ...from, h);
+      const next = zoomView(view, 0.6, from, to);
+      const result = xy(next, ...point, h);
+      assert.equal(next.span, view.span * 0.6);
+      assert.ok(Math.hypot(result[0] - to[0], result[1] - to[1]) < 1e-8);
+    }
+    assert.equal(zoomView(view, 0.0001, from).span, 0.5);
+    assert.equal(zoomView(view, 1000, from).span, 360);
+  }
+});
+
+
+test('southern Asia uses detailed coastlines across the old 18°N cutoff independently of political borders', () => {
+  const tile = bases.southernAsia;
+  const [west, east, south, north] = tile.bbox;
+  assert.ok(west < 73 && east > 141 && south < -10 && north > 18);
+  assert.ok(tile.coast.startsWith('M') && tile.land.includes('Z'));
+  assert.ok(definitions({ southernAsia: tile }).includes(tile.coast));
+  for (const [lon, lat] of [[80.7, 7.8], [104, 14], [114, 0], [122, 12]]) {
+    const doc = { view: { base: 'globe', lon, lat, span: 8 }, points: [], notes: [], routes: [] };
+    for (const countryBorders of [true, false]) {
+      assert.match(draw({ ...doc, countryBorders }, bases), /href="#geo-southernAsia"/);
+    }
+  }
+});
+
+test('all outline tiles include a separate shoreline, including the global fallback', () => {
+  for (const [key, tile] of Object.entries(bases)) {
+    assert.ok(tile.coast?.startsWith('M'), key);
+    assert.ok(definitions({ [key]: tile }).includes(tile.coast), key);
+  }
+  const doc = { view: { base: 'globe', lon: -100, lat: 20, span: 45 }, points: [], notes: [], routes: [] };
+  assert.match(draw({ ...doc, countryBorders: false }, bases), /href="#geo-globe"/);
+});

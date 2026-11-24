@@ -78,6 +78,7 @@ export function EventCategoryTimeline({event,data,titleId,topicId,onTopicChange,
     <header>
      <h3 id={`${titleId}-timeline`}>{topics.length===1?`${topics[0].name} 연표`:'카테고리 연표'}</h3>
      {topics.length>1&&<div className="event-topic-links" role="group" aria-label="연표 카테고리">{topics.map(item=><button type="button" key={item.topic_id} aria-pressed={item.topic_id===topic?.topic_id} onClick={()=>onTopicChange(item.topic_id)}>{item.name}</button>)}</div>}
+     {topic&&<a href={'/history-map.html?topic='+encodeURIComponent(topic.topic_id)} target="_blank" rel="noreferrer">지도 제작실에서 열기 ↗</a>}
      <div className="event-step-actions" onKeyDown={key=>{
       const target=key.key==='ArrowLeft'?previous:key.key==='ArrowRight'?next:null;
       if(target){key.preventDefault();visit(target.id);}

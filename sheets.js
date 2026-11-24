@@ -121,10 +121,15 @@ globalThis.SheetData = (() => {
     return [header,...rows.map(row=>row[column]==='작성 중'?[]:row)].map(row=>row.map(value=>'"'+value.replaceAll('"','""')+'"').join(',')).join('\n');
   }
   const eventSheetCSV=(config,request)=>sheetCSV(config,'사건',request);
-  async function sheetRecords(config,name,required,request) {
-    const [header=[],...rows]=parseCSV(await sheetCSV(config,name,request));
+  async function sheetRecords(config,name,required,request,includeRowNumber=false) {
+    const [header=[],...rows]=parseCSV(await sheetCSV(config,name,request),includeRowNumber);
     if(!required.every(field=>header.includes(field)))fail(`${name} 탭의 열을 확인하세요.`);
-    return rows.map(row=>Object.fromEntries(header.flatMap((field,i)=>field?[[field,text(row[i]).trim()]]:[])));
+    return rows.flatMap((row,index)=>{
+      if(includeRowNumber && !row.some(value=>value!==''))return [];
+      const record=Object.fromEntries(header.flatMap((field,i)=>field?[[field,text(row[i]).trim()]]:[]));
+      if(includeRowNumber)record.sheetRow=index+2;
+      return [record];
+    });
   }
   async function readCategoryLinks(config,request=fetch) {
     const rows=await sheetRecords(config,'사건_카테고리',['사건ID','카테고리ID'],request);

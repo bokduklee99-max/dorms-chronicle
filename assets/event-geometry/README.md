@@ -34,7 +34,6 @@
 
 공간 미리보기의 `context/*.json`은 각 지역의 표시 범위로 자른 경위도 벡터다. 육지·호수·하천·주변 도시는 [Natural Earth 1:10m](https://www.naturalearthdata.com/downloads/10m-physical-vectors/)의 지형 및 도시 참고 자료다. 물길과 해안선은 지리적 위치를 설명한다. 경인 지역은 위에 기재한 국사편찬위원회 1910년 복원 육지 및 1899년 경인선 자료를 사용한다. 중동·남아시아 등 여섯 참고도에는 [CShapes 2.1](https://icr.ethz.ch/data/cshapes/)의 해당 기준일에 유효한 국가 경계를 담았다(CC BY-NC-SA 4.0). 권역 지도는 그 범위 안의 국가를 표시한다.
 
-
 - `china-proper.geojson`은 CShapes 2.1(`independence-asia.svg`)의 1921–1945년 중화민국 영역(`gwcode=710`, ID `CHINA_PROPER`)을 경위도 GeoJSON MultiPolygon으로 추출한 도형이다.
 - `iron-curtain.geojson`은 냉전기 유럽의 발트해(뤼베크)에서 아드리아해(트리에스테)까지 이어지는 동서 분단선(`IRON_CURTAIN`)을 경위도 GeoJSON LineString으로 정리한 도형이다.
 
@@ -42,3 +41,13 @@
 - `cliopatria-europe.geojson`: Cliopatria(CC BY 4.0) 기반 유럽·지중해 세계사 48개 정치체(고대 지중해·게르만·이슬람 지중해·중세 유럽 왕국·근세·근대) 1,735개 전 시점 영토 폴리곤(0.07도 단순화, 유럽·지중해 권역 필터링).
 - `cliopatria-china.geojson`: Cliopatria(CC BY 4.0) 기반 중국사 39개 왕조(상·주·춘추전국~중화인민공화국) 404개 전 시점 영토 폴리곤(0.05도 단순화).
 - 지도에서 읽는 `cliopatria-east-asia-land-clipped.geojson`은 위 표본을 배경과 같은 `context/east-asia.json`의 Natural Earth 1:10m 육지 도형과 교차한 판본이다. 141개 Feature의 ID와 적용 기간을 유지한다. 원본 표본이나 육지 도형을 갱신하면 Shapely 2가 설치된 Python 환경에서 `python3 scripts/clip-territory-coast.py`를 실행해 새 파일을 만든다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/)
+
+냉전 제작실의 `world-1980.geojson`은 시트가 지정한 1980년 판본의 배포 URL이 404여서 CShapes 2.1 GW에서 1980-01-01 유효 경계를 추출한 대체 배경이다. `cold-war-territories.geojson`에는 1949-04-04 NATO 창립 12개 회원국의 본국과 CShapes의 1949-12-08 대만 경계를 담았다. 두 파일은 원본을 0.09도 허용 오차로 단순화하고 좌표를 소수 셋째 자리로 반올림했다. [Schvitz 외, CShapes](https://icr.ethz.ch/data/cshapes/) · [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) · [NATO 창립 회원국](https://www.nato.int/en/about-us/organization/nato-member-countries)
+
+지도 제작실의 시대별 배경은 시트의 세계지도 판본에 맞춘 André Ourednik의 Historical Basemaps(커밋 4b5039e50d8d2464b065bd76ad6086cd4597108d)와 위의 CShapes 1980년 판본을 사용한다. 편집기에 맞춰 경로를 단순화하고 메르카토르 좌표로 투영했다. 고대 판본에는 문화권의 범위도 포함된다. [Historical Basemaps 원본](https://github.com/aourednik/historical-basemaps) · [GPL-3.0](historical-basemaps-license.txt)
+
+현대 국경과 시·도·주 표시는 Natural Earth 1:10m Admin 0 육상 경계 및 Admin 1 주·도 경계선(v5.1.0)을 0.018도 허용 오차로 단순화한 자료다. 한국·북한·중국·일본·몽골·대만의 내부 경계는 같은 자료의 Admin 1 폴리곤(v5.1.1)에서 인접한 두 구역이 공유하는 선만 추출하여 0.008도 허용 오차로 단순화했다. 시대별 배경을 사용할 때는 그 판본의 영역선을 국경으로 사용한다. 현대 행정경계는 별도로 켤 수 있다. [Natural Earth](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/) · [퍼블릭 도메인](https://www.naturalearthdata.com/about/terms-of-use/)
+
+남아시아·동남아시아 백지도는 Natural Earth 1:10m 육지 v5.1.1을 사용한다. 육지와 실제 해안선을 따로 잘라 그려 지도 자료의 사각 테두리가 해안선으로 표시되지 않도록 했다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/)
+
+전 지구 백지도의 대륙 윤곽은 Natural Earth 1:50m 육지 v4.1.0에서 추출했다. 날짜변경선에서 나뉜 폴리곤의 절단면과 투영 범위 끝에는 해안선을 그리지 않는다. [Natural Earth 육지](https://www.naturalearthdata.com/downloads/50m-physical-vectors/50m-land/)

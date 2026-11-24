@@ -1,5 +1,5 @@
 import { historyCamera } from './cold-war.js';
-import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=source-card-1';
+import { loadSheetLibrary, sheetPoint, refreshDrawing } from './sheet-library.js?v=area-periods-1';
 import {
   W,
   mapHeight,
@@ -511,7 +511,7 @@ async function start() {
       const type = entry?.type || (typeof layer?.line === 'boolean' ? (layer.line ? 'line' : 'area') : 'other');
       const territory = historical.events[doc.eventId]?.territories.find(t => t.key === key);
       const period = territory?.from && (territory.from + (territory.to ? ' ~ ' + territory.to : '부터'));
-      rows.push({ kind: 'layerKeys', index, type, name: entry?.name || layer?.name || key,
+      rows.push({ kind: 'layerKeys', index, type, name: entry?.name || layer?.name || key, period: entry?.period,
         original: layer?.original, detail: [period, layer?.note, territory?.note].filter(Boolean).join(' · '),
         hidden: doc.hiddenLayers?.includes(key), missing: !layer?.d && !layer?.original, loadFailed: layer?.loadFailed });
     }
@@ -549,23 +549,28 @@ async function start() {
     }
     if (hidden && selected?.kind === kind && selected.index === index) selected = null;
   }
-  function sidebarRow({kind, index, name, hidden, missing, loadFailed, original, detail}) {
+  function shapeLabel(name, period) {
+    return '<span class="shape-label"><span>' + name + '</span>' +
+      (period ? '<span class="shape-period">' + esc(period) + '</span>' : '') + '</span>';
+  }
+  function sidebarRow({kind, index, name, period, hidden, missing, loadFailed, original, detail}) {
     const text = esc(name), id = 'visible-' + kind + '-' + index;
+    const spokenName = period ? text + ' · ' + esc(period) : text;
     const toggle = '<label class="pin-toggle" title="지도에 표시"><input type="checkbox" id="' + id +
       '" data-visible-kind="' + kind + '" data-index="' + index + '"' +
       (kind === 'points' ? ' data-visible-point="' + index + '"' : '') +
-      ' aria-label="' + text + ' 지도에 표시"' + (missing ? ' disabled' : hidden ? '' : ' checked') + '></label>';
+      ' aria-label="' + spokenName + ' 지도에 표시"' + (missing ? ' disabled' : hidden ? '' : ' checked') + '></label>';
     const label = kind === 'layerKeys'
-      ? '<button type="button" class="place layer-name" data-layer-source="' + index + '" aria-haspopup="dialog" aria-label="' + text +
-        ' 출처와 표시 근거" title="' + esc(detail ? '출처와 표시 근거 · ' + detail : '출처와 표시 근거') + '">' + text +
-        (loadFailed ? ' · 도형 읽기 실패' : missing ? ' · 도형 미등록' : '') + '</button>'
+      ? '<button type="button" class="place layer-name" data-layer-source="' + index + '" aria-haspopup="dialog" aria-label="' + spokenName +
+        ' 출처와 표시 근거" title="' + esc(detail ? '출처와 표시 근거 · ' + detail : '출처와 표시 근거') + '">' + shapeLabel(
+          text + (loadFailed ? ' · 도형 읽기 실패' : missing ? ' · 도형 미등록' : ''), period) + '</button>'
       : '<button class="place" data-kind="' + kind + '" data-index="' + index + '" aria-pressed="' +
         (selected?.kind === kind && selected.index === index) + '">' +
         (kind === 'points' ? '' : '<i>' + icon(kindIcons[kind]) + '</i>') + '<span>' + text + '</span></button>';
     return '<div class="pin-row' + (kind === 'notes' ? ' wide-item' : '') + '">' + toggle + label +
-      (original ? '<button type="button" data-original="' + index + '" aria-label="' + text + ' 원도 크게 보기">원도 보기</button>' : '') +
+      (original ? '<button type="button" data-original="' + index + '" aria-label="' + spokenName + ' 원도 크게 보기">원도 보기</button>' : '') +
       '<button type="button" class="remove-item" data-remove-kind="' + kind + '" data-index="' + index +
-      '" aria-label="' + text + ' 지도에서 빼기" title="지도에서 빼기">−</button></div>';
+      '" aria-label="' + spokenName + ' 지도에서 빼기" title="지도에서 빼기">−</button></div>';
   }
   function list() {
     const all = sidebarItems();
@@ -853,8 +858,8 @@ async function start() {
     const key = esc(entry.key);
     const caption = !available ? (layer?.loadFailed ? '도형 읽기 실패' : '도형 미등록') : visible ? '✓ 표시 중' : layer.original ? '원도 표시' : '＋ 추가';
     return '<button class="choice" id="choice-shape-' + key + '" data-shape="' + key +
-      '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') + '><span>' +
-      esc(entry.name) + '</span><small>' + caption + '</small></button>';
+      '" aria-pressed="' + !!visible + '"' + (available ? '' : ' disabled') + '>' +
+      shapeLabel(esc(entry.name), entry.period) + '<small>' + caption + '</small></button>';
   }
   const shapesByKey = new Map((library.shapes || []).map(entry => [entry.key, entry]));
   const packageLessons = packages.map(pkg => ({
@@ -874,7 +879,7 @@ async function start() {
     const packages = '<div class="catalog-packages" role="group" aria-label="패키지"><h4>패키지</h4>' +
       buttons.join('') + '</div>';
     const matches = packageLessons[catalogPackage].categories.map(category => {
-      const matching = entry => category.theme.name.includes(query) || entry.name.includes(query) || entry.keywords?.includes(query);
+      const matching = entry => category.theme.name.includes(query) || entry.name.includes(query) || entry.keywords?.includes(query) || entry.period?.includes(query);
       return { category, points: category.points.filter(matching), shapes: category.shapes.filter(matching) };
     }).filter(row => row.category.theme.name.includes(query) || row.points.length || row.shapes.length);
     if (!matches.length) return packages + '<p class="empty">이 패키지에 검색 결과가 없습니다.</p>';
@@ -949,7 +954,7 @@ async function start() {
     const choices = $('choices');
     if (!topic && library.source !== 'unavailable') {
       for (const entry of library.shapes || []) {
-        if (![entry.name, entry.keywords, entry.kind].some((value) => value?.includes(query))) continue;
+        if (![entry.name, entry.keywords, entry.kind, entry.period].some((value) => value?.includes(query))) continue;
         addResult(entry.type, entry.kind, shapeChoice(entry));
       }
       results.push(catalogColumn('point', '점', groups.point), catalogColumn('line', '선', groups.line),

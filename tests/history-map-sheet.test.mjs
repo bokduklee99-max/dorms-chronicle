@@ -193,3 +193,33 @@ test('catalog uses sheet geometry and subtype labels even when a line has a refe
     ['경계', 'line', '경계·선'], ['지역', 'area', '주권·국경'], ['전선', 'line', '전선 유형'],
   ]);
 });
+
+test('area choices keep the space name and show sheet periods separately', () => {
+  const { shapes } = sheetLibrary({
+    ...tables,
+    공간: [
+      { 공간ID: 'dated', 공간명: '고구려', 공간유형: 'area', 지도참조키: 'dated' },
+      { 공간ID: 'open', 공간명: '대한민국', 공간유형: 'area', 지도참조키: 'open' },
+      { 공간ID: 'snapshot', 공간명: '중국 관내', 공간유형: 'area', 지도참조키: 'snapshot' },
+      { 공간ID: 'line', 공간명: '경계', 공간유형: 'line', 지도참조키: 'line' },
+    ],
+    지도도형: [
+      { 지도참조키: 'dated', 도형유형: 'area', 기준시점: '원자료 · 출처' },
+      { 지도참조키: 'open', 도형유형: 'area', 기준시점: '1960년 판본' },
+      { 지도참조키: 'snapshot', 도형유형: 'area', 기준시점: '1921–1945년 중화민국 영역 · 출처' },
+      { 지도참조키: 'line', 도형유형: 'line' },
+    ],
+    영토변화: [
+      { 지도참조키: 'dated', 영토유형: 'sovereignty', 시작일: '-36', 종료일: '22' },
+      { 지도참조키: 'dated', 영토유형: 'sovereignty', 시작일: '-36', 종료일: '22' },
+      { 지도참조키: 'open', 영토유형: 'sovereignty', 시작일: '1953-07-27', 종료일: '' },
+      { 지도참조키: 'line', 영토유형: 'occupation', 시작일: '1945', 종료일: '1950' },
+    ],
+  }, presets);
+  assert.deepEqual(shapes.map(({ name, period }) => [name, period]), [
+    ['고구려', '기원전 36년 ~ 22년'],
+    ['대한민국', '1953-07-27부터'],
+    ['중국 관내', '1921–1945년 기준'],
+    ['경계', undefined],
+  ]);
+});

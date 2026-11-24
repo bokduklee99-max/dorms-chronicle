@@ -25,9 +25,21 @@ function kindLabel(tables, tab, column, value) {
     defaultKindLabels[value] || value;
 }
 
+function territoryPeriod(start, end) {
+  const label = (date) => {
+    if (/^-\d+$/.test(date)) return '기원전 ' + Math.abs(Number(date)) + '년';
+    if (/^\d+$/.test(date)) return Number(date) + '년';
+    return date;
+  };
+  if (start && end) return start === end ? label(start) : label(start) + ' ~ ' + label(end);
+  if (start) return label(start) + '부터';
+  return end ? label(end) + '까지' : '';
+}
+
 export function shapeCatalog(tables) {
   const shapes = new Map(tables.지도도형.map((shape) => [shape.지도참조키, shape]));
   const catalog = new Map();
+  const periods = new Map();
   function register(key, type, name, kind, keywords) {
     const entry = catalog.get(key) || { key, type, name, kind, keywords: '' };
     entry.keywords = [entry.keywords, keywords].filter(Boolean).join(' ');
@@ -49,6 +61,17 @@ export function shapeCatalog(tables) {
     const kind = kindLabel(tables, '영토변화', '영토유형', row.영토유형);
     const entry = register(key, shape.도형유형, shape.기준시점 || key, kind, row.설명);
     entry.kind = kind;
+    if (entry.type !== 'area') continue;
+    const period = territoryPeriod(row.시작일, row.종료일);
+    if (!period) continue;
+    if (!periods.has(key)) periods.set(key, new Set());
+    periods.get(key).add(period);
+  }
+  for (const entry of catalog.values()) {
+    if (entry.type !== 'area') continue;
+    const basis = /^(\d+(?:\s*[~–—]\s*\d+)?년|현대|냉전기)(?=\s|$)/.exec(shapes.get(entry.key)?.기준시점 || '')?.[1];
+    entry.period = periods.has(entry.key) ? [...periods.get(entry.key)].join(' · ')
+      : basis?.endsWith('년') ? basis + ' 기준' : basis || '';
   }
   return [...catalog.values()];
 }

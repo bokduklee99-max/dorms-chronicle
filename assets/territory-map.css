@@ -1,17 +1,16 @@
 * { box-sizing: border-box }
 body, h1, h2, p, figure, ul { margin: 0 }
 [hidden] { display: none !important }
-.atlas-source a:hover { text-decoration: underline; text-underline-offset: 4px }
 html { overflow: hidden }
 main { padding-bottom: 4px }
-.atlas-heading { display: grid; grid-template-columns: 5rem minmax(0,1fr); align-items: baseline; gap: 10px }
+.atlas-heading { display: grid; grid-template-columns: 5rem minmax(0,1fr); align-items: center; gap: 10px }
 .atlas-heading h1 { font-size: 15px; font-weight: 600; color: var(--chronicle-muted) }
 .atlas-options { display: flex; flex-wrap: wrap; gap: 4px }
 #scope { width: fit-content; padding: 3px; border-radius: 9px; background: var(--chronicle-tint) }
 #scope button { background: transparent; border: 0; padding-inline: 16px }
 #scope button[aria-pressed=true] { background: var(--chronicle-green); color: var(--chronicle-surface) }
 .atlas-heading { margin-bottom: 12px }
-#eras { grid-area: eras; align-self: center }
+#eras { grid-area: eras; align-self: center; padding-top: 5px }
 #eras button { background: transparent; border: 0; padding: 6px 11px; min-height: 36px; border-radius: 4px; color: var(--chronicle-muted) }
 #eras button[aria-pressed=true] { color: var(--chronicle-accent-hover); background: var(--chronicle-soft) }
 #scope button:hover:not([aria-pressed=true]), #eras button:hover:not([aria-pressed=true]) { background: var(--chronicle-surface) }
@@ -23,53 +22,96 @@ button:disabled { opacity: .4; cursor: default }
 #play:hover:enabled { background: #293a2e }
 .atlas-frame { overflow: hidden; background: var(--chronicle-surface); border: 1px solid var(--chronicle-line); border-radius: 10px }
 
-#atlas-map { display: block; width: 100%; height: clamp(345px,51vw,595px); background: #dbe8e7 }
+.atlas-canvas { position: relative }
+#fullscreen { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 42px; padding: 0 }
+#fullscreen:not([data-expanded="true"]) .collapse-icon,
+#fullscreen[data-expanded="true"] .expand-icon { display: none }
+#atlas-map { display: block; width: 100%; height: clamp(345px,51vw,595px); background: #dbe8e7; touch-action: none; cursor: grab }
+#atlas-map:focus-visible { outline: 2px solid var(--chronicle-green); outline-offset: -3px }
+#atlas-map.is-dragging { cursor: grabbing }
+main.atlas-expanded { display: flex; flex-direction: column; height: 100dvh; padding: 12px; overflow: auto; background: var(--chronicle-surface) }
+.atlas-expanded #atlas { flex: 1; display: grid; grid-template-rows: minmax(min-content, 1fr) }
+.atlas-expanded .atlas-layout { display: grid; height: 100%; grid-template-rows: auto minmax(160px, 1fr) auto auto }
+.atlas-expanded #atlas-map { height: 100% }
+.atlas-expanded .legend-entries { max-height: 42px }
+.atlas-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px }
+.atlas-zoom button { min-width: 40px; padding-inline: 8px; font-size: 18px }
 #land { fill: #f1eddf; stroke: #9aa39a; stroke-width: .65 }
-#rivers { fill: none; stroke: #8faead; stroke-width: .65; opacity: .66 }
+.atlas-relief { opacity: .64; pointer-events: none }
+#rivers, #rivers-detail { fill: none; stroke: #799c9e; stroke-width: .72; opacity: .72; pointer-events: none }
+#rivers-detail { stroke-width: .55; opacity: .54 }
 #lakes { fill: #dbe8e7 }
-#sea-labels { fill: #4c6c6a; letter-spacing: .11em }
+.terrain-label { visibility: hidden; fill: #315d65; stroke: #e8f2ef; stroke-linejoin: round; paint-order: stroke; font-weight: 600; pointer-events: none }
+.terrain-label.is-current { visibility: visible }
+.terrain-label--mountain { fill: #614e38; stroke: #faf2df }
+.terrain-label--ocean { font-size: 1.18em; letter-spacing: .12em }
 .atlas-territory { opacity: 0; visibility: hidden; fill: currentColor; fill-opacity: .76; stroke: color-mix(in srgb,currentColor 65%,#222e25); stroke-width: 1.15; pointer-events: none; transition: opacity 440ms ease, visibility 0s 440ms }
 .atlas-territory.is-current { opacity: 1; visibility: visible; transition-delay: 0s }
-.atlas-territory.is-current.is-dim { opacity: .22 }
-.atlas-territory.is-current.is-focused { fill-opacity: .9; stroke-width: 2 }
 .territory-label { visibility: hidden; opacity: 0; fill: #262d25; stroke: #fffefa; stroke-linejoin: round; paint-order: stroke; font-weight: 700; pointer-events: none; transition: opacity 250ms ease, visibility 0s 250ms }
 .territory-label.is-current { visibility: visible; opacity: 1; transition-delay: 0s }
-.territory-label.is-current.is-dim { opacity: .4 }
-.atlas-legend { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 16px; padding: 12px 18px; border-top: 1px solid var(--chronicle-line) }
+.atlas-legend { padding: 7px 18px; border-top: 1px solid var(--chronicle-line) }
 #year { font: 600 clamp(24px,3.5vw,40px)/1.1 Georgia, var(--font-sans); color: var(--chronicle-green); letter-spacing: -.045em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap }
 .atlas-legend h2 { font-size: 15px; color: var(--chronicle-muted) }
-#legend { list-style: none; padding: 0; display: flex; flex: 1; flex-wrap: wrap; gap: 4px 8px }
-#legend li { max-width: 100% }
-#legend button { display: flex; align-items: center; gap: 6px; text-align: left; min-height: 36px; padding: 5px 8px; border-color: transparent; word-break: keep-all }
-#legend button[aria-pressed="true"] { border-color: var(--chronicle-green); background: #e8eee5 }
-#legend i { background: var(--swatch); border-radius: 2px; width: 11px; height: 11px; flex: 0 0 11px }
-#period, #empty, #gap { flex-basis: 100%; color: var(--chronicle-muted); font-size: 14px; line-height: 1.5 }
-.atlas-transport { display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "year playback" "eras eras" "slider slider"; align-items: center; gap: 4px 12px; padding: 12px 18px; border-bottom: 1px solid var(--chronicle-line) }
+.legend-row { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: baseline; gap: 8px; padding-block: 5px }
+.legend-extra { border-top: 1px solid var(--chronicle-line) }
+.legend-extra summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding-block: 6px;
+  color: var(--chronicle-muted);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.legend-extra summary::-webkit-details-marker { display: none }
+.legend-extra summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-inline: 6px;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.legend-extra[open] summary::after { transform: rotate(225deg) }
+.legend-extra summary:focus-visible { outline: 2px solid var(--chronicle-green); outline-offset: -2px }
+.legend-controls { display: grid; justify-items: start; gap: 5px }
+#reset-territories { min-height: 30px; padding: 3px 7px; font-size: 13px }
+.legend-entries { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; max-height: 76px; overflow: auto }
+.legend-extra .legend-entries { max-height: none; overflow: visible }
+.legend-entries li { max-width: 100% }
+.legend-entries button { display: flex; align-items: center; gap: 6px; text-align: left; min-height: 36px; padding: 5px 8px; border-color: transparent; word-break: keep-all; overflow-wrap: anywhere }
+.legend-entries button[aria-pressed="true"] { border-color: var(--chronicle-green); background: #e8eee5 }
+.legend-entries i { background: var(--swatch); border-radius: 2px; width: 11px; height: 11px; flex: 0 0 11px }
+#period, #empty, .legend-empty { color: var(--chronicle-muted); font-size: 14px; line-height: 1.5 }
+#period, #empty { padding: 4px 0 }
+#map-status { position: absolute; top: 10px; left: 10px; width: fit-content; max-width: calc(100% - 72px); padding: 5px 9px; border-radius: 6px; background: var(--chronicle-surface); color: var(--chronicle-muted); font-size: 14px; pointer-events: none }
+.atlas-transport { display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "year playback" "slider slider" "eras eras"; align-items: center; gap: 4px 12px; padding: 12px 18px; border-bottom: 1px solid var(--chronicle-line) }
 #year { grid-area: year }
 .atlas-playback { grid-area: playback; display: flex; align-items: center; gap: 4px }
 .atlas-playback button { min-width: 36px; padding-inline: 8px }
 #play { min-width: 76px }
 #play span { font-size: 12px }
 .atlas-scrubber { grid-area: slider }
-@media (min-width: 980px) {
-  .atlas-transport { grid-template-columns: auto 1fr auto; grid-template-areas: "year eras playback" "slider slider slider" }
-  #eras { justify-content: center }
-}
 .atlas-scrubber input { display: block; width: 100%; height: 28px; margin: 0; accent-color: var(--chronicle-accent); cursor: pointer }
 .atlas-scrubber div { display: flex; justify-content: space-between; gap: 8px; color: var(--chronicle-muted); font-size: 13px; font-variant-numeric: tabular-nums }
-.atlas-source { margin-top: 12px; color: var(--chronicle-muted); font-size: 14px; line-height: 1.6 }
-.atlas-source a { color: var(--chronicle-green); text-underline-offset: 2px }
+.atlas-source { padding: 5px 12px; border-top: 1px solid var(--chronicle-line); color: var(--chronicle-muted); font-size: 12px; line-height: 1.5 }
 @media (max-width: 600px) {
   .atlas-heading { grid-template-columns: minmax(0,1fr); gap: 4px }
   .atlas-heading h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%) }
-  #scope { width: 100%; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1px }
+  #scope { width: 100%; display: flex; justify-content: space-around; gap: 1px }
   #scope button { padding-inline: 2px; word-break: keep-all }
   #eras button { padding-inline: 8px }
   .atlas-transport { padding: 10px; column-gap: 4px }
   #play { min-width: 66px }
   #atlas-map { height: clamp(290px,85vw,420px) }
-  .atlas-legend { padding: 10px 12px; gap: 4px 8px }
+  .atlas-legend { padding-inline: 12px }
+  .legend-row { grid-template-columns: 80px minmax(0, 1fr) }
+  .legend-entries { gap: 4px }
 }
+.legend-extra > .legend-row { grid-template-columns: minmax(0, 1fr) }
 @media (prefers-reduced-motion: reduce) {
   .atlas-territory, .territory-label { transition: none }
 }

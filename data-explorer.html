@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="./assets/chronicle-theme.css">
   <link rel="stylesheet" href="./metro/assets/data-explorer.css?v=relation-counts">
   <link rel="stylesheet" href="./assets/space-preview.css?v=regional-atlas">
-  <link rel="stylesheet" href="./data-explorer.css?v=showroom">
-  <script defer src="./sheet-config.js?v=map-views"></script>
+  <link rel="stylesheet" href="./data-explorer.css?v=showroom-catalog">
+  <script defer src="./sheet-config.js?v=timeline-images"></script>
   <script defer src="./sheets.js?v=source-studio"></script>
-  <script type="module" src="./metro/assets/data-explorer.js?v=showroom-2"></script>
+  <script type="module" src="./metro/assets/data-explorer.js?v=showroom-catalog"></script>
 </head>
 <body class="chronicle-data">
   <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -111,11 +111,20 @@
     </div>
     <noscript>데이터를 보려면 자바스크립트를 켜 주세요.</noscript>
     <section id="example-view" aria-labelledby="showroom-title" hidden>
-      <header class="dashboard-heading"><div><h1 id="showroom-title">시각화 쇼룸</h1><p>냉전의 사건들을 세 가지 수업 화면으로 살펴보세요.</p></div></header>
-      <nav id="showroom-views" aria-label="시각화 유형"></nav>
-      <section id="showroom-exhibit" aria-labelledby="exhibit-title" hidden>
-        <header><h2 id="exhibit-title" tabindex="-1"></h2><a id="showroom-open" target="_blank" rel="noreferrer">새 창에서 열기 ↗</a></header>
-        <div id="showroom-stage"></div>
+      <header class="dashboard-heading"><h1 id="showroom-title">시각화 쇼룸</h1></header>
+      <div id="showroom-tabs" role="tablist" aria-label="쇼룸 전시">
+        <a id="lessons-tab" role="tab" aria-controls="lessons-panel" aria-selected="true" href="#examples">수업 화면</a>
+        <a id="modals-tab" role="tab" aria-controls="modals-panel" aria-selected="false" tabindex="-1" href="#examples?tab=modals">모달 디자인 도감</a>
+      </div>
+      <section id="lessons-panel" role="tabpanel" aria-labelledby="lessons-tab">
+        <nav id="showroom-views" aria-label="시각화 유형"></nav>
+        <section id="showroom-exhibit" aria-labelledby="exhibit-title" hidden>
+          <header><h2 id="exhibit-title" tabindex="-1"></h2><a id="showroom-open" target="_blank" rel="noreferrer">새 창에서 열기 ↗</a></header>
+          <div id="showroom-stage"></div>
+        </section>
+      </section>
+      <section id="modals-panel" role="tabpanel" aria-labelledby="modals-tab" hidden>
+        <iframe id="modal-catalog-frame" data-src="./mockups/modal-catalog/index.html?embed=1" title="모달 디자인 도감"></iframe>
       </section>
     </section>
   </main>

@@ -132,7 +132,7 @@ select.source{background:var(--panel);font-variant-numeric:tabular-nums}
  </section>
 </main>
 
-<script src="./sheet-config.js?v=normalized-schema"></script>
+<script src="./sheet-config.js?v=timeline-images"></script>
 <script src="./sheets.js?v=normalized-schema"></script>
 <script type="module">
 import {setupSwimlaneModal} from './assets/swimlane-modal.js?v=lesson-view';
@@ -141,7 +141,7 @@ const params=new URLSearchParams(location.search);
 const embedded=params.has('embedded');
 const frame=embedded?window.frameElement:null;
 const lesson=frame?.lessonSwimlane;
-const packageId=params.get('package')==='cold-war'?'cold-war':'japan';
+const packageId=params.get('package')||'japan';
 const packageName=lesson?.name||(packageId==='cold-war'?'냉전':'일제강점기와 독립운동');
 document.title=packageName+' · 스윔레인';
 document.querySelector('h1').textContent=packageName;
@@ -159,7 +159,7 @@ if(lesson){
  status.hidden=true;
  document.querySelector('h1').hidden=true;
 }
-const {events,categories,periods,actors,detailActors,relations}=lesson??await loadSwimlane(SHEET_CONFIG,SheetData,packageId)
+const lessonRecords=lesson??await loadSwimlane(SHEET_CONFIG,SheetData,packageId)
  .then(data=>{status.hidden=true;return data;})
  .catch(async()=>{
   const response=await fetch('./assets/swimlane-'+packageId+'.json');
@@ -167,6 +167,7 @@ const {events,categories,periods,actors,detailActors,relations}=lesson??await lo
   status.textContent='저장된 연표 자료를 표시합니다.';
   return response.json();
  }).catch(error=>{status.textContent='연표 자료를 불러오지 못했습니다.';throw error;});
+const {events,categories,periods,actors,detailActors,relations}=lessonRecords;
 const sheetBase='https://docs.google.com/spreadsheets/d/'+SHEET_CONFIG.id+'/edit#gid=';
 const sheet=sheetBase+SHEET_CONFIG.eventSheetId;
 const groups=[
@@ -387,7 +388,7 @@ const groupButton=document.getElementById('all-relations');
 groupButton.textContent='전체 관계 '+relations.length+'건';
 groupButton.disabled=false;
 groupButton.addEventListener('click',()=>{highlightRelationNode('');openModal('all');});
-const {open:openModal}=setupSwimlaneModal({events,categories,actors,detailActors,relations},frame);
+const {open:openModal}=setupSwimlaneModal({...lessonRecords,name:packageName,packageId},frame);
 function link(text,url){
  const anchor=create('a','',text);
  anchor.href=url;
@@ -511,6 +512,12 @@ layoutObserver.observe(axis);
 layoutObserver.observe(chart);
 layoutObserver.observe(eras);
 document.fonts.ready.then(relayoutTimeline);
+const initialRecord=params.get('record');
+if(initialRecord==='all')openModal('all');
+else if(initialRecord){
+ const record=[...events,...categories,...(detailActors||actors),...relations].find(row=>row.id===initialRecord);
+ if(record)openModal('record',record);
+}
 </script>
 </body>
 </html>

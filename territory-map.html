@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>영토 변화 지도 · DoRms' Chronicle</title>
   <script>if (window === window.top) location.replace('./metro/?sample=japan&view=territory');</script>
-  <link rel="stylesheet" href="./assets/chronicle-theme.css">
-  <link rel="stylesheet" href="./assets/territory-map.css">
+  <link rel="stylesheet" href="./assets/chronicle-theme.css?v=map-credit-links">
+  <link rel="stylesheet" href="./assets/territory-map.css?v=legend-disclosure">
 </head>
 <body>
   <main>
     <div class="atlas-heading">
       <h1>지도 범위</h1>
       <div id="scope" class="atlas-options" role="group" aria-label="지도 범위" hidden>
-        <button type="button" data-scope="korea" aria-pressed="true">한반도·만주</button>
+        <button type="button" data-scope="world" aria-pressed="true">세계</button>
+        <button type="button" data-scope="korea" aria-pressed="false">한반도·만주</button>
         <button type="button" data-scope="eastAsia" aria-pressed="false">동아시아</button>
-        <button type="button" data-scope="china" aria-pressed="false">중국사</button>
+        <button type="button" data-scope="china" aria-pressed="false">중국</button>
         <button type="button" data-scope="europe" aria-pressed="false">유럽·지중해</button>
       </div>
     </div>
@@ -30,40 +31,71 @@
               <button id="play" type="button"><span aria-hidden="true">▶</span> 재생</button>
               <button id="next" type="button" aria-label="다음 경계 변화">→</button>
             </div>
-            <div id="eras" class="atlas-options" role="group" aria-label="시대 선택"></div>
             <div class="atlas-scrubber">
               <input id="year-range" type="range" step="1" list="era-ticks" aria-label="지도 연도">
               <datalist id="era-ticks"></datalist>
               <div aria-hidden="true"><span id="first-year"></span><span id="last-year"></span></div>
             </div>
+            <div id="eras" class="atlas-options" role="group" aria-label="시대 바로가기"></div>
           </div>
-          <svg id="atlas-map" role="img" aria-labelledby="map-title">
-            <title id="map-title">한반도·동아시아 영토 지도</title>
-            <g transform="scale(.78 1)">
-              <path id="land" fill-rule="evenodd" vector-effect="non-scaling-stroke"></path>
-              <g id="territories"></g>
-              <path id="rivers" vector-effect="non-scaling-stroke"></path>
-              <path id="lakes" fill-rule="evenodd"></path>
-              <g id="sea-labels" aria-hidden="true" text-anchor="middle">
-                <text x="122.7" y="-35.75">황해</text>
-                <text x="133.9" y="-39.2">동해</text>
-                <text x="126.4" y="-27.6">동중국해</text>
+          <div class="atlas-canvas">
+            <svg id="atlas-map" role="img" aria-labelledby="map-title" tabindex="0">
+              <title id="map-title">세계 영토 지도</title>
+              <g transform="scale(.78 1)">
+                <path id="land" fill-rule="evenodd" vector-effect="non-scaling-stroke"></path>
+                <clipPath id="land-clip"><use href="#land" clip-rule="evenodd"></use></clipPath>
+                <g id="territories" clip-path="url(#land-clip)"></g>
+                <image class="atlas-relief" href="./assets/event-geometry/context/world-relief.webp"
+                  x="-180" y="-90" width="360" height="180" preserveAspectRatio="none"
+                  clip-path="url(#land-clip)" aria-hidden="true"></image>
+                <path id="rivers" vector-effect="non-scaling-stroke"></path>
+                <path id="rivers-detail" vector-effect="non-scaling-stroke"></path>
+                <path id="lakes" fill-rule="evenodd"></path>
               </g>
-            </g>
-            <g id="territory-labels" aria-hidden="true" text-anchor="middle" dominant-baseline="central"></g>
-          </svg>
+              <g id="terrain-labels" aria-hidden="true" text-anchor="middle" dominant-baseline="central"></g>
+              <g id="territory-labels" aria-hidden="true" text-anchor="middle" dominant-baseline="central"></g>
+            </svg>
+            <button id="fullscreen" type="button" aria-label="전체 화면" title="전체 화면" hidden>
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75">
+                <path class="expand-icon" d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>
+                <path class="collapse-icon" d="M9 3v6H3m12-6v6h6M3 15h6v6m12-6h-6v6"/>
+              </svg>
+            </button>
+            <div class="atlas-zoom" role="group" aria-label="지도 확대 및 축소">
+              <button id="zoom-in" type="button" aria-label="확대">+</button>
+              <button id="zoom-out" type="button" aria-label="축소">−</button>
+            </div>
+            <p id="map-status" role="status" hidden></p>
+          </div>
+          <p class="atlas-source map-credit-links">
+            <a href="https://doi.org/10.5281/zenodo.13363121" target="_blank" rel="noopener noreferrer">Bennett 외, Cliopatria</a>
+            <span title="영토 도형을 단순화하고 해안선에 맞춰 표시했습니다.">(도형 가공)</span>
+            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>
+            <a href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noopener noreferrer">Natural Earth</a>
+          </p>
           <aside class="atlas-legend" aria-label="지도 범례">
-            <h2>표시된 영토</h2>
-            <ul id="legend"></ul>
+            <div class="legend-row" data-curriculum="true">
+              <div class="legend-controls">
+                <h2 id="curriculum-title">교육과정 내</h2>
+                <button id="reset-territories" type="button" hidden>선택 초기화</button>
+              </div>
+              <ul class="legend-entries" aria-labelledby="curriculum-title"></ul>
+              <p class="legend-empty" hidden>항목 없음</p>
+            </div>
+            <details class="legend-extra">
+              <summary id="extra-title">교육과정 외</summary>
+              <div class="legend-row" data-curriculum="false">
+                <ul class="legend-entries" aria-labelledby="extra-title"></ul>
+                <p class="legend-empty" hidden>항목 없음</p>
+              </div>
+            </details>
             <p id="empty" hidden>이 해에 표시할 수 있는 영역 자료가 없습니다.</p>
             <p id="period" hidden></p>
-            <p id="gap" hidden></p>
           </aside>
         </div>
       </figure>
-      <p class="atlas-source"><a href="https://doi.org/10.5281/zenodo.13363121">Bennett 외, Cliopatria</a>의 근사 경계를 <a href="https://www.naturalearthdata.com/downloads/10m-physical-vectors/">Natural Earth</a> 육지에 맞춰 표시했습니다. 적용 연도는 건국·멸망 연대와 다를 수 있으며, 빈 영역에는 표본 도형이 없습니다. <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
     </section>
   </main>
-  <script type="module" src="./assets/territory-map.js"></script>
+  <script type="module" src="./assets/territory-map.js?v=packed-data"></script>
 </body>
 </html>

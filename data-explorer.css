@@ -10,7 +10,10 @@
 [hidden] { display: none !important }
 #main-content { max-width: 1536px; margin: auto; padding: clamp(24px, 5vw, 56px) var(--data-edge) 48px }
 #main-content.examples-active > :not(#example-view) { display: none }
-#example-view .dashboard-heading p { margin-top: 10px; color: var(--chronicle-muted) }
+#showroom-tabs { display: flex; flex-wrap: wrap; gap: 20px; border-bottom: 1px solid var(--chronicle-line); margin-bottom: 18px }
+#showroom-tabs a { padding: 9px 4px; border-bottom: 3px solid transparent; color: var(--chronicle-muted); font-weight: 600; text-decoration: none }
+#showroom-tabs a[aria-selected=true] { color: var(--chronicle-green); border-color: currentColor }
+#modal-catalog-frame { display: block; width: 100%; height: 78dvh; min-height: 360px; border: 1px solid var(--chronicle-line); border-radius: 8px; background: var(--chronicle-surface) }
 #showroom-views { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(12px,2vw,28px) }
 #showroom-views a { display: block; overflow: hidden; padding-bottom: 18px; border: 1px solid var(--chronicle-line); border-radius: 8px; background: var(--chronicle-surface); color: var(--chronicle-ink); text-decoration: none }
 #showroom-views :is(a:hover,a[aria-current]) { border-color: var(--chronicle-green) }
@@ -23,7 +26,8 @@
 #showroom-exhibit header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px }
 #exhibit-title { font-size: clamp(20px,2.4vw,30px); font-weight: 600; scroll-margin-top: 14px }
 #showroom-open { color: var(--chronicle-green); text-underline-offset: 3px }
-#showroom-stage iframe { display: block; width: 100%; height: min(80dvh,900px); min-height: 350px; border: 1px solid var(--chronicle-line); border-radius: 8px }
+#showroom-stage iframe { display: block; width: 100%; border: 1px solid var(--chronicle-line); border-radius: 8px }
+#showroom-stage iframe[data-view=radar] { height: min(80dvh,900px); min-height: 350px }
 @media(max-width:580px){
   #showroom-views { grid-template-columns: 1fr }
   #showroom-views a { display: grid; grid-template-columns: 104px minmax(0,1fr); align-content: center; padding: 0 }

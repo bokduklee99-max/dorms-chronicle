@@ -13,7 +13,7 @@ const feed=Object.entries(raw).flatMap(([name,rows])=>{
 const tables=api.decodeFeed(feed),data=api.build(raw),copy=()=>JSON.parse(JSON.stringify(tables));
 test('content-only data preserves events, partial dates, images, leader tags and relational tenures',()=>{
   assert.equal(data.events.length,167);assert.equal(data.events[0].date,'1923');
-  assert.equal(data.events.reduce((n,e)=>n+e.media.length,0),20);assert.equal(data.events.filter(e=>e.media.length).length,19);
+  assert.equal(data.events.reduce((n,e)=>n+e.media.length,0),26);assert.equal(data.events.filter(e=>e.media.length).length,25);
   assert.equal(new Set(data.events.map(e=>e.id)).size,167);assert.ok(data.events.every(e=>!e.point));
   assert.equal(data.events.reduce((n,e)=>n+e.leaderTags.length,0),83);
   assert.equal(data.tenures.length,91);assert.equal(new Set(tables.tenures.map(row=>row.person_id)).size,80);
@@ -26,8 +26,8 @@ test('content-only data preserves events, partial dates, images, leader tags and
 test('separate event, country, tenure and category tables keep images on events and validate their links',()=>{
   assert.equal(raw.events.length,167);assert.equal(raw.countries.length,75);
   assert.equal(raw.tenure_periods.length,91);assert.equal(raw.categories.length,13);
-  assert.equal(raw.events.filter(row=>row.images).length,19);
-  assert.equal(raw.events.reduce((n,row)=>n+(row.images?row.images.split('\n').length:0),0),20);
+  assert.equal(raw.events.filter(row=>row.images).length,25);
+  assert.equal(raw.events.reduce((n,row)=>n+(row.images?row.images.split('\n').length:0),0),26);
   assert.equal(raw.event_categories.length,191);assert.equal(raw.event_countries.length,505);
   const clone=()=>JSON.parse(JSON.stringify(raw));
   for(const corrupt of [
@@ -195,6 +195,40 @@ test('place relations resolve coordinates and reject multiple primary locations'
   f.event_places.push({event_id:eventId,place_id:'p',role:'occurred_at',is_primary:true});assert.throws(()=>api.build(f),/기본 장소/);
 });
 test('all twenty bundled Notion files exist and map to their original media URLs',()=>{
-  const media=vm.runInContext('SHEET_MEDIA',context);assert.equal(Object.keys(media).length,20);
-  for(const asset of tables.media_assets){assert.ok(media[asset.url]);assert.ok(existsSync(new URL('../'+media[asset.url],import.meta.url)));}
+  const images=vm.runInContext('TimelineImage',context);
+  const notion=tables.media_assets.filter(asset=>asset.url.startsWith('https://drive.google.com/file/'));
+  assert.equal(notion.length,20);
+  for(const asset of notion){
+    const src=images.src(asset.url);
+    assert.match(src,/^\/assets\/notion-images\//);
+    assert.ok(existsSync(new URL('..'+src,import.meta.url)));
+    assert.equal(new URL(src,'https://chronicle.test/metro/').pathname,src);
+  }
+});
+test('Commons description pages resolve to bundled WebP files with separate source credits',()=>{
+  const images=vm.runInContext('TimelineImage',context),media=vm.runInContext('SHEET_MEDIA',context);
+  const commons=Object.entries(media).filter(([url])=>url.startsWith('https://commons.wikimedia.org/wiki/File:'));
+  assert.equal(commons.length,13);
+  assert.equal(new Set(commons.map(([,src])=>src)).size,13);
+  for(const [source,src] of commons){
+    assert.equal(images.src(source),src);
+    assert.match(src,/^\/assets\/timeline-images\/E\d{3}-01\.webp$/);
+    const file=readFileSync(new URL('..'+src,import.meta.url));
+    assert.equal(file.toString('ascii',0,4),'RIFF');
+    assert.equal(file.toString('ascii',8,12),'WEBP');
+  }
+  const sample=JSON.parse(readFileSync(new URL('../assets/example-japan.json',import.meta.url),'utf8'));
+  const sampleCommons=sample.events.flatMap(event=>(event.images??'').split('\n')).filter(url=>url.includes('commons.wikimedia.org/wiki/File:'));
+  assert.equal(sampleCommons.length,7);
+  assert.ok(sampleCommons.every(url=>images.src(url).startsWith('/assets/timeline-images/')));
+  const coldWar=JSON.parse(readFileSync(new URL('../assets/swimlane-cold-war.json',import.meta.url),'utf8'));
+  for(const [source,src] of commons){
+    if(sampleCommons.includes(source))continue;
+    assert.equal(images.src(coldWar.events.find(event=>event.media===source)?.media),src);
+    assert.ok(tables.media_assets.some(asset=>asset.url===source));
+  }
+  assert.deepEqual(commons.filter(([,src])=>images.credit(src)).map(([,src])=>src.match(/E\d{3}/)[0]),['E164','E264','E306']);
+  assert.equal(images.src('https://commons.wikimedia.org/wiki/File:Other.jpg'),'');
+  assert.equal(images.src('https://drive.google.com/file/d/Other/view'),'');
+  assert.equal(images.src('https://upload.wikimedia.org/photo.jpg'),'https://upload.wikimedia.org/photo.jpg');
 });

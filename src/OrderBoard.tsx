@@ -2,12 +2,14 @@ import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {QuizActorList,QuizDialog} from './QuizDialog';
 import {QuizResultDialog} from './QuizFeedback';
 import {shuffle,type QuizRecord} from './record-quiz';
+import {EventImageCredit} from './EventImageCredit';
 
 export function OrderBoard({title,records,close,next,progress}:{title:string;records:QuizRecord[];close:()=>void;next?:()=>void;progress?:{current:number;total:number}}){
  const [deck,setDeck]=useState(()=>shuffle(records));
  const [slots,setSlots]=useState<(QuizRecord|null)[]>(()=>records.map(()=>null));
  const [selected,setSelected]=useState<QuizRecord|null>(null);
  const [detail,setDetail]=useState<QuizRecord|null>(null);
+ const detailImage=TimelineImage.src(detail?.image);
  const [phase,setPhase]=useState<'playing'|'moving'|'review'>('playing');
  const [resultDismissed,setResultDismissed]=useState(false);
  const [message,setMessage]=useState('');
@@ -161,8 +163,8 @@ export function OrderBoard({title,records,close,next,progress}:{title:string;rec
      {detail.actors.length>0&&<QuizActorList>{[...new Set(detail.actors)].map(name=><li key={name}>{name}</li>)}</QuizActorList>}
      {detail.categories.length>0&&<div><dt>카테고리</dt><dd>{detail.categories.join(' · ')}</dd></div>}
     </dl>}
-    {detail.image&&/^(https?:\/\/|\/(?!\/))/i.test(detail.image)&&<img className="quiz-photo" src={detail.image} alt={detail.title+' 관련 자료'} onError={e=>{e.currentTarget.hidden=true;}}/>}
-    {!graded&&!detail.body&&!detail.place&&!detail.categories.length&&!detail.actors.length&&!detail.image&&<p>추가로 등록된 사건 설명이 없습니다.</p>}
+    {detailImage&&detail.image&&<><img className="quiz-photo" src={detailImage} alt={detail.title+' 관련 자료'} onError={e=>{e.currentTarget.hidden=true;}}/><EventImageCredit src={detailImage} url={detail.image}/></>}
+    {!graded&&!detail.body&&!detail.place&&!detail.categories.length&&!detail.actors.length&&!detailImage&&<p>추가로 등록된 사건 설명이 없습니다.</p>}
    </div>
    {!graded&&<footer className="quiz-footer"><button type="button" className="button primary" onClick={()=>{setSelected(detail);setDetail(null);setMessage('');}}>이 사건 배치하기</button></footer>}
   </QuizDialog>}

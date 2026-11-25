@@ -1,8 +1,8 @@
-import {useEffect,useId,useMemo,useRef,useState,type ReactNode} from 'react';
+import {Fragment,useEffect,useId,useMemo,useRef,useState,type ReactNode} from 'react';
 import {loadShape,mapAsset} from '../event-map-links.js';
-import {registeredSvgFrame,renderSpaceMap} from '../assets/space-preview-map.js';
+import {naturalEarthCredit,registeredSvgFrame,renderSpaceMap,shapeSourceCredit,uniqueMapCredits} from '../assets/space-preview-map.js';
 import {geographicSvgLines,mapCamera,projectedPath} from './map-view.js';
-import {historicalMapPath,readBasemap} from './map-layers';
+import {historicalMapPath,mapLayerFrame,placeLayer,readBasemap,type MapLayer} from './map-layers';
 import {fetchMapShapes,fetchMapViews,fetchWorkspaceGeography,type WorkspaceSpace} from './package-content';
 import type {CategoryMetadata} from './package-catalog';
 import type {EventRecord} from './metro-model';
@@ -119,15 +119,65 @@ export function SpaceDrawing({space,shape,date,nearbyKeys}:{space:WorkspaceSpace
 }
 export function EventMap({event,maps}:{event:EventRecord;maps:LessonMaps}){
  const direct=maps.geography?.directByEvent;
- const ids=new Set([...(direct?.get(event.id)??[]),...(direct?.get(event.legacyId??'')??[])]);
- return <PlacePicker maps={maps} ids={[...ids]} date={event.date}/>;
+ const ids=useMemo(()=>new Set([...(direct?.get(event.id)??[]),...(direct?.get(event.legacyId??'')??[])]),
+  [direct,event.id,event.legacyId]);
+ return <PlacePicker maps={maps} ids={ids} date={event.date}/>;
 }
-export function PlacePicker({maps,ids,date}:{maps:LessonMaps;ids:string[];date:string}){
+
+function EventPlaceOverview({spaces,shapes}:{spaces:WorkspaceSpace[];shapes:Shapes}){
+ const [drawing,setDrawing]=useState<{space:WorkspaceSpace;layer:MapLayer}[]>();
+ useEffect(()=>{
+  let active=true;
+  setDrawing(undefined);
+  void Promise.all(spaces.map(async space=>{
+   const shape=shapes.get(space.mapKey);
+   const layer=shape&&await placeLayer(shape).catch(()=>undefined);
+   return layer?{space,layer}:null;
+  })).then(entries=>{if(active)setDrawing(entries.filter(entry=>entry!==null));});
+  return ()=>{active=false;};
+ },[spaces,shapes]);
+ if(!drawing)return <p className="lesson-empty-map" role="status">장소 지도를 읽는 중…</p>;
+ const box=mapLayerFrame(drawing.map(({layer})=>layer));
+ if(!box)return <p className="lesson-empty-map" role="status">한 지도에 표시할 수 있는 장소 도형이 없습니다.</p>;
+ const [left,top,width,height]=box;
+ const font=Math.max(width/28,height/19);
+ const credits=uniqueMapCredits([...drawing.map(({space})=>shapeSourceCredit(shapes.get(space.mapKey))),naturalEarthCredit]);
+ return <figure className="lesson-basemap lesson-event-overview">
+  <svg viewBox={box.join(' ')} role="img" aria-label={drawing.map(({space})=>space.name).join(', ')+' 위치 지도'}>
+   <use href="/assets/swimlane-basemap.svg#land"/>
+   {drawing.map(({space,layer})=>layer.paths&&<path key={space.id} d={projectedPath(layer.paths,flatProject,!layer.line)}
+    className={layer.line?'category-location-line':'category-location-area'} fillRule="evenodd" vectorEffect="non-scaling-stroke"><title>{space.name}</title></path>)}
+   {drawing.map(({space,layer})=>{
+    if(!layer.point)return null;
+    const [x,lat]=layer.point;
+    const side=x>left+width/2?-1:1;
+    const labelY=-lat>top+font*1.6?-lat-font*.48:-lat+font*1.15;
+    return <g key={space.id}><circle cx={x} cy={-lat} r={font*.32} className="category-location-dot"><title>{space.name}</title></circle>
+     <text x={x+side*font*.55} y={labelY} textAnchor={side<0?'end':'start'} fontSize={font} className="category-map-label">{space.name}</text></g>;
+   })}
+  </svg>
+  <div className="point-basemap-credit map-credit-links">
+   {credits.map(({label,href,license,licenseHref})=><Fragment key={href}>
+    <a href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+    {licenseHref&&<a href={licenseHref} target="_blank" rel="noopener noreferrer">{license}</a>}
+   </Fragment>)}
+  </div>
+  {drawing.length<spaces.length&&<figcaption>일부 장소의 도형을 이 지도에 표시할 수 없습니다.</figcaption>}
+ </figure>;
+}
+
+function PlacePicker({maps,ids,date}:{maps:LessonMaps;ids:Set<string>;date:string}){
  const [chosen,setChosen]=useState('');
- const spaces=maps.geography?.spaces.filter(s=>ids.includes(s.id))??[];
- const space=spaces.find(s=>s.id===chosen)??spaces.find(s=>s.type==='point')??spaces[0];
+ const spaces=useMemo(()=>maps.geography?.spaces.filter(s=>ids.has(s.id))??[],[maps.geography,ids]);
+ const selected=spaces.find(s=>s.id===chosen);
+ const space=selected??spaces[0];
  if(!maps.geography||!maps.shapes||!space)return <p className="lesson-empty-map">{maps.geography===null||maps.shapes===null?'공간 지도를 불러오지 못했습니다.':!maps.geography||!maps.shapes?'지도를 읽는 중…':'연결된 장소가 없습니다.'}</p>;
- return <><div className="lesson-spaces" role="group" aria-label="지도에 표시할 장소">{spaces.map(s=><button type="button" key={s.id} aria-pressed={s===space} onClick={()=>setChosen(s.id)}>{s.name}</button>)}</div>
-  <SpaceDrawing space={space} shape={maps.shapes.get(space.mapKey)} date={date} nearbyKeys={spaces.map(s=>s.mapKey)}/>
+ const overview=spaces.length>1&&!selected;
+ return <><div className="lesson-spaces" role="group" aria-label="지도에 표시할 장소">
+  {spaces.length>1&&<button type="button" aria-pressed={overview} onClick={()=>setChosen('')}>전체</button>}
+  {spaces.map(s=><button type="button" key={s.id} aria-pressed={!overview&&s===space} onClick={()=>setChosen(s.id)}>{s.name}</button>)}
+ </div>
+  {overview?<EventPlaceOverview spaces={spaces} shapes={maps.shapes}/>:
+   <SpaceDrawing space={space} shape={maps.shapes.get(space.mapKey)} date={date} nearbyKeys={spaces.map(s=>s.mapKey)}/>}
  </>;
 }

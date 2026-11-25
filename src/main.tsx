@@ -1,7 +1,6 @@
 import {localLesson,refreshLocalLessonSheets} from '../assets/local-sheet-copy.js';
 import React,{useEffect,useMemo,useState,useRef} from 'react';
 import {createRoot} from 'react-dom/client';
-import {createPortal} from 'react-dom';
 import {setupSwimlaneModal} from '../assets/swimlane-modal.js';
 import '../assets/swimlane-modal.css';
 import '../assets/space-preview.css';
@@ -10,7 +9,6 @@ import {lessonSwimlane} from '../swimlane-data.js';
 import {SwimlaneTimeline,useLessonRecords} from './SwimlaneTimeline';
 import {BasicTimeline} from './BasicTimeline';
 import {TimeSpaceRadar} from './TimeSpaceRadar';
-import {EventCategoryTimeline} from './EventDetail';
 import {CreatorCredit} from './CreatorCredit';
 import {useSheetHistory} from './use-sheet-history';
 import type {PackageSheet} from './package-catalog';
@@ -72,17 +70,27 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  const timelineTitle=workspace?`${workspace.school}의 ${selectedPackageName} 연표`:`${selectedPackageName} 연표`;
  useEffect(()=>{document.title=`${timelineTitle} · Dorms' Chronicle`;},[timelineTitle]);
  const [view,setView]=useState<TimelineView>(()=>timelineViews.find(v=>v.id===params.get('view'))?.id??workspace?.view??'timeline');
+ const timelineFrame=showroom&&view==='timeline'?window.frameElement as HTMLElement|null:null;
+ const main=useRef<HTMLElement>(null);
+ useEffect(()=>{
+  const content=main.current;
+  if(!timelineFrame||!content)return;
+  const observer=new ResizeObserver(()=>{
+   const border=timelineFrame.offsetHeight-timelineFrame.clientHeight;
+   timelineFrame.style.height=Math.ceil(content.getBoundingClientRect().height+border)+'px';
+  });
+  observer.observe(content);
+  return ()=>observer.disconnect();
+ },[timelineFrame]);
  const [requested,setRequested]=useState<{kind:'event'|'relation';id:string;external?:boolean}|null>(()=>{
   const id=view==='territory'?null:params.get('event');
   return id?{kind:'event',id}:null;
  });
- const [context,setContext]=useState<{event:EventRecord;host:HTMLElement}|null>(null);
- const [detailTopic,setDetailTopic]=useState<string|null>(null);
  const reader=useRef<ReturnType<typeof setupSwimlaneModal>|null>(null);
  const radarPanel=useRef<HTMLDivElement>(null);
  const [radarRecord,setRadarRecord]=useState('');
  const trigger=useRef<HTMLButtonElement|SVGGElement|null>(null);
- function changeView(next:TimelineView){if(next!==view){setRequested(null);setContext(null);setRadarRecord('');setDetailTopic(null);reader.current=null;}setView(next);const url=new URL(location.href);if(next==='timeline'&&!workspace)url.searchParams.delete('view');else url.searchParams.set('view',next);history.replaceState(null,'',url);}
+ function changeView(next:TimelineView){if(next!==view){setRequested(null);setRadarRecord('');reader.current=null;}setView(next);const url=new URL(location.href);if(next==='timeline'&&!workspace)url.searchParams.delete('view');else url.searchParams.set('view',next);history.replaceState(null,'',url);}
  function visit(id:string,button?:HTMLButtonElement|SVGGElement,kind:'event'|'relation'='event'){
   if(button&&!document.querySelector('#reader[open]'))trigger.current=button;
   setRequested({id,kind,external:!!button});
@@ -107,13 +115,11 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
     if(kind==='event'&&trigger.current&&!trigger.current.isConnected){
      trigger.current=document.querySelector<HTMLButtonElement|SVGGElement>('[data-open-event="'+CSS.escape(record.sourceId)+'"]');
     }
-    reader.current=setupSwimlaneModal(lesson,null,(id:string|null,host:HTMLElement|null)=>{
+    reader.current=setupSwimlaneModal({...lesson,name:selectedPackageName,packageId},timelineFrame,(id:string|null)=>{
      const sourceId=current.find(e=>e.id===id)?.sourceId;
      const original=data.events.find(e=>e.id===sourceId);
      if(panel)setRadarRecord(original?.id||id||'');
-     setContext(host&&original?{event:original,host}:null);
      if(!id){
-      setDetailTopic(null);
       if(!panel||document.activeElement===document.body||panel.contains(document.activeElement)){
        requestAnimationFrame(()=>trigger.current?.focus({preventScroll:true}));
       }
@@ -126,29 +132,30 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
    }
   }
   setRequested(null);
- },[requested,pending,lesson,data]);
+ },[requested,pending,lesson,data,timelineFrame]);
 
+ const canRefreshSheet=!sample&&localLesson&&globalThis.caches;
+ const showClassroomLinks=!sample&&!workspace;
  return <><nav className="topbar" hidden={showroom}>
   <div className="lesson-nav-links"><a href={setupHref()}>← 수업 목록으로</a>{sample&&<a href="/classroom.html?sample=japan">학습 콘텐츠 열기 ↗</a>}</div>
-  <a href="/">Dorms' Chronicle</a>{!workspace&&!sample&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
+  <a href="/">Dorms' Chronicle</a>{!workspace&&!sample&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main ref={main} data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
  <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{timelineViews.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=timelineViews[ev.key==='Home'?0:ev.key==='End'?timelineViews.length-1:(index+(ev.key==='ArrowRight'?1:-1)+timelineViews.length)%timelineViews.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
  {view!=='territory'&&!data.events.length&&<p role="status">{pending?'시트에서 사건을 읽는 중이에요.':<>표시할 사건이 없어요. <a href={setupHref({workspace:workspace?.id})}>탐색 설정에서 구성을 확인해 주세요.</a></>}</p>}
  {view==='swimlane'&&data.events.length>0&&<SwimlaneTimeline lesson={pending?undefined:lesson} packageId={packageId} name={selectedPackageName}/>}
  {view==='radar'&&data.events.length>0&&<TimeSpaceRadar data={data} lesson={lesson} packageId={packageId} panelRef={radarPanel} activeId={radarRecord} onDismiss={()=>{setRequested(null);if(radarPanel.current?.firstChild)reader.current?.close();}} onVisit={visit}/>}
  {view==='territory'&&<section id="panel-territory" role="tabpanel" aria-labelledby="tab-territory">
-  <iframe src="/territory-map.html" title="영토 변화 지도"/>
+  <iframe src="/territory-map.html" title="영토 변화 지도" allowFullScreen/>
  </section>}
  {view==='timeline'&&data.events.length>0&&(lesson&&!pending
-  ? <BasicTimeline events={data.events} categories={lesson.categories} records={lesson.events} relations={lesson.relations} onVisit={visit}/>
+  ? <BasicTimeline events={data.events} categories={lesson.categories} records={lesson.events} relations={lesson.relations} onVisit={visit} showroomFrame={timelineFrame}/>
   : <p role="status">기본 연표를 불러오는 중입니다.</p>)}
  {requested&&!lesson&&<p role="status">상세 정보를 불러오는 중입니다.</p>}
- {context&&createPortal(<EventCategoryTimeline event={context.event} data={data} titleId={view==='radar'?'radar-detail-title':'reader-title'} topicId={detailTopic} onTopicChange={setDetailTopic} onVisit={visit}/>,context.host)}
- <footer hidden={showroom}>{!sample&&localLesson&&globalThis.caches&&<>
+ {!showroom&&(canRefreshSheet||showClassroomLinks)&&<footer>{canRefreshSheet&&<>
   <button type="button" disabled={pending||!lesson||refreshState==='loading'} onClick={refreshLocalCopy}>{refreshState==='loading'?'시트 갱신 중…':'원본 시트에서 다시 받기'}</button>
   {refreshState==='failed'&&<span role="status">시트를 갱신하지 못했습니다. 다시 시도해 주세요.</span>}
- </>}Metro Map Gallery · <a href="https://21st.dev/@dhxwhy/components/metro-map-gallery" target="_blank" rel="noreferrer">DHxWhy / 21st.dev</a>{!workspace&&!sample&&<>
+ </>}{showClassroomLinks&&<>
   <a href="/classroom.html">연표·활동 ↗</a><CreatorCredit/>
- </>}</footer></main></>;
+ </>}</footer>}</main></>;
 }
 class ErrorBoundary extends React.Component<{children:React.ReactNode},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true};}render(){return this.state.failed?<main className="empty"><h1>연표를 불러오지 못했어요.</h1><p>새로고침하거나 기존 연표를 열어 주세요.</p><a href="/">기존 연표 열기 ↗</a></main>:this.props.children;}}
 if(workspaceId&&!workspace)document.title="저장한 구성을 찾을 수 없어요 · Dorms' Chronicle";

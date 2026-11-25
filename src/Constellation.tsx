@@ -50,10 +50,10 @@ function StarNode({star,index,x,y,inView=true,active,related,onHover,onFocus,onV
 function StarPreview({event,media,x,y,width,height}:{
  event:EventRecord; media:Record<string,string>; x:number; y:number; width:number; height:number;
 }){
- const image = event.media[0];
+ const image = TimelineImage.src(event.media[0]?.url,media);
  return <div className="star-preview" aria-hidden="true"
   style={{left:Math.max(10,Math.min(x+16,width-258)),top:Math.min(y+18,Math.max(4,height-(image?183:85)))}}>
-  {image&&<img src={media[image.url]?'/'+media[image.url]:image.url} alt="" onError={event=>{event.currentTarget.hidden=true;}}/>}
+  {image&&<img src={image} alt="" onError={event=>{event.currentTarget.hidden=true;}}/>}
   <time>{event.date}</time>
   <strong>{event.title}</strong>
  </div>;

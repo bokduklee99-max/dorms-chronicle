@@ -2,17 +2,16 @@ import type {EventRecord} from './metro-model';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {useSheetHistory} from './use-sheet-history';
 import {CategoryEventMap} from './CategoryEventMap';
-import {EventImportanceGroups} from './EventImportanceGroups';
 import {readEventImportance,swimlaneSnapshot,type ImportanceRow} from './event-importance';
-import {matchSwimlaneEvents} from '../swimlane-data.js';
+import {importanceLabels,matchSwimlaneEvents} from '../swimlane-data.js';
 import {CategoryMap,EventMap,useLessonMaps} from './LessonMap';
 import {createLesson,exploreHref,packageTopics,setupHref,views,workspaceDraft,type View} from './workspace-model';
 import './workspace.css';
-import '../assets/event-importance.css';
 import './lesson-wizard.css';
 
 const steps=[['package','패키지'],['categories','카테고리'],['events','사건'],['settings','수업 설정']] as const;
 const categoryTypes=[['period','시기'],['arc','사건군'],['theme','주제'],['','기타']] as const;
+const priorityColumns=[...importanceLabels];
 const toggle=(ids:string[],id:string)=>ids.includes(id)?ids.filter(x=>x!==id):[...ids,id];
 const requestedStep=()=>Math.max(0,steps.findIndex(([key])=>location.hash==='#'+key));
 type Choices={packageId:string;categories:string[];events:string[];school:string;view:View};
@@ -68,7 +67,19 @@ export function LessonWizard(){
  const eventGroup=eventFilter&&'categoryType' in eventFilter?categoryGroups.find(g=>g.type===eventFilter.categoryType&&g.selected.length):undefined;
  const filteredTopics=eventTopic?[eventTopic]:eventGroup?.selected;
  const topicEvents=filteredTopics?eligible.filter(e=>filteredTopics.some(t=>matchesTopic(e,t.topic_id))):eligible;
- const rows=topicEvents.filter(e=>(e.title+' '+e.date).toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>a.bounds.start-b.bounds.start);
+ const rows=topicEvents.filter(e=>(e.title+' '+e.date).toLowerCase().includes(query.trim().toLowerCase()))
+  .sort((a,b)=>a.bounds.start-b.bounds.start||a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'ko'));
+ const priorityEvents=new Map([...importanceLabels.keys()].map(level=>[level,[] as EventRecord[]]));
+ const eventsByDate=new Map<string,Map<string,EventRecord[]>>();
+ if(step===2)for(const record of rows){
+  const importance=matchImportance(record)?.importance??'';
+  const level=importanceLabels.has(importance)?importance:'';
+  if(!eventsByDate.has(record.date))eventsByDate.set(record.date,new Map());
+  const day=eventsByDate.get(record.date)!;
+  if(!day.has(level))day.set(level,[]);
+  day.get(level)!.push(record);
+  priorityEvents.get(level)?.push(record);
+ }
  const allRowsSelected=rows.length>0&&rows.every(e=>selectedEventIds.has(e.id));
  const event=rows.find(e=>e.id===previewEvent)??rows[0];
  const categoryEvents=useMemo(()=>data.events.filter(e=>matchesTopic(e,topic?.topic_id??'')),[data.events,topic?.topic_id]);
@@ -114,6 +125,14 @@ export function LessonWizard(){
    for(const {id} of events){if(selected)next.add(id);else next.delete(id);}
    return {...c,events:[...next]};
   });
+ }
+ function renderEvent(eventRow:EventRecord){
+  return <div className="lesson-event-entry" key={eventRow.id} data-preview={event?.id===eventRow.id}>
+   <label><input type="checkbox" checked={selectedEventIds.has(eventRow.id)} onChange={change=>{
+    setPreviewEvent(eventRow.id);selectEvents([eventRow],change.target.checked);
+   }}/><span>{eventRow.title}</span></label>
+   <button type="button" aria-label={eventRow.title+' 지도 보기'} onClick={()=>{setPreviewEvent(eventRow.id);showMap();}}>지도 보기</button>
+  </div>;
  }
  function finish(open:boolean){
   if(!pkg||!selectedTopics.length||!pickedEvents.length||!choice.school.trim()){setError('학교명을 입력해 주세요.');document.getElementById('lesson-school')?.focus();return;}
@@ -173,19 +192,33 @@ export function LessonWizard(){
     </div>
     <input type="search" className="setup-input" aria-label="사건명 또는 연도 검색" placeholder="사건명 또는 연도 검색" value={query} onChange={e=>setQuery(e.target.value)}/>
     <div className="lesson-bulk"><strong>사건 {rows.length}개</strong><button type="button" disabled={!rows.length} onClick={()=>selectEvents(rows,!allRowsSelected)}>{allRowsSelected?'목록 선택 해제':'목록 모두 선택'}</button></div>
-    <EventImportanceGroups entries={rows.map(record=>({record:{...record,importance:matchImportance(record)?.importance}}))} renderActions={(items,label)=>{
-     const events=items.map(({record})=>record);
-     const selected=events.filter(e=>selectedEventIds.has(e.id)).length;
-     return <div className="lesson-bulk lesson-priority-actions">
-      <button type="button" aria-label={`${label} 모두 선택`} disabled={selected===events.length} onClick={()=>selectEvents(events,true)}>모두 선택</button>
-      <button type="button" aria-label={`${label} 모두 해제`} disabled={selected===0} onClick={()=>selectEvents(events,false)}>모두 해제</button>
-     </div>;
-    }} render={({record:e})=><div className="lesson-row" key={e.id} data-preview={event?.id===e.id}>
-     <label><input type="checkbox" checked={selectedEventIds.has(e.id)} onChange={change=>{setPreviewEvent(e.id);selectEvents([e],change.target.checked);}}/>
-     <span>{e.title}</span></label>
-     <div className="lesson-event-meta"><time dateTime={e.date}>{e.date}</time>
-      <button type="button" aria-label={e.title+' 지도 보기'} onClick={()=>{setPreviewEvent(e.id);showMap();}}>지도 보기</button></div>
-    </div>}/>
+    {rows.length?<div className="lesson-event-scroll" role="region" aria-label="날짜순 사건 목록" tabIndex={0}>
+     <table className="lesson-event-table" aria-label="날짜와 중요도별 사건">
+      <thead><tr><th scope="col">날짜</th>{priorityColumns.map(([level,label])=>{
+       const events=priorityEvents.get(level)!;
+       const selected=events.filter(e=>selectedEventIds.has(e.id)).length;
+       const checked=events.length>0&&selected===events.length;
+       return <th key={level} scope="col" data-level={level}><label>
+        <input type="checkbox" aria-label={label+' 전체 선택'} checked={checked} disabled={!events.length}
+         ref={input=>{if(input)input.indeterminate=selected>0&&!checked;}}
+         onChange={e=>selectEvents(events,e.target.checked)}/>
+        {label}
+       </label></th>;
+      })}</tr></thead>
+      {[...eventsByDate].map(([date,day])=>{
+       const other=day.get('')??[];
+       const hasPriority=priorityColumns.some(([level])=>day.has(level));
+       const hasSecondRow=hasPriority&&other.length>0;
+       const unclassified=other.length>0?<td colSpan={importanceLabels.size} className="lesson-events-unclassified">
+        <small>중요도 미지정</small>{other.map(renderEvent)}
+       </td>:null;
+       return <tbody key={date}><tr>
+        <th className="lesson-event-date" scope={hasSecondRow?'rowgroup':'row'} rowSpan={hasSecondRow?2:1}><time dateTime={date}>{date}</time></th>
+        {hasPriority?priorityColumns.map(([level])=><td key={level}>{day.get(level)?.map(renderEvent)}</td>):unclassified}
+       </tr>{hasSecondRow&&<tr>{unclassified}</tr>}</tbody>;
+      })}
+     </table>
+    </div>:<p role="status">검색에 맞는 사건이 없습니다.</p>}
    </>}
    {step===1&&!topics.length&&<p className="setup-help">{pending?'카테고리를 읽는 중…':'이 패키지에 연결된 카테고리가 없습니다.'}</p>}
    </section>

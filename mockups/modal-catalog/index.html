@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#faf8f4"><title>모달 디자인 도감 · Dorms’ Chronicle</title>
+  <link rel="stylesheet" href="catalog.css">
+  <script defer src="../../sheet-config.js"></script><script defer src="../../sheets.js"></script>
+  <script defer src="sheet-data.js"></script><script defer src="../../assets/record-place-map.js"></script><script defer src="../../assets/record-views.js"></script><script defer src="place-map.js"></script><script defer src="records.js"></script>
+  <script defer src="specimens.js"></script><script defer src="../../assets/record-back-shortcut.js"></script><script defer src="catalog.js"></script>
+</head>
+<body class="record-presentation">
+  <header class="mast"><div class="wrap mast-inner"><a class="brand" href="./index.html"><span class="books" aria-hidden="true"><i></i><i></i><i></i></span>Dorms’ Chronicle</a>
+  <label class="search"><span aria-hidden="true">⌕</span><input type="search" id="search" aria-label="모달 검색" placeholder="모달 찾기"></label></div></header>
+  <main class="wrap"><header class="intro"><div><h1>모달 디자인 도감<span>.</span></h1><p><span id="snapshot-date"></span> 공개 시트 기준</p></div><a id="original-book" target="_blank" rel="noreferrer">원본 시트 ↗</a></header>
+    <section aria-label="목업 컬렉션"><div class="toolbar"><div id="filters" role="group" aria-label="사용 장면별로 보기"></div><div class="catalog-counts"><span id="count" role="status"></span><strong id="selection-count" role="status"></strong></div></div>
+    <div id="grid"></div><div id="empty" hidden><p>검색 결과가 없습니다.</p><button id="reset">전체 모달 보기</button></div></section>
+  </main>
+  <dialog id="viewer" aria-labelledby="modal-title"><button type="button" id="exit" aria-label="모달 닫기">×</button><div id="content"></div><p id="notice" role="status"></p></dialog>
+  <noscript>목업을 열려면 JavaScript를 활성화해 주세요.</noscript>
+</body></html>

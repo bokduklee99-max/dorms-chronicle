@@ -18,7 +18,7 @@ export type ChronicleCard={id:string;title:string;date:string;summary:string;ima
 export function chronicleCards(events:EventRecord[],media:Record<string,string>):ChronicleCard[]{
  return highlights.flatMap(([id,title,summary])=>{
   const event=events.find(event=>event.id===id),image=event?.media.map(item=>media[item.url]).find(Boolean);
-  return event&&image?[{id,title,date:event.date,summary,image:'/'+image,href:'/?setup=1&event='+encodeURIComponent(id)}]:[];
+  return event&&image?[{id,title,date:event.date,summary,image,href:'/?setup=1&event='+encodeURIComponent(id)}]:[];
  });
 }
 export function heroPosition(index:number,total:number,width:number,height:number,progress:number){

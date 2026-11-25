@@ -1,5 +1,5 @@
 import {importanceLabels,loadSwimlane,swimlaneDateRange,eventPeriods,packTimelineItems,cardRelationPaths,relationChain} from '../swimlane-data.js';
-import {setupSwimlaneModal} from './swimlane-modal.js';
+import {getSwimlaneEmbed,setupSwimlaneModal} from './swimlane-modal.js';
 
 const $=id=>document.getElementById(id);
 const make=(tag,cls='',label='')=>Object.assign(document.createElement(tag),{className:cls,textContent:label});
@@ -21,6 +21,7 @@ const bounds=value=>swimlaneDateRange(value,SheetData.dateRange);
 const params=new URLSearchParams(location.search);
 const frame=window.frameElement;
 async function init(){
+ const embed=frame&&getSwimlaneEmbed(frame);
  const pkg=params.get('package')==='cold-war'?'cold-war':'japan';
  const data=frame?.lessonSwimlane??await loadSwimlane(SHEET_CONFIG,SheetData,pkg);
  const {events,categories,actors,relations,periods}=data;
@@ -65,7 +66,7 @@ async function init(){
  viewport.addEventListener('wheel',event=>{
   if(event.ctrlKey||event.defaultPrevented)return;
   const horizontal=Math.abs(event.deltaX)>Math.abs(event.deltaY);
-  if(!horizontal&&event.target.closest?.('.rail, .axis > strong'))return;
+  if(!horizontal&&(embed?.outerFrame||event.target.closest?.('.rail, .axis > strong')))return;
   const direction=horizontal?event.deltaX:event.deltaY;
   if(!direction)return;
   if(direction<0?monthOf(start)<=min:monthOf(end)>=max){
@@ -415,19 +416,26 @@ async function init(){
   if(!events.some(e=>intersects(intervals.get(e.id))))$('lanes').append(make('p','empty','이 구간에 기록된 수업 사건이 없습니다.'));
   paintSelection();drawEdges();
  }
+ const main=document.querySelector('main');
  function fitFrame(){
-  if(frame)frame.style.height=Math.ceil(document.querySelector('main').getBoundingClientRect().height+3)+'px';
+  if(!frame)return;
+  frame.style.height=Math.ceil(main.getBoundingClientRect().height+3)+'px';
+  if(embed.outerFrame){
+   const {outerFrame,showroom}=embed;
+   const border=outerFrame.offsetHeight-outerFrame.clientHeight;
+   outerFrame.style.height=Math.ceil(showroom.getBoundingClientRect().height+border)+'px';
+  }
  }
  if(frame){
   // The lesson page owns scrolling, so keep the axis at its visible top edge.
   const axis=document.querySelector('.axis');
-  const pinAxis=()=>axis.style.setProperty('--axis-top',Math.max(0,-frame.getBoundingClientRect().top)+'px');
-  window.parent.addEventListener('scroll',pinAxis,{passive:true});
-  window.addEventListener('pagehide',()=>window.parent.removeEventListener('scroll',pinAxis),{once:true});
+  const pinAxis=()=>axis.style.setProperty('--axis-top',Math.max(0,-embed.bounds().top)+'px');
+  embed.scrollWindow.addEventListener('scroll',pinAxis,{passive:true});
+  window.addEventListener('pagehide',()=>embed.scrollWindow.removeEventListener('scroll',pinAxis),{once:true});
   pinAxis();
  }
  $('status').textContent='';fitFrame();render();
- new ResizeObserver(()=>{if($('ticks').clientWidth!==plotWidth)render();fitFrame();}).observe(document.querySelector('main'));
+ new ResizeObserver(()=>{if($('ticks').clientWidth!==plotWidth)render();fitFrame();}).observe(main);
  new ResizeObserver(layoutEraOverview).observe(eraOverview);
  document.fonts.ready.then(()=>{layoutEraOverview();render();fitFrame();});
 }

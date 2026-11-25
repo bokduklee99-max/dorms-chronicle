@@ -27,12 +27,25 @@
 .lesson-workbench { grid-template-columns: minmax(0,1.12fr) minmax(0,1fr); align-items: start }
 .lesson-events-workbench { grid-template-columns: minmax(0,2.1fr) minmax(0,1fr) }
 .lesson-picker { padding: 14px }
-.lesson-event-picker .author-priority-items { max-height: min(87dvh,840px) }
-.lesson-event-picker .lesson-row { display: grid; gap: 2px; align-items: start; border-top: 0; border-bottom: 1px solid var(--chronicle-line); padding: 8px 10px 4px }
-.lesson-event-picker .lesson-row label { align-items: start }
-.lesson-event-picker .lesson-row input { margin-block-start: 3px }
-.lesson-event-meta { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-inline-start: 25px }
-.lesson-event-meta time { font-size: 14px; color: var(--chronicle-muted); font-variant-numeric: tabular-nums }
+.lesson-event-scroll { max-height: min(57svh, 620px); overflow: auto; border: 1px solid var(--chronicle-line); border-radius: 8px }
+.lesson-event-table { width: 100%; min-width: 29rem; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 14px }
+.lesson-event-table th, .lesson-event-table td { border-bottom: 1px solid var(--chronicle-line); text-align: left; vertical-align: top }
+.lesson-event-table td, .lesson-event-table thead th:not(:first-child) { border-inline-start: 1px solid var(--chronicle-line) }
+.lesson-event-table thead th { position: sticky; top: 0; z-index: 2; padding: 9px 8px; background: var(--chronicle-tint); color: var(--chronicle-green) }
+.lesson-event-table thead th:first-child { left: 0; z-index: 3; width: 6.25rem }
+.lesson-event-table thead th[data-level=core] { background: #dceade }
+.lesson-event-table thead th[data-level=major] { background: #e9eee2 }
+.lesson-event-table label { display: flex; align-items: start; gap: 7px; cursor: pointer }
+.lesson-event-table input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--chronicle-green) }
+.lesson-event-table input:disabled { opacity: .55 }
+.lesson-event-table .lesson-event-date { position: sticky; left: 0; z-index: 1; padding: 10px 8px; white-space: nowrap; background: var(--chronicle-surface); color: var(--chronicle-muted); font-weight: 500; font-variant-numeric: tabular-nums }
+.lesson-event-table td:empty { background: color-mix(in srgb,var(--chronicle-tint) 36%,var(--chronicle-surface)) }
+.lesson-event-entry { padding: 7px 8px 3px }
+.lesson-event-entry + .lesson-event-entry { border-top: 1px solid var(--chronicle-line) }
+.lesson-event-entry label { font-weight: 600 }
+.lesson-event-entry[data-preview=true] { background: #eef2e9; box-shadow: inset 2px 0 var(--chronicle-green) }
+.lesson-event-entry button { min-height: 30px; margin-inline-start: 23px; font-size: 12px; color: var(--chronicle-green); text-decoration: underline; text-underline-offset: 3px }
+.lesson-events-unclassified small { display: block; padding: 5px 8px 0; color: var(--chronicle-muted) }
 .lesson-picker fieldset { min-width: 0; border: 0; padding: 0; margin: 0 0 15px }
 .lesson-picker legend,.lesson-bulk { font-weight: 600; padding: 7px 0 }
 .lesson-row { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--chronicle-line); padding: 5px 7px; min-height: 45px }
@@ -43,7 +56,6 @@
 .lesson-row button,.lesson-bulk button { font-size: 13px; min-height: 34px; padding-inline: 4px; color: var(--chronicle-green); text-decoration: underline; text-underline-offset: 3px; flex: none }
 .lesson-bulk { display: flex; justify-content: space-between; align-items: center }
 .lesson-category-bulk { justify-content: flex-end; padding: 0 }
-.lesson-priority-actions { justify-content: flex-end; flex-wrap: wrap; gap: 0 8px; padding: 0 8px; border-bottom: 1px solid var(--chronicle-line) }
 .lesson-map-panel { overflow: hidden }
 .lesson-map-heading { padding: 16px 18px; background: var(--chronicle-green); color: #fffdf4 }
 .lesson-map-heading p,.lesson-map-heading time { font-size: 14px; opacity: .85 }
@@ -52,6 +64,9 @@
 .lesson-basemap svg { display: block; width: 100%; height: clamp(190px,28vw,310px); background: #dce7e3 }
 .lesson-basemap path { fill: #e9e6d3; stroke: #899c8b; stroke-width: .68 }
 .lesson-basemap figcaption,.lesson-empty-map { padding: 12px 16px; color: var(--chronicle-muted); font-size: 15px }
+.lesson-event-overview svg { height: auto; min-height: 155px; max-height: 270px }
+.lesson-map-panel .point-basemap-credit { justify-content: start; padding: 5px 10px; border-color: var(--chronicle-line); background: var(--chronicle-surface); color: var(--chronicle-muted); line-height: 1.5; overflow-wrap: anywhere }
+.lesson-event-overview figcaption { padding: 5px 10px; font-size: 12px }
 .lesson-empty-map { min-height: 100px; display: grid; align-items: center }
 .lesson-spaces { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px }
 .lesson-map-panel .lesson-spaces { padding: 10px 12px; margin: 0 }
@@ -81,10 +96,6 @@
 .lesson-actions .lesson-save { margin-left: auto; padding: 8px 15px; border: 1px solid var(--chronicle-line); border-radius: 24px; background: var(--chronicle-surface) }
 @media(max-width:620px){ .lesson-view-cards { grid-template-columns: repeat(auto-fit,minmax(min(115px,100%),1fr)) } }
 @media(max-width:1020px){ .lesson-events-workbench { grid-template-columns: minmax(0,1fr) } }
-@media(max-width:560px){
- .lesson-event-picker { max-height: 58.5svh; overflow: auto; scrollbar-gutter: stable }
- .lesson-event-picker .author-priority-items { max-height: none }
-}
 .lesson-actions { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 16px; margin-top: 22px; padding: 14px 0; border-top: 1px solid var(--chronicle-line); background: var(--chronicle-paper) }
 .lesson-actions strong { margin-left: auto; font-size: 15px }
 .lesson-actions [role=alert] { color: #98391f }

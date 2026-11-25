@@ -8,6 +8,7 @@ import {shuffle,type QuizRecord} from './record-quiz';
 import {PersonQuizEditor} from './PersonQuizEditor';
 import {OrderBoard} from './OrderBoard';
 import {InsertionPlayer} from './InsertionQuiz';
+import {EventImageCredit} from './EventImageCredit';
 import {authoredQuestions,categoriesOf,clueMask,emptyPlan,fieldMatches,insertionRecords,orderQuestions,orderQuizQuestions,personChoiceFields,personQuestions,quizFields,type BlankQuizPlan,type InsertionQuizPlan,type OrderQuizPlan,type QuizField,type QuizPlan} from './authored-quiz';
 
 type Item=ReturnType<typeof authoredQuestions>[number]&{choices?:string[]};
@@ -108,6 +109,7 @@ function PassagePicker({fields,numbers,toggle}:{fields:QuizField[]}&PassageEdit)
 
 function RecordSheet({item,cell,number,showImage,editPassage}:{item:Item;cell:(field:QuizField)=>ReactNode;number:number;showImage:boolean;editPassage?:PassageEdit}){
  const {record,fields}=item;
+ const imageSrc=showImage?TimelineImage.src(record.image):'';
  const lines=new Map<string,QuizField[]>();
  const titleParts=fields.filter(f=>f.label==='사건명');
  for(const f of fields)if(f.line&&f.label==='사건 내용'){
@@ -147,7 +149,7 @@ function RecordSheet({item,cell,number,showImage,editPassage}:{item:Item;cell:(f
     <p key={line}>{parts.map(f=><span key={f.key}>{cell(f)}</span>)}</p>
    )}</div></section>}
    {details.some(Boolean)&&<dl className="quiz-facts">{details}</dl>}
-   {showImage&&record.image&&/^(https?:\/\/|\/(?!\/))/i.test(record.image)&&<img className="quiz-photo" src={record.image} alt="사건 관련 자료" onError={e=>e.currentTarget.hidden=true}/>}
+   {imageSrc&&record.image&&<><img className="quiz-photo" src={imageSrc} alt="사건 관련 자료" onError={e=>e.currentTarget.hidden=true}/><EventImageCredit src={imageSrc} url={record.image}/></>}
   </div>
  </article>;
 }

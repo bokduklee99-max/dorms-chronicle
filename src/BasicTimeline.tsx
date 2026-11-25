@@ -13,6 +13,7 @@ type Props={
  records:{id:string;sourceId:string;place?:string;title:string}[];
  relations:{fromType:string;fromId:string;toType:string;toId:string;status?:string;visible?:boolean;body?:string}[];
  onVisit:(id:string,button:HTMLButtonElement)=>void;
+ showroomFrame:HTMLElement|null;
 };
 
 function dateLabel(date:string,groupYear?:number){
@@ -35,7 +36,11 @@ function filterLabel(category:Category){
  return range?`${category.name} (${range})`:category.name;
 }
 
-export function BasicTimeline({events,categories,records,relations,onVisit}:Props){
+function frameTop(frame:HTMLElement){
+ return frame.getBoundingClientRect().top+frame.clientTop;
+}
+
+export function BasicTimeline({events,categories,records,relations,onVisit,showroomFrame}:Props){
  const [choice,setChoice]=useState<Mode>('arc');
  const viewport=useRef<HTMLDivElement>(null);
  const [selected,setSelected]=useState<string[]>([]);
@@ -85,19 +90,31 @@ export function BasicTimeline({events,categories,records,relations,onVisit}:Prop
  useLayoutEffect(()=>{
   const box=viewport.current,head=box?.querySelector('thead');
   if(!box||!head)return;
-  function measure(){
-   if(!box||!head)return;
-   box.style.setProperty('--head-height',head.offsetHeight+'px');
+  function pinHeader(){
+   if(!showroomFrame||!box)return;
+   const top=frameTop(showroomFrame)+box.getBoundingClientRect().top+box.clientTop;
+   box.style.setProperty('--head-top',Math.max(0,-top)+'px');
   }
+  const measure=()=>{
+   box.style.setProperty('--head-height',head.offsetHeight+'px');
+   pinHeader();
+  };
   measure();
   const observer=new ResizeObserver(measure);observer.observe(box);observer.observe(head);
-  return ()=>observer.disconnect();
- },[mode,columns]);
+  if(showroomFrame)window.parent.addEventListener('scroll',pinHeader,{passive:true});
+  return ()=>{
+   observer.disconnect();
+   if(showroomFrame)window.parent.removeEventListener('scroll',pinHeader);
+  };
+ },[mode,columns,showroomFrame]);
  useLayoutEffect(()=>{viewport.current?.scrollTo(0,0);},[mode,selected]);
  function jumpYear(year:number){
   const box=viewport.current,group=box?.querySelector('tbody[data-year="'+year+'"]');
   const head=box?.querySelector('thead');
-  if(box&&group&&head)box.scrollTop+=group.getBoundingClientRect().top-head.getBoundingClientRect().bottom;
+  if(!box||!group||!head)return;
+  const top=group.getBoundingClientRect().top;
+  if(showroomFrame)window.parent.scrollBy(0,top+frameTop(showroomFrame)-head.offsetHeight);
+  else box.scrollTop+=top-head.getBoundingClientRect().bottom;
  }
  return <section id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline" className="basic-timeline">
   <header className="bt-heading">

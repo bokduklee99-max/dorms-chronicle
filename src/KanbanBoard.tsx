@@ -44,7 +44,7 @@ export function KanbanBoard({events,topics,media,onVisit}:Props) {
      <th scope="row" className="kanban-year"><time dateTime={String(year)}>{year}</time></th>
      {columns.map(column => <td key={JSON.stringify(column.id)}>
       {cells.get(column.id)?.map(event => {
-       const image = event.media[0] && media[event.media[0].url];
+       const image = TimelineImage.src(event.media[0]?.url,media);
        const [,month,day] = event.date.split('-');
        const dateLabel = month ? `${Number(month)}월${day ? ` ${Number(day)}일` : ''}` : '연도만 기록';
        return <button key={event.id} className="kanban-card" type="button" onClick={e => onVisit(event.id,e.currentTarget,column.id)}>
@@ -52,7 +52,7 @@ export function KanbanBoard({events,topics,media,onVisit}:Props) {
          <time dateTime={event.date}>{dateLabel}</time>
          <strong>{event.shortTitle || event.title}</strong>
         </span>
-        {image && <img src={image} alt="" loading="lazy" />}
+        {image && <img src={image} alt="" loading="lazy" onError={e=>{e.currentTarget.hidden=true;}} />}
        </button>;
       })}
      </td>)}

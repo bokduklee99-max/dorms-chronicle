@@ -1,4 +1,5 @@
 import { historyCamera } from './cold-war.js';
+import { readPackedMapData } from '../packed-map-data.js';
 import { loadSheetLibrary, sheetPoint, refreshDrawing, groupAreaChoices } from './sheet-library.js?v=area-groups-1';
 import {
   W,
@@ -67,11 +68,7 @@ async function json(file) {
 async function packedMapData(name) {
   const response = await fetch(new URL(name, import.meta.url));
   if (!response.ok) throw Error(name);
-  const blob = await response.blob();
-  const signature = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
-  if (signature[0] === 31 && signature[1] === 139)
-    return new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).json();
-  return JSON.parse(await blob.text());
+  return readPackedMapData(response);
 }
 async function start() {
   const [library, bases, editions, boundaries] = await Promise.all([

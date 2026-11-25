@@ -5,6 +5,7 @@ export function EventHoverCard({event,events,data,media,anchor,onSelect,onOpen,o
  const ref=useRef<HTMLDivElement>(null),[position,setPosition]=useState({left:12,top:12});
  const [width,setWidth]=useState(Math.min(980,innerWidth-24));
  const {previous,next}=previewNeighbours(events,event.id);
+ const image=event.media[0],imageSrc=TimelineImage.src(image?.url,media);
  const countries=data.actors.filter(a=>['state','territory'].includes(a.actor_type||'')&&event.actorIds.includes(a.actor_id));
  useLayoutEffect(()=>{const el=ref.current;if(!el)return;const place=()=>{setWidth(Math.min(980,innerWidth-24));const size=el.getBoundingClientRect();setPosition(previewPosition(anchor,size,{width:innerWidth,height:innerHeight}));};place();const observer=new ResizeObserver(place);observer.observe(el);window.addEventListener('resize',place);return()=>{observer.disconnect();window.removeEventListener('resize',place);};},[anchor]);
  function neighbour(record:EventRecord|null,direction:'previous'|'next'){
@@ -14,7 +15,7 @@ export function EventHoverCard({event,events,data,media,anchor,onSelect,onOpen,o
   <button className="preview-close" aria-label="미리보기 닫기" onClick={onClose}>×</button>
   {neighbour(previous,'previous')}
   <article className="preview-main" key={event.id}>
-   <figure aria-hidden={!event.media[0]}>{event.media[0]&&<img src={media[event.media[0].url]||event.media[0].url} alt={event.media[0].title||event.title} onError={ev=>{ev.currentTarget.hidden=true;}}/>}</figure>
+   <figure aria-hidden={!imageSrc}>{imageSrc&&<img src={imageSrc} alt={image?.title||event.title} onError={ev=>{ev.currentTarget.hidden=true;}}/>}</figure>
    <div className="preview-story"><time>{event.date}</time><h3>{event.title}</h3><p className="preview-content">{event.description||'내용이 아직 입력되지 않았습니다.'}</p><div className="preview-countries"><h4>관련 국가</h4><div>{countries.length?countries.map(c=><span key={c.actor_id}>{c.name}</span>):<p>연결된 국가가 없습니다.</p>}</div></div><button className="preview-open" onClick={onOpen}>사진·관계망 자세히 보기 ↗</button></div>
   </article>
   {neighbour(next,'next')}

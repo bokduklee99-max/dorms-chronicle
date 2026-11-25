@@ -58,7 +58,7 @@ export function buildSwimlane(tables, parser, packageId) {
   }));
   const categories = tables.categories.filter(row => row.패키지ID === packageId).map(row => ({
     id: row.카테고리ID, name: row.카테고리명, kind: row.카테고리유형,
-    start: row.시작일, end: row.종료일, body: row.설명, place: namesOfPlaces(categoryPlaces,row.카테고리ID,row.주공간), row: row.row
+    source:row.출처,start: row.시작일, end: row.종료일, body: row.설명, place: namesOfPlaces(categoryPlaces,row.카테고리ID,row.주공간), row: row.row
   }));
   const categoriesById = new Map(categories.map(record => [record.id, record]));
   const memberships = new Map();
@@ -84,7 +84,7 @@ export function buildSwimlane(tables, parser, packageId) {
     return {
       id: row.사건ID, row: row.row, date: row.날짜, end, title: row.사건명, type: row.사건유형, importance: (row.중요도 || '').trim(),
       period: names('period')[0] || '', periodNames:names('period'), arcs: names('arc'), themes: names('theme'),
-      body: row.내용, media: row.이미지, place: namesOfPlaces(eventPlaces,row.사건ID,row.공간), actors: eventActors.get(row.사건ID) || []
+      categoryIds:categories.map(c=>c.id),source:row.출처,body: row.내용, media: row.이미지, place: namesOfPlaces(eventPlaces,row.사건ID,row.공간), actors: eventActors.get(row.사건ID) || []
     };
   });
   if (!events.length) throw Error('패키지에 연결된 연표 자료를 찾지 못했습니다.');
@@ -103,7 +103,8 @@ export function buildSwimlane(tables, parser, packageId) {
   const detailActors = tables.actors.filter(row => actorIds.has(row.주체ID) || participantIds.has(row.주체ID)).map(row => {
     const start = row['존속 시작일'] || '';
     if (start) parser.dateRange(start);
-    return {id: row.주체ID, title: row.주체명, start, end: row['존속 종료일'], body: row.소개, kind: row.구분,
+    return {id: row.주체ID, title: row.주체명, start, end: row['존속 종료일'], body: row.소개, kind: row.구분, originalName:row.원어명,iso3:row.국가코드,
+      orientation:row.성향,status:row.검토상태,periodNotes:row['기간 설명'],
       place: namesOfPlaces(actorPlaces,row.주체ID,row.거점공간)};
   });
   const actors = detailActors.filter(actor => actorIds.has(actor.id));
@@ -273,7 +274,7 @@ export function lessonSwimlane(data, metadata, sheet, actorRelationIds = new Set
       media:row?.media || (event.media || []).map(image=>image.url).join('\n'), images:event.media,
       source:event.source, originLabel:event.originLabel,
       body:event.description, type:event.eventType, place:event.place || row?.place,
-      period:labels('period')[0] || '', periodNames:labels('period'), arcs:labels('arc'), themes:labels('theme'),
+      categoryIds:topics.map(t=>t.id),period:labels('period')[0] || '', periodNames:labels('period'), arcs:labels('arc'), themes:labels('theme'),
       actors:row?.actors || event.actorIds.filter(id => names.has(id)).map(id => ({id,name:names.get(id)}))};
   });
   const selected = new Set([...events, ...categories].map(record => record.id));

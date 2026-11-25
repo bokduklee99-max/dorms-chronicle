@@ -23,7 +23,7 @@
 .context-registered summary { cursor: pointer }
 .context-registered > div { background: #e0ece9; margin-top: 5px }
 .context-city { fill: #586c60 }
-.point-basemap-credit { justify-self: stretch; padding: 4px 9px; background: #f2f2e9; color: #3e564a; border-top: 1px solid #c8d4c9; text-align: right; font-size: 12px; text-decoration: underline; text-underline-offset: 2px }
+.point-basemap-credit { justify-self: stretch; justify-content: end; padding: 4px 9px; background: #f2f2e9; color: #3e564a; border-top: 1px solid #c8d4c9; font-size: 12px }
 .space-shape-image { filter: brightness(0) saturate(100%) invert(26%) sepia(24%) saturate(712%) hue-rotate(103deg); opacity: .92 }
 .space-map-point, .space-map-area, .space-map-line { vector-effect: non-scaling-stroke }
 .space-map-point { fill: #a63d28; stroke: white; stroke-width: 2 }

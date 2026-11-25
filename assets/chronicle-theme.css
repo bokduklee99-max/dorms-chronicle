@@ -16,6 +16,15 @@
 body{background:var(--chronicle-paper);color:var(--chronicle-ink);font-family:var(--font-sans)}
 ::selection{background:#e5bb9f;color:var(--chronicle-ink)}
 :is(button,a,input,textarea,select,[tabindex]):focus-visible{outline:3px solid var(--chronicle-accent);outline-offset:4px}
+.map-credit-links{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.map-credit-links>a{
+ display:inline-flex;align-items:center;gap:5px;min-height:24px;max-width:100%;padding:2px 7px;
+ border-radius:5px;background:color-mix(in srgb,var(--chronicle-green) 7%,var(--chronicle-surface));
+ color:var(--chronicle-green);font-weight:600;text-decoration:none;overflow-wrap:anywhere
+}
+.map-credit-links>a::after{content:"↗" / "";font-size:.9em;flex:none}
+.map-credit-links>a:hover{background:color-mix(in srgb,var(--chronicle-green) 14%,var(--chronicle-surface))}
+.map-credit-links>a:focus-visible{outline-width:2px;outline-offset:1px}
 :is(h1,h2,h3){letter-spacing:-.035em}
 :is(.setup-page,.metro-app,.chronicle-lens main,.chronicle-ideas main) h1{font-weight:600;letter-spacing:-.055em}
 :is(.landing-nav,.topbar){background:var(--chronicle-paper);border-color:var(--chronicle-line)}

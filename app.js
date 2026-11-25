@@ -49,8 +49,9 @@ function toast(message) {
 
 function mediaHTML(event) {
   const media = (event.media || []).map(asset => {
-    const src = SHEET_MEDIA[asset.url] || (/\.(png|jpe?g|webp|gif)(?:[?#]|$)/i.test(asset.url) ? asset.url : '');
-    return src ? `<figure><a href="${escapeHTML(asset.url)}" target="_blank" rel="noreferrer"><img src="${escapeHTML(src)}" alt="${escapeHTML(asset.caption || asset.title)}" loading="lazy" referrerpolicy="no-referrer"></a>${asset.caption ? `<figcaption>${escapeHTML(asset.caption)}</figcaption>` : ''}</figure>` : `<a class="detail-source" href="${escapeHTML(asset.url)}" target="_blank" rel="noreferrer">${escapeHTML(asset.title || '이미지 원본 보기')}${icon('external')}</a>`;
+    const src = TimelineImage.src(asset.url), credit = TimelineImage.credit(src);
+    const caption = [escapeHTML(asset.caption || ''), credit && `${escapeHTML(credit.by)} · <a href="${escapeHTML(credit.licenseUrl)}" target="_blank" rel="noreferrer">${escapeHTML(credit.license)}</a> · 화면용 WebP 변환`].filter(Boolean).join(' · ');
+    return src ? `<figure><a href="${escapeHTML(asset.url)}" target="_blank" rel="noreferrer"><img src="${escapeHTML(src)}" alt="${escapeHTML(asset.caption || asset.title)}" loading="lazy" referrerpolicy="no-referrer"></a>${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>` : `<a class="detail-source" href="${escapeHTML(asset.url)}" target="_blank" rel="noreferrer">${escapeHTML(asset.title || '이미지 원본 보기')}${icon('external')}</a>`;
   }).join('');
   return media?`<div class="event-media">${media}</div>`:'';
 }

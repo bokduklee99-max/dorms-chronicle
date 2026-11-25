@@ -6,13 +6,23 @@ export const territoryAsset = {
   version: '0.04-degree subset, Natural Earth land clip v1',
 };
 
+export const worldTerritoryAsset = {
+  asset_id: 'asset_cliopatria_world_v1',
+  url: './event-geometry/cliopatria-world/',
+  source_id: 'source_cliopatria',
+};
+export function territoryFileStart(year) {
+  const step = year >= 1600 ? 50 : 200;
+  return Math.floor(year / step) * step;
+}
+
 // The local sample uses signed years. Keep them in its adapter because Sheets dates only accept CE.
 export const yearPosition = year => year < 0 ? year + 1 : year;
 export const yearAtPosition = position => position <= 0 ? position - 1 : position;
 export const yearLabel = year => (year < 0 ? '기원전 ' : '') + Math.abs(year) + '년';
 const partialYear = year => (year < 0 ? '-' : '') + String(Math.abs(year)).padStart(4, '0');
 
-export function readTerritoryBoundaries(collection) {
+export function readTerritoryBoundaries(collection, asset = territoryAsset) {
   if (collection?.type !== 'FeatureCollection' || !Array.isArray(collection.features) || !collection.features.length) {
     throw new Error('영토 도형 목록이 비어 있습니다.');
   }
@@ -57,11 +67,11 @@ export function readTerritoryBoundaries(collection) {
       start_date: partialYear(fromYear),
       end_date: partialYear(toYear),
       boundary_type: 'control',
-      asset_id: territoryAsset.asset_id,
+      asset_id: asset.asset_id,
       feature_id: id,
       precision: 'approximate',
       review_status: 'draft',
-      source_id: territoryAsset.source_id,
+      source_id: asset.source_id,
       start: fromYear,
       end: toYear,
       geometry,

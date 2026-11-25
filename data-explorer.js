@@ -1998,9 +1998,10 @@ function recordFields(tab, row, maps, omit = []) {
       value = raw.split(/\r?\n/).filter(item => item.trim()).map(item => {
         const href = recordLink(item.trim());
         if (!href) return escapeHtml(item);
-        const media = field === '이미지' && Object.hasOwn(SHEET_MEDIA, href) ? SHEET_MEDIA[href] : '';
-        const content = media ? `<img src="/${escapeHtml(media)}" alt="${escapeHtml(recordName(tab,row,maps))}" loading="lazy">` : '원본 열기 ↗';
-        return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+        const media = field === '이미지' && Object.hasOwn(SHEET_MEDIA, href) ? TimelineImage.src(href) : '';
+        const credit = TimelineImage.credit(media);
+        const content = media ? `<img src="${escapeHtml(media)}" alt="${escapeHtml(recordName(tab,row,maps))}" loading="lazy">${credit ? escapeHtml(credit.by) : ''}` : '원본 열기 ↗';
+        return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${content}</a>${credit ? ` · <a href="${escapeHtml(credit.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(credit.license)}</a> · 화면용 WebP 변환` : ''}`;
       }).join('<br>');
     }
     const entry = `<div><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div>`;
@@ -2973,6 +2974,17 @@ window.addEventListener('scroll', scheduleStructureTracking, {passive:true});
 
 const exampleView = document.getElementById('example-view');
 const showroomViews = document.getElementById('showroom-views');
+const showroomTabs = [...document.querySelectorAll('#showroom-tabs [role="tab"]')];
+document.getElementById('showroom-tabs').addEventListener('keydown', event => {
+  const index = showroomTabs.indexOf(event.target);
+  if (index < 0) return;
+  const next = {ArrowLeft:(index + showroomTabs.length - 1) % showroomTabs.length,
+    ArrowRight:(index + 1) % showroomTabs.length, Home:0, End:showroomTabs.length - 1, ' ':index}[event.key];
+  if (next === undefined) return;
+  event.preventDefault();
+  showroomTabs[next].focus();
+  showroomTabs[next].click();
+});
 const exhibit = document.getElementById('showroom-exhibit');
 const stage = document.getElementById('showroom-stage');
 const descriptions = {
@@ -3070,7 +3082,16 @@ function applyRoute() {
   state.activeView = 'overview';
   if (view === '#examples') {
     state.activeView = 'examples';
-    let requested = params.get('example');
+    const catalogOpen = params.get('tab') === 'modals';
+    for (const tab of showroomTabs) {
+      const selected = tab.id === (catalogOpen ? 'modals-tab' : 'lessons-tab');
+      tab.setAttribute('aria-selected',String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+    }
+    const catalogFrame = document.getElementById('modal-catalog-frame');
+    if (catalogOpen && !catalogFrame.hasAttribute('src')) catalogFrame.src = catalogFrame.dataset.src;
+    let requested = catalogOpen ? null : params.get('example');
     if (requested && !views.some(v => v.id === requested)) {
       requested = requested === 'cold-war' ? 'swimlane' : null;
       history.replaceState(null,'',requested ? '#examples?example='+requested : '#examples');

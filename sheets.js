@@ -113,7 +113,9 @@ globalThis.SheetData = (() => {
     source.search=new URLSearchParams(gid?{format:'csv',gid:String(gid)}:{sheet:name,headers:'1',tqx:'out:csv'});
     const response=await request(source,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(10000)});
     if(!response.ok)fail(`${name} 탭을 읽지 못했습니다.`);
-    const csv=await response.text();
+    const text=await response.text();
+    // Some published versions of the space table have a mistyped first column.
+    const csv=name==='공간'?text.replace(/^\uFEFF?(?:"ㅇ"|ㅇ)(?=,)/,'공간ID'):text;
     if(!csv.includes('작성 중'))return csv;
     const [header,...rows]=parseCSV(csv,true),column=header.indexOf('작성상태');
     if(column<0)return csv;
@@ -406,7 +408,7 @@ globalThis.SheetData = (() => {
     }).sort((a,b)=>a.bounds.start-b.bounds.start||a.bounds.end-b.bounds.end||a.id.localeCompare(b.id));
     const tenures=tenureRanges.map(row=>{
       const office=masters.offices.get(row.office_id),person=masters.people.get(row.person_id);
-      return {id:row.tenure_id,actorId:office.country_id,officeId:row.office_id,title:office.title,person:person.name,start:row.start,end:row.end,startDate:row.start_date,endDate:row.end_date,status:row.review_status==='verified'&&office.review_status==='verified'?'verified':'draft',source:url(masters.sources.get(row.source_id)?.url||row.notes?.match(/https?:\/\/[^\s]+/)?.[0])};
+      return {id:row.tenure_id,actorId:office.country_id,officeId:row.office_id,organizationId:office.institution_id,personId:row.person_id,title:office.title,person:person.name,start:row.start,end:row.end,startDate:row.start_date,endDate:row.end_date,status:row.review_status==='verified'&&office.review_status==='verified'?'verified':'draft',source:url(masters.sources.get(row.source_id)?.url||row.notes?.match(/https?:\/\/[^\s]+/)?.[0])};
     });
     return {events,topics,actors:tables.actors,tenures,relations,years:[...new Set(events.map(event=>event.year))].sort((a,b)=>a-b)};
   }

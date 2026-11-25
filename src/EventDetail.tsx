@@ -1,6 +1,7 @@
 import {useEffect,useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
 import type {EventRecord,HistoryData} from './metro-model';
 import {EventLeaders} from './EventLeaders';
+import {EventImageCredit} from './EventImageCredit';
 import {categoryTimeline,timelineGaps} from './detail-model';
 
 type Props={
@@ -20,7 +21,7 @@ export function EventDetail({event,data,media,titleId,topicId,onTopicChange,onVi
  const title=useRef<HTMLHeadingElement>(null);
  const body=useRef<HTMLDivElement>(null);
  const image=event.media[index];
- const imageUrl=(url:string)=>media[url]?'/'+media[url]:url;
+ const imageSrc=TimelineImage.src(image?.url,media);
 
  useEffect(()=>{
   if(body.current)body.current.scrollTop=0;
@@ -39,11 +40,14 @@ export function EventDetail({event,data,media,titleId,topicId,onTopicChange,onVi
    <div className="event-reader">
     {(event.description||image)&&<article className="event-story" aria-label="사건 내용">
      {image&&<figure className="event-media">
-      <a data-dialog-figure className="event-main-image" href={imageUrl(image.url)} target="_blank" rel="noreferrer" aria-label={`${event.title} 원본 이미지 크게 보기`}>
-       <img key={image.url} src={imageUrl(image.url)} alt={image.title||event.title} onError={error=>{error.currentTarget.hidden=true;}}/>
-      </a>
-      {event.media.length>1&&<div className="event-image-picker" role="group" aria-label="사건 사진 선택">{event.media.map((item,i)=><button type="button" key={item.url} aria-label={`사진 ${i+1}`} aria-pressed={i===index} onClick={()=>setPhoto({eventId:event.id,index:i})}><img src={imageUrl(item.url)} alt=""/></button>)}</div>}
-      {image.caption&&<figcaption>{image.caption}</figcaption>}
+      {imageSrc&&<a data-dialog-figure className="event-main-image" href={imageSrc} target="_blank" rel="noreferrer" aria-label={`${event.title} 사진 크게 보기`}>
+       <img key={imageSrc} src={imageSrc} alt={image.title||event.title} onError={error=>{error.currentTarget.hidden=true;}}/>
+      </a>}
+      {event.media.length>1&&<div className="event-image-picker" role="group" aria-label="사건 사진 선택">{event.media.map((item,i)=>{
+       const src=TimelineImage.src(item.url,media);
+       return <button type="button" key={item.url} aria-label={`사진 ${i+1}`} aria-pressed={i===index} onClick={()=>setPhoto({eventId:event.id,index:i})}>{src?<img src={src} alt=""/>:i+1}</button>;
+      })}</div>}
+      {(image.caption||imageSrc!==image.url)&&<figcaption>{image.caption}{image.caption&&imageSrc!==image.url?' · ':''}{TimelineImage.credit(imageSrc)?<EventImageCredit src={imageSrc} url={image.url}/>:imageSrc!==image.url&&<a href={image.url} target="_blank" rel="noreferrer">이미지 출처 ↗</a>}</figcaption>}
      </figure>}
      {event.description&&<p className="event-description">{event.description}</p>}
     </article>}
@@ -78,7 +82,6 @@ export function EventCategoryTimeline({event,data,titleId,topicId,onTopicChange,
     <header>
      <h3 id={`${titleId}-timeline`}>{topics.length===1?`${topics[0].name} 연표`:'카테고리 연표'}</h3>
      {topics.length>1&&<div className="event-topic-links" role="group" aria-label="연표 카테고리">{topics.map(item=><button type="button" key={item.topic_id} aria-pressed={item.topic_id===topic?.topic_id} onClick={()=>onTopicChange(item.topic_id)}>{item.name}</button>)}</div>}
-     {topic&&<a href={'/history-map.html?topic='+encodeURIComponent(topic.topic_id)} target="_blank" rel="noreferrer">지도 제작실에서 열기 ↗</a>}
      <div className="event-step-actions" onKeyDown={key=>{
       const target=key.key==='ArrowLeft'?previous:key.key==='ArrowRight'?next:null;
       if(target){key.preventDefault();visit(target.id);}

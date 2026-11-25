@@ -1,19 +1,10 @@
 import {useEffect,useMemo,useState} from 'react';
 import {projectedPath} from './map-view.js';
-import {placeLayer,type MapLayer} from './map-layers';
+import {mapLayerFrame,placeLayer,type MapLayer} from './map-layers';
 import {CategoryMap,SpaceDrawing,type LessonMaps} from './LessonMap';
 import type {WorkspaceSpace} from './package-content';
 import type {CategoryMetadata} from './package-catalog';
 import type {EventRecord} from './metro-model';
-
-function frame(layers:MapLayer[]){
- if(!layers.length)return;
- const left=Math.min(...layers.map(l=>l.box[0])),right=Math.max(...layers.map(l=>l.box[0]+l.box[2]));
- const top=Math.min(...layers.map(l=>l.box[1])),bottom=Math.max(...layers.map(l=>l.box[1]+l.box[3]));
- const pad=Math.max(1,(right-left)*.08,(bottom-top)*.12);
- const x=Math.max(-180,left-pad),y=Math.max(-90,top-pad);
- return [x,y,Math.min(180,right+pad)-x,Math.min(90,bottom+pad)-y];
-}
 
 export function CategoryEventMap({events,meta,maps}:{events:EventRecord[];meta?:CategoryMetadata;maps:LessonMaps}){
  const [activeId,setActiveId]=useState('');
@@ -53,7 +44,7 @@ export function CategoryEventMap({events,meta,maps}:{events:EventRecord[];meta?:
  const drawn=(place?[place]:groups.places).flatMap(g=>{
   const layer=layers.get(g.space.id);return layer?[{...g,layer}]:[];
  }).sort((a,b)=>Number(!!a.layer.point)-Number(!!b.layer.point)||(b.layer.box[2]*b.layer.box[3]-a.layer.box[2]*a.layer.box[3]));
- const box=frame(drawn.map(g=>g.layer));
+ const box=mapLayerFrame(drawn.map(g=>g.layer));
  const focus=place?box:undefined;
  return <div className="category-places">
   <div className="category-map-summary">사건 {events.length}개 <span>·</span> 연결된 장소 {groups.places.length}곳</div>

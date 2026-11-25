@@ -20,17 +20,18 @@
  max-height:70dvh;overflow:auto;isolation:isolate;overscroll-behavior-x:contain;
  background:var(--bt-paper);border:1px solid var(--chronicle-line);border-radius:8px;
 }
+[data-showroom] .bt-board{max-height:none}
 .bt-board table{width:100%;min-width:calc(var(--rail) + var(--lanes) * var(--lane));table-layout:fixed;border-collapse:separate;border-spacing:0;text-align:left}
 .bt-year-col{width:var(--year)}.bt-date-col{width:var(--stamp)}
 .bt-board :is(th,td){vertical-align:middle}
 .bt-board [data-tone="0"]{--accent:#3d6654}.bt-board [data-tone="1"]{--accent:#9a5338}.bt-board [data-tone="2"]{--accent:#49677f}
-.bt-board thead th{position:sticky;top:0;z-index:2;background:#efefe6;color:#2d4033;border-bottom:1px solid #cdd3c4;padding:13px var(--inset);font-size:16px;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}
+.bt-board thead th{position:sticky;top:var(--head-top,0px);z-index:2;background:#efefe6;color:#2d4033;border-bottom:1px solid #cdd3c4;padding:13px var(--inset);font-size:16px;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}
 .bt-board thead th:first-child{left:0;z-index:3}
 .bt-board thead th[scope=col]::before{content:"";display:inline-block;width:9px;height:9px;margin-right:8px;border-radius:50%;background:var(--accent)}
 .bt-board thead small{white-space:nowrap;font-weight:500;font-size:13px}
 .bt-board tbody th{position:sticky;left:0;z-index:1;background-color:var(--bt-paper);font-variant-numeric:tabular-nums}
 .bt-board th[scope=rowgroup]{vertical-align:top;text-align:center}
-.bt-board th[scope=rowgroup] span{position:sticky;top:var(--head-height);display:block;padding:14px 0;color:#35493e;font:bold clamp(17px,2vw,24px) Georgia,serif}
+.bt-board th[scope=rowgroup] span{position:sticky;top:calc(var(--head-top,0px) + var(--head-height));display:block;padding:14px 0;color:#35493e;font:bold clamp(17px,2vw,24px) Georgia,serif}
 .bt-board th[scope=row]{
  left:var(--year);padding:8px 24px 8px 0;white-space:nowrap;text-align:right;font-size:14px;font-weight:550;color:#526254;
  background-image:linear-gradient(#849a88,#849a88),linear-gradient(var(--bt-line),var(--bt-line));

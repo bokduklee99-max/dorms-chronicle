@@ -1,5 +1,6 @@
+@import url("./record-presentation.css");
 #reader::backdrop{background:#172c22a8}
-@scope (:is(#reader,.gallery,.radar-reader)){
+@scope (:is(#reader,.gallery,.radar-reader)) to (.record-presentation){
  :scope{--ink:#25332c;--line:#d9d9cd;--sheet:#fffefa;--tint:#f0f2eb;word-break:keep-all;overflow-wrap:anywhere}
  :where(button,a){font:inherit;color:inherit}
  button{cursor:pointer}
@@ -124,6 +125,7 @@
 :is(#reader,.radar-reader) .lesson-event-context .event-timeline{position:static;height:auto}
 :is(#reader,.radar-reader) .event-timeline-scroll{max-height:min(40vh,320px)}
 
+@scope (.record){
 .participant-list,.participant-tenures{margin:0;padding:0;list-style:none}
 .participant-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,9rem),1fr));gap:8px;align-items:stretch}
 .participant{min-width:0;max-width:13rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;overflow-wrap:anywhere}
@@ -138,3 +140,8 @@
 .participant-tenures li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;padding:6px 0;border-top:1px solid var(--line)}
 .participant-tenures small{flex-basis:100%;font-variant-numeric:tabular-nums}
 .participant-tenures time{white-space:nowrap}
+}
+
+#reader:has(>.live-reader){width:min(1060px,calc(100% - 32px));border-radius:18px;background:#fffdf7}
+#reader:has(>.live-reader)::backdrop{background:#373c3966;backdrop-filter:blur(4px)}
+@media(max-width:690px){#reader:has(>.live-reader){width:calc(100% - 12px);border-radius:13px}}

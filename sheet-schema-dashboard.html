@@ -122,45 +122,57 @@
     }
     .global-res-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
       gap: 8px;
       max-height: 290px;
       overflow-y: auto;
     }
     .global-res-item {
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 8px 10px;
-      border: 1px solid #e2e8f0;
+      gap: 6px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
       border-radius: 9px;
-      background: #fafaf9;
+      background: var(--surface);
+    }
+    .global-res-item.is-active { border-color: #1a73e8; background: #eff6ff; }
+    .global-res-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .global-res-sheet { color: var(--chronicle-ink); font-size: 0.95rem; }
+    .global-res-top a { white-space: nowrap; font-size: 0.8rem; }
+    .global-res-matches { list-style: none; margin: 0; padding: 0; }
+    .global-res-match {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 5fr);
+      align-items: baseline;
+      gap: 8px;
+      width: 100%;
+      padding: 5px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
       text-align: left;
       cursor: pointer;
     }
-    .global-res-item:hover { border-color: #1a73e8; background: #eff6ff; }
-    .global-res-item.is-active { border-color: #1a73e8; background: #dbeafe; box-shadow: 0 0 0 2px rgba(26,115,232,0.18); }
-    .global-res-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      font-size: 0.74rem;
-    }
-    .global-res-badge {
-      font-weight: 800;
-      color: #1a73e8;
-      background: #e8f0fe;
-      padding: 1px 6px;
-      border-radius: 5px;
-    }
+    .global-res-match:hover, .global-res-match:focus-visible { background: var(--chronicle-tint); }
+    .global-res-column { color: var(--chronicle-green); font-size: 0.85rem; font-weight: 700; overflow-wrap: anywhere; }
     .global-res-snippet {
-      font-size: 0.77rem;
-      color: #1e293b;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
+      font-size: 0.82rem;
     }
+    .global-res-record { margin: 2px 0 0 5px; color: var(--muted); font-size: 0.78rem; overflow-wrap: anywhere; }
     .global-res-snippet mark {
       background: #fef08a;
       color: #0f172a;
@@ -451,7 +463,7 @@
     .rel-chip small { opacity: 0.78; }
 
     .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
-    .shape-type-options { display: flex; flex-wrap: wrap; gap: 4px; }
+    .shape-type-options, .trace-sheet-options { display: flex; flex-wrap: wrap; gap: 4px; }
     .search-box {
       flex: 1 1 260px;
       max-width: 440px;
@@ -659,7 +671,7 @@
       flex: none;
       min-width: 24px;
       min-height: 24px;
-      margin-inline-start: 5px;
+      margin-inline-end: 5px;
       padding: 1px 3px;
       font: inherit;
       border-radius: 5px;
@@ -668,7 +680,7 @@
       cursor: pointer;
       vertical-align: middle;
     }
-    .mini-map-cell .map-prev-btn { margin-inline-start: 0; }
+    .mini-map-cell .map-prev-btn { margin-inline-end: 0; }
     .mini-map-cell .map-prev-btn:focus-visible { outline-offset: -2px; }
     .map-prev-btn:hover { background: #fef3c7; border-color: #f59e0b; }
     dialog.map-modal {
@@ -685,71 +697,8 @@
       background: rgba(15, 23, 42, 0.45);
       backdrop-filter: blur(2px);
     }
-    .map-modal-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #faf9f5;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .map-modal-head h3 { margin: 0; font-size: 0.96rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .map-modal-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow-y: auto;
-      max-height: calc(90vh - 60px);
-    }
-    .map-stage {
-      width: 100%;
-      aspect-ratio: 16 / 10;
-      min-height: 300px;
-      background: #e9eff5;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-    .map-stage svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    .map-preview-point {
-      position: absolute;
-      inset: 0;
-      margin: auto;
-      width: 6.2px;
-      height: 6.2px;
-      border-radius: 50%;
-      background: #111;
-      pointer-events: none;
-    }
-    .map-stage img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-    .map-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 8px;
-      font-size: 0.76rem;
-    }
-    .map-meta-cell {
-      padding: 7px 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-    .map-meta-cell small { display: block; color: #64748b; font-size: 0.68rem; margin-bottom: 2px; }
-    .map-meta-cell strong { color: #0f172a; word-break: break-all; }
+    dialog.map-modal {width:min(1060px,96vw);overflow:auto;background:#fffdf7;border:0}
+    .schema-shape-footer {padding:0 28px 22px;color:#3c5947;font-size:14px}
     .empty-td { text-align: center; padding: 22px !important; color: #94a3b8; }
     @media (max-width: 600px) {
       .shell { padding-inline: 12px; gap: 10px; }
@@ -763,6 +712,7 @@
       .mini-sheet, .arrow-label-btn { transition: none; }
     }
   </style>
+  <link rel="stylesheet" href="./assets/record-presentation.css">
 </head>
 <body>
   <a class="skip-link" href="#schema-content">본문으로 건너뛰기</a>
@@ -816,18 +766,10 @@
 
   <aside id="canvas-trace-bar" class="canvas-trace-bar" aria-label="선택한 행의 연결" hidden></aside>
 
-  <dialog id="map-preview-modal" class="map-modal" aria-labelledby="map-modal-title">
-    <div class="map-modal-head">
-      <h3 id="map-modal-title">지도 도형 미리보기</h3>
-      <div style="display:flex;gap:6px;align-items:center">
-        <a id="map-modal-sheet-link" class="btn" href="#" target="_blank" rel="noopener noreferrer">시트 행 열기 ↗</a>
-        <button type="button" class="btn btn-primary" id="btn-close-map-modal">닫기</button>
-      </div>
-    </div>
-    <div class="map-modal-body">
-      <div id="map-stage" class="map-stage">불러오는 중…</div>
-      <div id="map-meta-grid" class="map-meta-grid"></div>
-    </div>
+  <dialog id="map-preview-modal" class="map-modal record-presentation live-reader" aria-label="지도 도형 미리보기">
+    <div class="record-controls"><button type="button" class="record-close" id="btn-close-map-modal" aria-label="닫기">×</button></div>
+    <div id="map-preview-content"></div>
+    <footer class="schema-shape-footer"><a id="map-modal-sheet-link" target="_blank" rel="noreferrer">시트 행 열기 ↗</a></footer>
   </dialog>
 
   <script>
@@ -1059,11 +1001,8 @@
       return { stats, pkMaps };
     }
 
-    function getActiveArrows(stats, pkMaps) {
-      if (state.tracedRow && pkMaps) {
-        const traced = collectConnectedRowsBySheet(state.tracedRow.tab, state.tracedRow.origIdx, pkMaps);
-        if (traced.arrowIds.size) return stats.filter(a => traced.arrowIds.has(a.id));
-      }
+    function getActiveArrows(stats, tracedInfo) {
+      if (tracedInfo) return stats.filter(arrow => tracedInfo.arrowIds.has(arrow.id));
       if (state.selectedArrowId) return stats.filter(a => a.id === state.selectedArrowId);
       if (state.mode === 'all') return stats;
       return stats.filter(a => {
@@ -1084,24 +1023,24 @@
 
     function render() {
       const { stats, pkMaps } = computeArrowStats();
-      const activeArrows = getActiveArrows(stats, pkMaps);
-      const activeArrowIds = new Set(activeArrows.map(a => a.id));
-      const fkByCol = new Map(stats.filter(a => a.kind === 'fk').map(a => [`${a.from}::${a.fromCol}`, a]));
-
       const tracedInfo = state.tracedRow
         ? collectConnectedRowsBySheet(state.tracedRow.tab, state.tracedRow.origIdx, pkMaps)
         : null;
+      const activeArrows = getActiveArrows(stats, tracedInfo);
+      const activeArrowIds = new Set(activeArrows.map(a => a.id));
+      const fkByCol = new Map(stats.filter(a => a.kind === 'fk').map(a => [`${a.from}::${a.fromCol}`, a]));
 
       const traceBar = document.getElementById('canvas-trace-bar');
       if (state.tracedRow && tracedInfo) {
         const tTab = state.tracedRow.tab;
         const tIdx = state.tracedRow.origIdx;
         const tRow = (state.data[tTab] || [])[tIdx];
-        const totalLinkedSheets = [...tracedInfo.bySheet.keys()].filter(k => k !== tTab).length;
-        const totalLinkedRows = [...tracedInfo.bySheet.entries()].reduce((sum, [k, m]) => sum + (k === tTab ? 0 : m.size), 0);
+        const linkedSheets = [...tracedInfo.bySheet.entries()];
+        const totalLinkedSheets = linkedSheets.filter(([tab, rows]) => tab !== tTab || rows.size > 1).length;
+        const totalLinkedRows = linkedSheets.reduce((sum, [, rows]) => sum + rows.size, -1);
         traceBar.hidden = false;
         traceBar.innerHTML = `
-          <span>🔗 <strong>${esc(tTab)} #${tIdx + 2} · ${esc(tRow ? rowDisplayLabel(tTab, tRow) : '')}</strong> · 연결된 <strong>${totalLinkedSheets}개 시트 · ${totalLinkedRows}행</strong></span>
+          <span>🔗 <strong>${esc(tTab)} #${tIdx + 2} · ${esc(tRow ? rowDisplayLabel(tTab, tRow) : '')}</strong> · 직접 연결 <strong>${totalLinkedSheets}개 시트 · ${totalLinkedRows}행</strong></span>
           <span style="display:flex;gap:6px">
             <a class="btn" href="${esc(sheetUrl(tTab, tIdx + 2))}" target="_blank" rel="noopener noreferrer">구글 시트 행 열기 ↗</a>
             <button type="button" class="btn btn-primary" id="btn-clear-canvas-trace">추적 해제</button>
@@ -1127,7 +1066,7 @@
       const gq = state.globalQuery.trim().toLowerCase();
       const globalHitsByTab = new Map();
       const allGlobalHits = [];
-      if (gq) {
+      if (gq && !tracedInfo) {
         for (const tab of ALL_TABS) {
           const rows = state.data[tab] || [];
           rows.forEach((row, origIdx) => {
@@ -1146,7 +1085,7 @@
           });
         }
       }
-      renderGlobalResults(gq, allGlobalHits, globalHitsByTab);
+      renderGlobalResults(gq, allGlobalHits, globalHitsByTab, tracedInfo);
 
       document.getElementById('meta-counts').textContent = `관계 ${activeArrows.length}/${stats.length}`;
       document.getElementById('btn-mode-focus').setAttribute('aria-pressed', String(state.mode === 'focus'));
@@ -1164,23 +1103,7 @@
             let previewEntries = [];
             let extraCount = 0;
             let extraLabel = '';
-            if (gq && tracedInfo) {
-              const merged = new Map();
-              searchHits.forEach(h => {
-                const tr = tracedMap?.get(h.origIdx);
-                const rc = tr ? (tr.isOrigin ? 'is-origin-row' : 'is-linked-row') : 'is-search-row';
-                merged.set(h.origIdx, { row: h.row, origIdx: h.origIdx, rowClass: rc, note: tr ? tr.note : '검색 일치' });
-              });
-              tracedEntries.forEach(e => {
-                if (!merged.has(e.origIdx) && rows[e.origIdx]) {
-                  merged.set(e.origIdx, { row: rows[e.origIdx], origIdx: e.origIdx, rowClass: e.isOrigin ? 'is-origin-row' : 'is-linked-row', note: e.note });
-                }
-              });
-              const allMerged = [...merged.values()];
-              previewEntries = allMerged.slice(0, 8);
-              extraCount = Math.max(0, allMerged.length - previewEntries.length);
-              extraLabel = `외 ${extraCount}건 더 있음`;
-            } else if (tracedInfo) {
+            if (tracedInfo) {
               previewEntries = tracedEntries.slice(0, 6).map(e => ({
                 row: rows[e.origIdx], origIdx: e.origIdx, rowClass: e.isOrigin ? 'is-origin-row' : 'is-linked-row', note: e.note
               })).filter(e => e.row);
@@ -1198,14 +1121,8 @@
               }));
             }
 
-            const isSel = isOriginSheet || (!tracedInfo && !gq && s.tab === state.selectedTab) || (gq && searchHits.length > 0);
-            const isDim = (gq && tracedInfo)
-              ? (!searchHits.length && !tracedEntries.length)
-              : tracedInfo
-                ? !tracedEntries.length
-                : gq
-                  ? !searchHits.length
-                  : (state.mode === 'focus' && !connectedTabs.has(s.tab));
+            const isSel = tracedInfo ? isOriginSheet : gq ? searchHits.length > 0 : s.tab === state.selectedTab;
+            const isDim = tracedInfo ? !tracedEntries.length : gq ? !searchHits.length : state.mode === 'focus' && !connectedTabs.has(s.tab);
             return `
               <article class="mini-sheet ${isSel ? 'is-selected' : ''} ${isDim ? 'is-dim' : ''}" style="--sheet-color:${s.color};--col-weight:${s.cols.length}" data-sheet="${esc(s.tab)}">
                 <div class="sheet-tab-bar">
@@ -1250,7 +1167,7 @@
                             const rawVal = e.row[col] || '';
                             const cellHtml = (gq && rawVal) ? highlightMatch(rawVal, gq) : esc(rawVal || '—');
                             if (isMapKeyColumn(col) && rawVal && pkMaps.get('지도도형')?.has(rawVal)) {
-                              return `<td title="${esc(rawVal)}"><div class="mini-map-cell"><span>${cellHtml}</span>${mapPreviewButton(rawVal)}</div></td>`;
+                              return `<td title="${esc(rawVal)}"><div class="mini-map-cell">${mapPreviewButton(rawVal)}<span>${cellHtml}</span></div></td>`;
                             }
                             return `<td title="${esc(rawVal)}">${cellHtml}</td>`;
                           }).join('')}
@@ -1266,7 +1183,7 @@
       `).join('');
 
       drawArrows(stats, activeArrowIds);
-      renderInspector(stats, pkMaps, fkByCol);
+      renderInspector(stats, pkMaps, tracedInfo, gq, globalHitsByTab);
       bindEvents();
     }
 
@@ -1425,179 +1342,70 @@
       return vals.join(' · ') || '(값 없음)';
     }
 
-    function traceRecordConnections(tab, origIdx, pkMaps) {
-      const rows = state.data[tab] || [];
-      const row = rows[origIdx];
-      if (!row) return { groups: [], arrowIds: new Set() };
-      const groups = [];
-      const arrowIds = new Set();
-
-      for (const a of ARROWS) {
-        if (a.kind === 'fk') {
-          // Outgoing FK: this row points to target table
-          if (a.from === tab) {
-            const val = row[a.fromCol];
-            if (val) {
-              const targetRows = state.data[a.to] || [];
-              const hits = [];
-              targetRows.forEach((tr, ti) => {
-                if (tr[a.toCol] === val) hits.push({ tab: a.to, origIdx: ti, label: rowDisplayLabel(a.to, tr), note: `${a.fromCol}=${val}` });
-              });
-              if (hits.length) {
-                arrowIds.add(a.id);
-                groups.push({ arrowId: a.id, kind: 'fk', dir: '참조 →', title: `${a.label} (${a.to})`, via: `${a.fromCol} → ${a.to}.${a.toCol}`, hits });
-              }
-            }
-          }
-          // Incoming FK: other table rows point to this row
-          if (a.to === tab) {
-            const val = row[a.toCol];
-            if (val) {
-              const srcRows = state.data[a.from] || [];
-              const hits = [];
-              srcRows.forEach((sr, si) => {
-                if (sr[a.fromCol] === val) hits.push({ tab: a.from, origIdx: si, label: rowDisplayLabel(a.from, sr), note: '' });
-              });
-              if (hits.length) {
-                arrowIds.add(a.id);
-                groups.push({ arrowId: a.id, kind: 'fk', dir: '← 피참조', title: `${a.from} (${a.label})`, via: `${a.from}.${a.fromCol} → ${a.toCol}`, hits });
-              }
-            }
-          }
-        } else if (a.kind === 'junction') {
-          const jRows = state.data[a.viaTab] || [];
-          // Special handling for polymorphic '관계' table
-          if (a.viaTab === '관계') {
-            const spec = getSheetSpec(tab);
-            const myId = spec ? row[spec.pk] : '';
-            if (!myId) continue;
-            const hits = [];
-            jRows.forEach((jr, ji) => {
-              if (jr['출발ID'] === myId) {
-                const toId = jr['도착ID'];
-                const rel = jr['관계유형'] || '관계';
-                hits.push({ tab: '관계', origIdx: ji, label: `→ [${rel}] ${toId}`, note: jr['설명'] || '' });
-              } else if (jr['도착ID'] === myId) {
-                const fromId = jr['출발ID'];
-                const rel = jr['관계유형'] || '관계';
-                hits.push({ tab: '관계', origIdx: ji, label: `← [${rel}] ${fromId}`, note: jr['설명'] || '' });
-              }
-            });
-            if (hits.length) {
-              arrowIds.add(a.id);
-              groups.push({ arrowId: a.id, kind: 'junction', dir: '관계 ↔', title: '관계 시트 연결', via: '관계(출발ID ↔ 도착ID)', hits });
-            }
-            continue;
-          }
-          // If inspecting a core table on either end of a junction
-          if (a.from === tab) {
-            const myVal = row[a.fromCol];
-            if (myVal) {
-              const hits = [];
-              jRows.forEach(jr => {
-                if (jr[a.viaFromCol] === myVal) {
-                  const targetId = jr[a.viaToCol];
-                  const hitMeta = pkMaps.get(a.to)?.get(targetId);
-                  const roleNote = jr['역할'] || jr['설명'] || '';
-                  if (hitMeta) {
-                    hits.push({ tab: a.to, origIdx: hitMeta.idx, label: hitMeta.label, note: roleNote });
-                  }
-                }
-              });
-              if (hits.length) {
-                arrowIds.add(a.id);
-                groups.push({ arrowId: a.id, kind: 'junction', dir: '연결 ↔', title: `${a.to} (${a.viaTab})`, via: `${a.viaTab} 경유`, hits });
-              }
-            }
-          }
-          if (a.to === tab && a.from !== a.to) {
-            const myVal = row[a.toCol];
-            if (myVal) {
-              const hits = [];
-              jRows.forEach(jr => {
-                if (jr[a.viaToCol] === myVal) {
-                  const targetId = jr[a.viaFromCol];
-                  const hitMeta = pkMaps.get(a.from)?.get(targetId);
-                  const roleNote = jr['역할'] || jr['설명'] || '';
-                  if (hitMeta) {
-                    hits.push({ tab: a.from, origIdx: hitMeta.idx, label: hitMeta.label, note: roleNote });
-                  }
-                }
-              });
-              if (hits.length) {
-                arrowIds.add(a.id);
-                groups.push({ arrowId: a.id, kind: 'junction', dir: '연결 ↔', title: `${a.from} (${a.viaTab})`, via: `${a.viaTab} 경유`, hits });
-              }
-            }
-          }
-          // If inspecting the junction row itself, show both endpoints
-          if (a.viaTab === tab) {
-            const fromVal = row[a.viaFromCol];
-            const toVal = row[a.viaToCol];
-            const h1 = pkMaps.get(a.from)?.get(fromVal);
-            const h2 = pkMaps.get(a.to)?.get(toVal);
-            const hits = [];
-            if (h1) hits.push({ tab: a.from, origIdx: h1.idx, label: `[${a.from}] ${h1.label}`, note: fromVal });
-            if (h2) hits.push({ tab: a.to, origIdx: h2.idx, label: `[${a.to}] ${h2.label}`, note: toVal });
-            if (hits.length) {
-              arrowIds.add(a.id);
-              groups.push({ arrowId: a.id, kind: 'junction', dir: '양쪽 연결 ↔', title: `${a.from} ↔ ${a.to}`, via: a.label, hits });
-            }
-          }
-        }
-      }
-      return { groups, arrowIds };
-    }
+    const relationEndpointTabs = new Map([
+      ['event', '사건'], ['category', '카테고리'],
+      ...['actor', 'state', 'territory', 'organization', 'army', 'institution', 'person'].map(type => [type, '주체']),
+    ]);
 
     function collectConnectedRowsBySheet(tab, origIdx, pkMaps) {
       const bySheet = new Map();
       const arrowIds = new Set();
-      const addHit = (t, idx, isOrigin = false, note = '') => {
-        if (!CORE_SHEETS.some(s => s.tab === t)) return;
-        if (!bySheet.has(t)) bySheet.set(t, new Map());
-        const m = bySheet.get(t);
-        if (!m.has(idx) || isOrigin) m.set(idx, { origIdx: idx, isOrigin, note });
-      };
+      const row = state.data[tab][origIdx];
 
-      addHit(tab, origIdx, true, '선택 행');
-      const hop1 = traceRecordConnections(tab, origIdx, pkMaps);
-      hop1.arrowIds.forEach(id => arrowIds.add(id));
-      for (const g of hop1.groups) {
-        for (const h of g.hits) {
-          addHit(h.tab, h.origIdx, false, h.note || g.title);
-        }
+      function addHit(sheet, index, note = '', isOrigin = false) {
+        if (index === undefined) return;
+        if (!bySheet.has(sheet)) bySheet.set(sheet, new Map());
+        const hits = bySheet.get(sheet);
+        if (!hits.has(index)) hits.set(index, { origIdx: index, isOrigin, note });
       }
 
-      // 2-hop propagation (주체 -> 영토변화 -> 지도도형, 사건 -> 공간 -> 지도도형 등)
-      const secondHopSources = [];
-      for (const [t, map] of bySheet.entries()) {
-        if (t === tab) continue;
-        if (['영토변화', '공간', '카테고리', '직위'].includes(t)) {
-          let count = 0;
-          for (const idx of map.keys()) {
-            if (count++ >= 12) break;
-            secondHopSources.push([t, idx]);
+      addHit(tab, origIdx, '선택 행', true);
+      if (!row) return { bySheet, arrowIds };
+
+      for (const arrow of ARROWS) {
+        if (arrow.kind === 'fk') {
+          if (arrow.from === tab) {
+            const target = pkMaps.get(arrow.to)?.get(row[arrow.fromCol]);
+            if (target) {
+              addHit(arrow.to, target.idx, arrow.label);
+              arrowIds.add(arrow.id);
+            }
           }
-        }
-      }
-      for (const [t2, idx2] of secondHopSources) {
-        const hop2 = traceRecordConnections(t2, idx2, pkMaps);
-        for (const g of hop2.groups) {
-          if (g.kind !== 'fk' || g.dir !== '참조 →') continue;
-          for (const h of g.hits) {
-            if (h.tab === tab) continue;
-            arrowIds.add(g.arrowId);
-            addHit(h.tab, h.origIdx, false, `${t2} 경유`);
+          if (arrow.to === tab && row[arrow.toCol]) {
+            state.data[arrow.from].forEach((source, index) => {
+              if (source[arrow.fromCol] !== row[arrow.toCol]) return;
+              addHit(arrow.from, index, arrow.label);
+              arrowIds.add(arrow.id);
+            });
           }
+          continue;
         }
-      }
 
+        state.data[arrow.viaTab].forEach((link, index) => {
+          if (tab === arrow.viaTab && index !== origIdx) return;
+          if (arrow.viaTab !== '관계' && ![arrow.from, arrow.to, arrow.viaTab].includes(tab)) return;
+          const ends = arrow.viaTab === '관계'
+            ? ['출발', '도착'].map(side => {
+              const type = link[side + '유형']?.trim().toLowerCase();
+              return [relationEndpointTabs.get(type), link[side + 'ID']];
+            })
+            : [[arrow.from, link[arrow.viaFromCol]], [arrow.to, link[arrow.viaToCol]]];
+          const endpoints = ends.map(([sheet, id]) => ({
+            sheet, index: pkMaps.get(sheet)?.get(id)?.idx,
+          }));
+          const selected = tab === arrow.viaTab || endpoints.some(end => end.sheet === tab && end.index === origIdx);
+          if (!selected) return;
+          addHit(arrow.viaTab, index, arrow.label);
+          for (const end of endpoints) addHit(end.sheet, end.index, arrow.label);
+          if (ends.every(([sheet], i) => sheet === (i ? arrow.to : arrow.from))) arrowIds.add(arrow.id);
+        });
+      }
       return { bySheet, arrowIds };
     }
 
     const shapeTypeLabels = new Map([['', '전체'], ['point', '점'], ['line', '선'], ['area', '영역'], ['basemap', '배경지도']]);
 
-    function renderInspector(allStats, pkMaps, fkByCol) {
+    function renderInspector(allStats, pkMaps, tracedInfo, gq, globalHitsByTab) {
       const tab = state.inspectTab;
       const rows = state.data[tab] || [];
       const isShapes = tab === '지도도형';
@@ -1622,8 +1430,15 @@
       }
 
       const q = state.search.trim().toLowerCase();
+      const matchingRows = gq ? new Set((globalHitsByTab.get(tab) || []).map(hit => hit.origIdx)) : null;
+      const tracedRows = tracedInfo?.bySheet.get(tab);
       const filtered = [];
       rows.forEach((row, origIdx) => {
+        if (tracedInfo) {
+          if (tracedRows?.has(origIdx)) filtered.push({ row, origIdx });
+          return;
+        }
+        if (matchingRows && !matchingRows.has(origIdx)) return;
         if (isShapes && state.shapeType && row.도형유형 !== state.shapeType) return;
         if (state.pin && state.pin.tab === tab && row[state.pin.col] !== state.pin.val) return;
         if (selArrow && selArrow.kind === 'fk' && selArrow.from === tab && !row[selArrow.fromCol]) return;
@@ -1659,12 +1474,16 @@
             <button type="button" class="btn" id="btn-unpin">필터 해제</button>
           </div>` : ''}
 
+        ${tracedInfo?.bySheet.size > 1 ? `<div class="trace-sheet-options" role="group" aria-label="직접 연결된 시트">
+          ${[...tracedInfo.bySheet].map(([sheet, records]) => `<button type="button" class="btn" data-trace-sheet="${esc(sheet)}"
+            aria-pressed="${sheet === tab}">${esc(sheet)} ${records.size}행</button>`).join('')}
+        </div>` : ''}
         <div class="toolbar">
-          ${isShapes ? `<div class="shape-type-options" role="group" aria-label="도형유형">
+          ${isShapes && !tracedInfo ? `<div class="shape-type-options" role="group" aria-label="도형유형">
             ${[...shapeTypes].map(([type, label]) => `<button type="button" class="btn" data-shape-type="${esc(type)}"
               aria-pressed="${state.shapeType === type}">${esc(label)}</button>`).join('')}
           </div>` : ''}
-          <input type="search" id="ins-search" class="search-box" aria-label="${esc(tab)} 시트 검색" placeholder="${esc(tab)} 시트 검색" value="${esc(state.search)}">
+          ${!tracedInfo ? `<input type="search" id="ins-search" class="search-box" aria-label="${esc(tab)} 시트 검색" placeholder="${esc(tab)} 시트 검색" value="${esc(state.search)}">` : ''}
           <span style="font-size:0.78rem;color:#64748b">${filtered.length.toLocaleString()}행</span>
         </div>
 
@@ -1689,12 +1508,12 @@
                         const hit = pkMaps.get(fk.to)?.get(val);
                         const previewBtn = (fk.to === '지도도형') ? mapPreviewButton(val) : '';
                         if (hit) {
-                          return `<td><button type="button" class="fk-link" data-jump-tab="${esc(fk.to)}" data-jump-col="${esc(fk.toCol)}" data-jump-val="${esc(val)}">${esc(val)}${hit.label !== val ? `<small>${esc(hit.label)}</small>` : ''}</button>${previewBtn}</td>`;
+                          return `<td>${previewBtn}<button type="button" class="fk-link" data-jump-tab="${esc(fk.to)}" data-jump-col="${esc(fk.toCol)}" data-jump-val="${esc(val)}">${esc(val)}${hit.label !== val ? `<small>${esc(hit.label)}</small>` : ''}</button></td>`;
                         }
                         return `<td><span class="fk-warn" title="${esc(fk.to)} 시트에 없는 값">${esc(val)} ⚠</span></td>`;
                       }
                       if (val && tab === '지도도형' && col === '지도참조키') {
-                        return `<td><strong>${esc(val)}</strong>${mapPreviewButton(val)}</td>`;
+                        return `<td>${mapPreviewButton(val)}<strong>${esc(val)}</strong></td>`;
                       }
                       if (/^https?:\/\//.test(val)) {
                         return `<td><a class="row-ext" href="${esc(val)}" target="_blank" rel="noopener noreferrer">${esc(val.length > 36 ? val.slice(0, 36) + '…' : val)} ↗</a></td>`;
@@ -1718,17 +1537,16 @@
       return esc(text.slice(0, idx)) + '<mark>' + esc(text.slice(idx, idx + query.length)) + '</mark>' + esc(text.slice(idx + query.length));
     }
 
-    function renderGlobalResults(gq, allHits, byTab) {
+    function renderGlobalResults(gq, allHits, byTab, tracedInfo) {
       const box = document.getElementById('global-results');
       const meta = document.getElementById('global-search-meta');
       const clearBtn = document.getElementById('btn-clear-global');
-      if (!gq) {
+      clearBtn.hidden = !gq;
+      if (!gq || tracedInfo) {
         box.hidden = true;
-        clearBtn.hidden = true;
         meta.textContent = '';
         return;
       }
-      clearBtn.hidden = false;
       meta.textContent = `${byTab.size}개 시트 · 총 ${allHits.length.toLocaleString()}건 일치`;
       box.hidden = false;
 
@@ -1751,18 +1569,28 @@
         </div>
         <div class="global-res-list">
           ${capped.map(hit => {
-            const first = hit.matchedCols[0];
-            const idCol = Object.keys(hit.row)[0] || first.col;
-            const idVal = hit.row[idCol] || first.val;
+            const idCol = Object.keys(hit.row)[0];
+            const idVal = hit.row[idCol];
+            const showId = idVal && !hit.matchedCols.some(({col}) => col === idCol);
+            const active = state.tracedRow?.tab === hit.tab && state.tracedRow.origIdx === hit.origIdx;
             return `
-              <div class="global-res-item ${state.tracedRow && state.tracedRow.tab === hit.tab && state.tracedRow.origIdx === hit.origIdx ? 'is-active' : ''}" data-gjump-tab="${esc(hit.tab)}" data-gjump-col="${esc(first.col)}" data-gjump-val="${esc(first.val)}" data-gjump-idx="${hit.origIdx}">
+              <article class="global-res-item ${active ? 'is-active' : ''}">
                 <div class="global-res-top">
-                  <span class="global-res-badge">${esc(hit.tab)} · ${esc(first.col)}</span>
-                  <a class="row-ext" href="${esc(sheetUrl(hit.tab, hit.rowNum))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">#${hit.rowNum} ↗</a>
+                  <strong class="global-res-sheet">${esc(hit.tab)} 시트</strong>
+                  <a class="row-ext" href="${esc(sheetUrl(hit.tab, hit.rowNum))}" target="_blank" rel="noopener noreferrer"
+                    aria-label="${esc(hit.tab)} 시트 ${hit.rowNum}행 열기">${hit.rowNum}행 ↗</a>
                 </div>
-                <div class="global-res-snippet">${highlightMatch(first.val, gq)}</div>
-                ${idCol !== first.col ? `<div style="font-size:0.7rem;color:#64748b">${esc(idCol)}: ${esc(idVal)}</div>` : ''}
-              </div>`;
+                <ul class="global-res-matches">
+                  ${hit.matchedCols.map(({col, val}) => `<li>
+                    <button type="button" class="global-res-match" data-gjump-tab="${esc(hit.tab)}"
+                      data-gjump-col="${esc(col)}" data-gjump-idx="${hit.origIdx}">
+                      <span class="global-res-column">${esc(col)} 열</span>
+                      <span class="global-res-snippet">${highlightMatch(val, gq)}</span>
+                    </button>
+                  </li>`).join('')}
+                </ul>
+                ${showId ? `<p class="global-res-record">${esc(idCol)} · ${esc(idVal)}</p>` : ''}
+              </article>`;
           }).join('')}
         </div>
         ${visible.length > capped.length ? `<div style="font-size:0.74rem;color:#64748b">상위 ${capped.length}건만 표시 중입니다. 위 시트 탭을 누르거나 검색어를 더 구체화해 보세요.</div>` : ''}
@@ -1775,7 +1603,6 @@
         el.onclick = () => {
           const t = el.dataset.gjumpTab;
           const col = el.dataset.gjumpCol;
-          const val = el.dataset.gjumpVal;
           const isCore = CORE_SHEETS.some(s => s.tab === t);
           if (isCore) {
             state.selectedTab = t;
@@ -1789,7 +1616,7 @@
           if (state.tracedRow && state.tracedRow.tab === t && state.tracedRow.origIdx === idx) {
             state.tracedRow = null;
           } else {
-            setTracedRow(t, idx);
+            state.tracedRow = { tab: t, origIdx: idx };
           }
           state.inspectTab = t;
           state.pin = null;
@@ -1812,14 +1639,14 @@
       if (current) window.scrollBy(0, current.getBoundingClientRect().top - top);
     }
 
-    function setTracedRow(tab, origIdx) {
-      state.tracedRow = { tab, origIdx };
-      if (tab === '지도도형' && state.shapeType && state.data[tab][origIdx]?.도형유형 !== state.shapeType) {
-        state.shapeType = '';
-      }
-    }
-
     function bindEvents() {
+      document.querySelectorAll('[data-trace-sheet]').forEach(button => {
+        button.onclick = () => {
+          state.inspectTab = button.dataset.traceSheet;
+          render();
+          document.querySelector('[data-trace-sheet][aria-pressed="true"]')?.focus({ preventScroll: true });
+        };
+      });
       document.querySelectorAll('[data-shape-type]').forEach(button => {
         button.onclick = () => {
           state.shapeType = button.dataset.shapeType;
@@ -1888,7 +1715,7 @@
           if (state.tracedRow && state.tracedRow.tab === t && state.tracedRow.origIdx === idx) {
             state.tracedRow = null;
           } else {
-            setTracedRow(t, idx);
+            state.tracedRow = { tab: t, origIdx: idx };
             if (CORE_SHEETS.some(s => s.tab === t)) state.selectedTab = t;
           }
           render();
@@ -1907,7 +1734,7 @@
             const arrow = ARROWS.find(a => a.viaTab === t);
             state.selectedArrowId = arrow ? arrow.id : '';
           }
-          setTracedRow(t, idx);
+          state.tracedRow = { tab: t, origIdx: idx };
           state.pin = null;
           state.search = '';
           render();
@@ -1920,7 +1747,7 @@
           if (state.tracedRow && state.tracedRow.tab === t && state.tracedRow.origIdx === idx) {
             state.tracedRow = null;
           } else {
-            setTracedRow(t, idx);
+            state.tracedRow = { tab: t, origIdx: idx };
             state.selectedTab = t;
             state.inspectTab = t;
             state.selectedArrowId = '';
@@ -1957,248 +1784,23 @@
       }
     }
 
-    const assetJsonCache = new Map();
-    async function loadLocalJson(relPath) {
-      if (assetJsonCache.has(relPath)) return assetJsonCache.get(relPath);
-      const res = await fetch(relPath);
-      if (!res.ok) throw new Error(`파일을 불러올 수 없습니다 (${res.status}): ${relPath}`);
-      const json = await res.json();
-      assetJsonCache.set(relPath, json);
-      return json;
+    async function openMapPreview(mapKey){
+      const modal=document.getElementById('map-preview-modal');
+      const host=document.createElement('article');
+      host.className='surface atlas';
+      host.textContent='지도를 불러오는 중…';
+      document.getElementById('map-preview-content').replaceChildren(host);
+      const shapes=state.data['지도도형']||[];
+      const index=shapes.findIndex(row=>row.지도참조키===mapKey);
+      const link=document.getElementById('map-modal-sheet-link');
+      link.hidden=index<0;
+      if(index>=0)link.href=sheetUrl('지도도형',index+2);
+      if(!modal.open)modal.showModal();
+      try{
+        const {renderShapePreview}=await import('./assets/record-atlas.js');
+        await renderShapePreview(host,mapKey,{공간:state.data['공간']||[],지도도형:shapes});
+      }catch(error){host.textContent=error.message||'지도를 불러오지 못했습니다.';}
     }
-
-    function geomBBox(geom) {
-      let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
-      const walk = c => {
-        if (typeof c[0] === 'number') {
-          if (c[0] < w) w = c[0];
-          if (c[0] > e) e = c[0];
-          if (c[1] < s) s = c[1];
-          if (c[1] > n) n = c[1];
-        } else if (Array.isArray(c)) {
-          c.forEach(walk);
-        }
-      };
-      if (geom?.coordinates) walk(geom.coordinates);
-      return [w, s, e, n];
-    }
-
-    function pickContextBasemap([w, s, e, n]) {
-      const cx = (w + e) / 2, cy = (s + n) / 2;
-      const span = Math.max(e - w, n - s);
-      if (cx >= 123 && cx <= 132 && cy >= 32 && cy <= 43 && span < 12) return 'korea.json';
-      if (cx >= 70 && cx <= 150 && cy >= 15 && cy <= 56) return 'east-asia.json';
-      if (cx >= -15 && cx <= 48 && cy >= 30 && cy <= 72) return 'europe.json';
-      if (cx >= 25 && cx <= 65 && cy >= 12 && cy <= 42) return 'middle-east.json';
-      if (cx >= -140 && cx <= -30) return 'americas.json';
-      return 'europe.json';
-    }
-
-    function geoToSvgPath(geom, lonScale = 0.78) {
-      const ringToD = (ring, close) => {
-        if (!ring?.length) return '';
-        const parts = ring.map(([lon, lat], i) => `${i === 0 ? 'M' : 'L'}${(lon * lonScale).toFixed(3)},${(-lat).toFixed(3)}`);
-        return parts.join(' ') + (close ? ' Z' : '');
-      };
-      if (geom.type === 'Polygon') return geom.coordinates.map(r => ringToD(r, true)).join(' ');
-      if (geom.type === 'MultiPolygon') return geom.coordinates.flatMap(poly => poly.map(r => ringToD(r, true))).join(' ');
-      if (geom.type === 'LineString') return ringToD(geom.coordinates, false);
-      if (geom.type === 'MultiLineString') return geom.coordinates.map(r => ringToD(r, false)).join(' ');
-      return '';
-    }
-
-    const previewContextRegions = new Map([
-      ['geo_middle_east', 'middle-east'], ['geo_south_asia', 'south-asia'],
-      ['geo_israel', 'israel'], ['geo_afghanistan', 'afghanistan'],
-      ['geo_iran', 'iran'], ['geo_india_pakistan', 'india-pakistan'],
-    ]);
-    const previewTerritories = new Set([
-      'geo_north_vietnam', 'geo_south_vietnam', 'geo_roc_taiwan', 'geo_nato_1949', 'geo_nato_1982',
-    ]);
-    const localPreviewPath = /^(?:\.\/|\/)?assets\/event-geometry\//;
-    let mapPreviewRequest = 0;
-
-    function mapPreviewSource(value) {
-      if (!value) return null;
-      if (/^data:image\/svg\+xml(?:;base64)?,/i.test(value)) return { url: value, image: true };
-      if (/^data:application\/(?:geo\+json|json)(?:;base64)?,/i.test(value)) return { url: value, image: false };
-      let url;
-      try { url = new URL(value, location.href); }
-      catch { return null; }
-      const local = url.origin === location.origin && localPreviewPath.test(value);
-      if ((!local && url.protocol !== 'https:') || url.username || url.password) return null;
-      if (url.pathname.endsWith('.svg')) return { url: url.href, image: true };
-      if (url.pathname.endsWith('.geojson')) return { url: url.href, image: false };
-      return null;
-    }
-
-    async function loadMapPreview(shape) {
-      const file = shape['파일경로']?.trim() || '';
-      const dataUrl = shape['지도데이터URL']?.trim() || '';
-      const localFile = localPreviewPath.test(file);
-      const sources = new Set([...(localFile ? [file, dataUrl] : [dataUrl, file]), shape['원본SVG']?.trim()]);
-      const extId = shape['외부도형ID']?.trim();
-      let failure;
-      for (const value of sources) {
-        const source = mapPreviewSource(value);
-        if (!source) continue;
-        try {
-          if (source.image) {
-            const image = new Image();
-            image.alt = shape['지도참조키'] + ' 지도';
-            image.src = source.url;
-            await image.decode();
-            return { image };
-          }
-          const data = await loadLocalJson(source.url);
-          const features = data.type === 'FeatureCollection' ? data.features : [data];
-          const feature = source.url.startsWith('data:') && data.type !== 'FeatureCollection'
-            ? (data.type === 'Feature' ? data : { geometry: data })
-            : (extId ? features.find(f => String(f.id) === extId || String(f.properties?.id) === extId) : features[0]);
-          if (!feature?.geometry) throw new Error('파일에 등록된 도형 ID를 찾을 수 없습니다.');
-          return { feature };
-        } catch (error) {
-          failure = source.image ? new Error('등록된 SVG 이미지를 불러오지 못했습니다.') : error;
-        }
-      }
-
-      const key = shape['지도참조키'];
-      const region = previewContextRegions.get(key);
-      if (region) {
-        const context = await loadLocalJson('./assets/event-geometry/context/' + region + '.json');
-        return { context };
-      }
-      if (previewTerritories.has(key)) {
-        const { features } = await loadLocalJson('./assets/event-geometry/schema-preview-territories.geojson');
-        const feature = features.find(item => item.id === key);
-        if (feature) return { feature, date: feature.properties.date };
-      }
-      throw failure || new Error(file || dataUrl
-        ? '등록된 주소에서 SVG 또는 GeoJSON 미리보기를 만들 수 없습니다.'
-        : '이 지도참조키의 미리보기 자료가 등록되어 있지 않습니다.');
-    }
-
-    function contextPreviewMarkup({ box, land, countries, lakes, rivers, selected }, mapKey) {
-      return `<svg viewBox="${box.join(' ')}" role="img" aria-label="${esc(mapKey)} 지도">
-        <path d="${land || ''}" fill="#ece7dc" fill-rule="evenodd" />
-        ${(countries || []).map(d => `<path d="${d}" fill="none" stroke="#8d9685" stroke-width=".7" vector-effect="non-scaling-stroke" />`).join('')}
-        <path d="${lakes || ''}" fill="#d6e6f2" fill-rule="evenodd" />
-        <path d="${rivers || ''}" fill="none" stroke="#9dbbd4" stroke-width=".6" vector-effect="non-scaling-stroke" />
-        ${(selected || []).map(d => `<path d="${d}" fill="#d97706" fill-opacity=".48" stroke="#92400e" stroke-width="1.5" fill-rule="evenodd" vector-effect="non-scaling-stroke" />`).join('')}
-      </svg>`;
-    }
-
-    async function openMapPreview(mapKey) {
-      const request = ++mapPreviewRequest;
-      const modal = document.getElementById('map-preview-modal');
-      const titleEl = document.getElementById('map-modal-title');
-      const stage = document.getElementById('map-stage');
-      const metaGrid = document.getElementById('map-meta-grid');
-      const sheetLink = document.getElementById('map-modal-sheet-link');
-
-      const shapes = state.data['지도도형'] || [];
-      const idx = shapes.findIndex(r => r['지도참조키'] === mapKey);
-      const shape = idx >= 0 ? shapes[idx] : null;
-      if (!shape) {
-        titleEl.textContent = `🗺 ${mapKey}`;
-        stage.innerHTML = `<div style="padding:20px;color:#b91c1c;font-size:0.85rem">지도도형 시트에서 <strong>${esc(mapKey)}</strong>를 찾지 못했습니다.</div>`;
-        metaGrid.innerHTML = '';
-        modal.showModal();
-        return;
-      }
-
-      const rowNum = idx + 2;
-      sheetLink.href = sheetUrl('지도도형', rowNum);
-      titleEl.innerHTML = `<span>🗺 ${esc(mapKey)}</span> <span class="pill">${esc(shape['도형유형'] || 'shape')}</span> <small style="color:#64748b;font-weight:600">${esc(shape['기준시점'] || '')}</small>`;
-      stage.innerHTML = '<div style="color:#475569;font-size:0.84rem">지도 도형과 배경지도를 불러오는 중…</div>';
-      metaGrid.innerHTML = [
-        ['도형유형', shape['도형유형']],
-        ['데이터형식', shape['데이터형식']],
-        ['파일경로', shape['파일경로']],
-        ['외부도형ID', shape['외부도형ID']],
-        ['좌표상태', shape['좌표상태']],
-        ['출처', shape['출처']],
-      ].map(([k, v]) => `<div class="map-meta-cell"><small>${esc(k)}</small><strong>${esc(v || '—')}</strong></div>`).join('');
-
-      modal.showModal();
-
-      const isCurrent = () => modal.open && request === mapPreviewRequest;
-      try {
-        const { image, feature: feat, context, date } = await loadMapPreview(shape);
-        if (!isCurrent()) return;
-        if (image) {
-          stage.replaceChildren(image);
-          return;
-        }
-        if (context) {
-          stage.innerHTML = contextPreviewMarkup(context, mapKey);
-          const basis = context.selected?.length ? '국경 기준일' : '권역 참고도';
-          metaGrid.innerHTML += `<div class="map-meta-cell"><small>${basis}</small><strong>${esc(context.date || '—')}</strong></div>`;
-          return;
-        }
-
-        const geom = feat.geometry;
-        const bbox = geomBBox(geom);
-        const [w, s, e, n] = bbox;
-        const lonScale = 0.78;
-
-        let terrain = null;
-        const ctxFile = pickContextBasemap(bbox);
-        try {
-          terrain = await loadLocalJson('./assets/event-geometry/context/' + ctxFile);
-        } catch {}
-
-        if (!isCurrent()) return;
-        if (![w,s,e,n].every(Number.isFinite)) throw new Error('도형의 좌표를 확인해 주세요.');
-
-        const isPoint = geom.type === 'Point';
-        const padX = isPoint ? 6 : Math.max(2.5, (e - w) * 0.28);
-        const padY = isPoint ? 4 : Math.max(2.0, (n - s) * 0.28);
-        const minX = (w - padX) * lonScale;
-        const maxX = (e + padX) * lonScale;
-        const minY = -(n + padY);
-        const maxY = -(s - padY);
-        const vbW = Math.max(1, maxX - minX);
-        const vbH = Math.max(1, maxY - minY);
-
-        const bgSvg = terrain ? `
-          <g transform="scale(${lonScale} 1)">
-            <path d="${terrain.land || ''}" fill="#ece7dc" stroke="#b8b09c" stroke-width="0.6" fill-rule="evenodd" vector-effect="non-scaling-stroke" />
-            <path d="${terrain.rivers || ''}" fill="none" stroke="#9dbbd4" stroke-width="0.5" vector-effect="non-scaling-stroke" />
-            <path d="${terrain.lakes || ''}" fill="#d6e6f2" stroke="none" fill-rule="evenodd" />
-          </g>` : '';
-
-        let shapeSvg = '';
-        if (geom.type.includes('Line')) {
-          const d = geoToSvgPath(geom, lonScale);
-          shapeSvg = `<path d="${d}" fill="none" stroke="#dc2626" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />`;
-        } else if (!isPoint) {
-          const d = geoToSvgPath(geom, lonScale);
-          shapeSvg = `<path d="${d}" fill="#d97706" fill-opacity="0.48" stroke="#92400e" stroke-width="1.8" fill-rule="evenodd" vector-effect="non-scaling-stroke" />`;
-        }
-
-        stage.innerHTML = `
-          <svg viewBox="${minX} ${minY} ${vbW} ${vbH}" preserveAspectRatio="xMidYMid meet">
-            <rect x="${(minX - vbW).toFixed(2)}" y="${(minY - vbH).toFixed(2)}" width="${(vbW * 3).toFixed(2)}" height="${(vbH * 3).toFixed(2)}" fill="#dbe8f4" />
-            ${bgSvg}
-            ${shapeSvg}
-          </svg>
-          ${isPoint ? '<span class="map-preview-point" aria-hidden="true"></span>' : ''}`;
-
-        const extraInfo = isPoint
-          ? `경도 ${geom.coordinates[0].toFixed(4)}, 위도 ${geom.coordinates[1].toFixed(4)}`
-          : `범위 [${w.toFixed(1)}°~${e.toFixed(1)}°E, ${s.toFixed(1)}°~${n.toFixed(1)}°N]` + (feat.properties?.area_km2 ? ` · 면적 ${Number(feat.properties.area_km2).toLocaleString()} km²` : '');
-        if (date) metaGrid.innerHTML += `<div class="map-meta-cell"><small>국경 기준일 · CShapes 2.1</small><strong>${esc(date)}</strong></div>`;
-        metaGrid.innerHTML += `<div class="map-meta-cell"><small>실제 지오메트리 정보</small><strong>${esc(extraInfo)}</strong></div>`;
-      } catch (err) {
-        if (!isCurrent()) return;
-        stage.innerHTML = `<div style="padding:20px;text-align:center;color:#991b1b;font-size:0.84rem">
-          <strong>도형을 불러오지 못했습니다.</strong><br>
-          <span>${esc(err.message)}</span>
-        </div>`;
-      }
-    }
-
     document.getElementById('btn-close-map-modal').onclick = () => document.getElementById('map-preview-modal').close();
     document.getElementById('map-preview-modal').addEventListener('click', e => {
       if (e.target === e.currentTarget) e.currentTarget.close();
@@ -2222,12 +1824,16 @@
     document.getElementById('btn-clear-global').onclick = () => {
       state.globalQuery = '';
       state.globalTabFilter = 'ALL';
+      state.tracedRow = null;
       gInput.value = '';
       render();
       gInput.focus();
     };
     window.addEventListener('resize', () => render());
-    loadAllSheets();
+    loadAllSheets().then(()=>{
+      const ref=new URLSearchParams(location.search).get('shape');
+      if(ref)openMapPreview(ref);
+    });
   </script>
 </body>
 </html>

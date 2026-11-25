@@ -45,7 +45,8 @@ function cityLabel(map, name, lon, lat, size, selected) {
   map.append(label);
 }
 
-async function regionalPointMap(backdrop, name, lon, lat) {
+async function regionalPointMap(backdrop, name, lon, lat, shape) {
+  const pointSource = shapeSourceCredit(shape);
   if (backdrop === 'incheon-coast') {
     const [land, cities] = await Promise.all([asset('seoul-land-1919-1926.geojson'), asset('place-points.geojson')]);
     const map = svg('svg',{viewBox:'126.28 -37.77 .92 .53',class:'incheon-coast',role:'img','aria-label':'인천과 서울 위치 지도'});
@@ -53,24 +54,22 @@ async function regionalPointMap(backdrop, name, lon, lat) {
     const seoul = cities.features.find(city => city.id === 'geo_seoul');
     if (seoul) cityLabel(map,seoul.properties.name,...seoul.geometry.coordinates,.032,false);
     cityLabel(map,name,lon,lat,.035,true);
-    return [map,mapCredit('인천·서울 일대 · 국사편찬위원회 1919·1926년 복원 자료',koreaSource)];
+    return [map,mapCredits(sourceCredit(koreaSource,'국사편찬위원회 1919·1926년 인천·서울 복원 자료'),pointSource)];
   }
   const district = backdrop === 'gyeongseong';
   const peninsula = backdrop === 'peninsula';
   const box = district ? [lon-.14,-lat-.084,.28,.168] : peninsula ? [123,-43,9,10] : [72,-54,62,37];
   const map = svg('svg',{viewBox:box.join(' '),role:'img','aria-label':name+' 위치 지도'});
-  let credit, source;
+  const credits = [];
   if (district) {
     const files = ['seoul-land-1919-1926','seoul-admin-1919-1926','gyeongseong-1919'];
     const [land,admin,area] = await Promise.all(files.map(file=>asset(file+'.geojson')));
     map.append(layer(land.geometry,'land'),layer(admin.geometry,'line'),layer(area.geometry,'district'));
-    credit = '경성부 · 국사편찬위원회 1919년 복원도';
-    source = 'https://hgis.history.go.kr/pro_g1/dataset.do#tab05';
+    credits.push(sourceCredit(koreaSource,'국사편찬위원회 1919년 경성부 복원도'));
   } else if (peninsula) {
     const coast = await asset('korea-guide-1920.svg');
     map.append(svg('path',{d:coast.querySelector('path').getAttribute('d'),class:'context-land','fill-rule':'evenodd'}));
-    credit = '한반도 해안선 · GSHHG';
-    source = 'https://www.soest.hawaii.edu/wessel/gshhg/';
+    credits.push(sourceCredit(geoSources));
   } else {
     const [terrain,cities,borders] = await Promise.all([asset('east-asia-1938.geojson'),asset('place-points.geojson'),
       backdrop === 'china-land' ? null : asset(backdrop+'.svg')]);
@@ -84,11 +83,10 @@ async function regionalPointMap(backdrop, name, lon, lat) {
     for (const city of cities.features.filter(f=>['geo_beijing','geo_shanghai'].includes(f.id) && f.properties.name !== name)) {
       cityLabel(map,city.properties.name,...city.geometry.coordinates,2,false);
     }
-    credit = borders ? '중국 일대 · '+backdrop.slice(6)+'년 판도' : '중국 일대 · 해안선과 주요 하천';
-    source = 'https://github.com/aourednik/historical-basemaps';
+    credits.push(sourceCredit(historicalSource),naturalEarthCredit);
   }
   cityLabel(map,district ? '경성부 · 서울' : name,lon,lat,district ? .009 : peninsula ? .5 : 2.15,true);
-  return [map,mapCredit(credit,source)];
+  return [map,mapCredits(...credits,pointSource)];
 }
 
 // Each extent is in longitude / negative latitude, as in the registered SVGs.
@@ -117,18 +115,70 @@ export function historicalView(space, date = '', nearbyKeys = []) {
   return {...view,day: day.length === 4 ? day+'-01-01' : day.length === 7 ? day+'-01' : day};
 }
 
-const cshapesSource = 'https://icr.ethz.ch/data/cshapes/';
+const cshapesSource = 'https://icr.ethz.ch/data/cshapes/beta.html';
 const koreaSource = 'https://hgis.history.go.kr/pro_g1/dataset.do#tab05';
 const geoSources = 'https://www.soest.hawaii.edu/wessel/gshhg/';
+const historicalSource = 'https://github.com/aourednik/historical-basemaps';
+export const naturalEarthCredit = {label:'Natural Earth',href:'https://www.naturalearthdata.com/about/terms-of-use/'};
 
-function mapCredit(label,source) {
+function sourceCredit(href,label) {
+  if (href.startsWith('https://icr.ethz.ch/data/cshapes/')) return {
+    label:'Schvitz 외, CShapes 2.1 (도형 가공)',href:cshapesSource,
+    license:'CC BY-NC-SA 4.0',licenseHref:'https://creativecommons.org/licenses/by-nc-sa/4.0/'
+  };
+  if (href.startsWith(historicalSource)) return {
+    label:label || 'André Ourednik, Historical Basemaps (도형 가공)',href,
+    license:'GPL-3.0',licenseHref:'/assets/event-geometry/historical-basemaps-license.txt'
+  };
+  if (href.startsWith('https://hgis.history.go.kr/')) return {
+    label:label || '국사편찬위원회 역사지리정보DB',href,license:'공공누리 제1유형',
+    licenseHref:'https://www.mcst.go.kr/site/s_open/kogl/koglType.jsp?pTab=04'
+  };
+  if (href === geoSources) return {
+    label:'Wessel·Smith, GSHHG (해안선 가공)',href,
+    license:'LGPL-3.0 이상',licenseHref:'/assets/event-geometry/gshhg-license.txt'
+  };
+  if (href.startsWith('https://www.naturalearthdata.com/')) return naturalEarthCredit;
+  if (href.startsWith('https://peacemap.universe.go.kr/')) return {label:'통일부 DMZ 평화지도',href};
+  if (href.startsWith('https://daten.berlin.de/datensaetze/verlauf-der-berliner-mauer-1989-')) return {label:'베를린 장벽 1989 · Berlin Open Data',href};
+  return {label:label || new URL(href).hostname.replace(/^www\./,''),href};
+}
+
+export function shapeSourceCredit(shape) {
+  const source = shape?.출처?.trim();
+  if (!source || !/^https?:\/\/\S+$/.test(source)) return null;
+  if (/^https:\/\/(?:pmc\.ncbi\.nlm\.nih\.gov\/articles\/PMC11822181\/|doi\.org\/10\.5281\/zenodo\.13363121)(?:$|[?#])/.test(source)) return {
+    label:'Bennett 외, Cliopatria (도형 가공)',href:source,
+    license:'CC BY 4.0',licenseHref:'https://creativecommons.org/licenses/by/4.0/'
+  };
+  try { return sourceCredit(source); } catch { return null; }
+}
+
+export function uniqueMapCredits(credits) {
+  const sources = new Map();
+  for (const credit of credits) {
+    if (credit && !sources.has(credit.href)) sources.set(credit.href,credit);
+  }
+  return [...sources.values()];
+}
+
+function creditLink(label,href) {
   const link = document.createElement('a');
-  link.className = 'point-basemap-credit';
-  link.href = source;
+  link.href = href;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.textContent = label+' ↗';
+  link.textContent = label;
   return link;
+}
+
+function mapCredits(...credits) {
+  const element = document.createElement('div');
+  element.className = 'point-basemap-credit map-credit-links';
+  for (const credit of uniqueMapCredits(credits)) {
+    element.append(creditLink(credit.label,credit.href));
+    if (credit.licenseHref) element.append(creditLink(credit.license,credit.licenseHref));
+  }
+  return element;
 }
 
 function activePaths(doc,day) {
@@ -144,7 +194,7 @@ async function drawHistoricalPlace(space,shape,view) {
   const key = space.지도참조키;
   const map = svg('svg',{viewBox:box.join(' '),role:'img','aria-label':space.공간명+' 위치 지도'});
   if (key === 'geo_americas') map.classList.add('hemisphere-map');
-  let credit,source;
+  const credits = [];
   const [atlas,provinces,land,rivers,cities,point,landmarks] = await Promise.all([
     !view.seoul && asset('independence-'+(view.atlas || 'asia')+'.svg'),
     view.korea && asset('colonial-korea.svg'),
@@ -160,13 +210,11 @@ async function drawHistoricalPlace(space,shape,view) {
       if (path.getAttribute('code') === view.highlight) country.classList.add('context-selected-country');
       map.append(country);
     }
-    credit = day+' 기준 국경 · CShapes';
-    source = cshapesSource;
+    credits.push(sourceCredit(cshapesSource));
   }
   if (land) {
     map.append(layer(land.geometry,'land'));
-    credit = (view.coast === 'honshu-coast' ? '도쿄만' : '창장강 하구')+' · GSHHG 해안선';
-    source = geoSources;
+    credits.push(sourceCredit(geoSources));
   }
   if (provinces) {
     const active = activePaths(provinces,day);
@@ -177,17 +225,16 @@ async function drawHistoricalPlace(space,shape,view) {
       if (district) map.append(contextPath(district,'district'));
     }
     if (active.length) {
-      credit = day+' 기준 '+(district && key === 'geo_pyongyang' ? '평양부' : '도 경계')+' · 국사편찬위원회';
-      source = koreaSource;
+      credits.push(sourceCredit(koreaSource, '국사편찬위원회 역사 행정구역'));
     }
   }
   if (view.seoul) {
     const [land,admin,district] = await Promise.all([asset('seoul-land-1919-1926.geojson'),asset('seoul-admin-1919-1926.geojson'),loadShape(shape)]);
     map.append(layer(land.geometry,'land'),layer(admin.geometry,'line'),layer(district,'district'));
-    credit = '1919년 경성부 · 국사편찬위원회';
-    source = koreaSource;
+    credits.push(sourceCredit(koreaSource,'국사편찬위원회 1919년 경성부'));
   }
   if (rivers) map.append(layer(rivers.geometry,'river'));
+  if (rivers || landmarks) credits.push(naturalEarthCredit);
   if (cities) for (const f of cities.features.filter(f=>view.cities.includes(f.id))) {
     cityLabel(map,f.properties.name,...f.geometry.coordinates,Math.min(box[2]*.046,box[3]*.065),false);
   }
@@ -195,6 +242,7 @@ async function drawHistoricalPlace(space,shape,view) {
     cityLabel(map,f.properties.name,...f.geometry.coordinates,Math.min(box[2]*.039,box[3]*.055),false);
   }
   if (point) cityLabel(map,space.공간명,...point.coordinates,Math.min(box[2]*.045,box[3]*.065),true);
+  if (point || view.seoul) credits.push(shapeSourceCredit(shape));
   if (view.coast && point) {
     const japan = key === 'geo_tokyo';
     const inset = svg('svg',{viewBox:japan ? '128 -46 19 17' : '94 -44 35 25',role:'img','aria-label':day+' 기준 '+space.공간명+'의 광역 위치'});
@@ -211,9 +259,9 @@ async function drawHistoricalPlace(space,shape,view) {
     legend.textContent = day.slice(0,4)+'년 '+(japan ? '일본' : '중국')+' 일대';
     locator.append(inset,legend);
     frame.append(map,locator);
-    return [frame,mapCredit(credit,source)];
+    return [frame,mapCredits(...credits,sourceCredit(cshapesSource))];
   }
-  return [map,mapCredit(credit,source)];
+  return [map,mapCredits(...credits)];
 }
 
 export async function renderSpaceMap(container, space, shape, {pointWidth = 6, date = '', nearbyKeys = [], registered = false} = {}) {
@@ -280,8 +328,6 @@ const contextRegions = {
   geo_middle_east:'middle-east', geo_south_asia:'south-asia', geo_israel:'israel',
   geo_afghanistan:'afghanistan', geo_iran:'iran', geo_india_pakistan:'india-pakistan'
 };
-
-const physicalSource = 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/';
 
 async function drawRegion(container,space,shape,region,date) {
   const data = await asset('context/'+region+'.json').catch(() => null);
@@ -350,12 +396,18 @@ async function drawRegion(container,space,shape,region,date) {
     if (point && Math.hypot(lon-point[0],lat-point[1])<size*.8) continue;
     label(name,lon,lat,false);
   }
-  let credit = mapCredit('해안선·수계 · Natural Earth 지형 참고도',physicalSource);
-  if (edition) credit = mapCredit(edition+'년 국경 · Historical Basemaps / 지형 · Natural Earth','https://github.com/aourednik/historical-basemaps');
-  if (region === 'gyeongin') credit = mapCredit((railView ? '1899년 경인선 · ' : '')+'1910년 경인 지역 복원 · 국사편찬위원회',koreaSource);
-  if (region === 'berlin') credit = mapCredit('베를린·포츠담 · 현대 시 경계와 수역', 'https://daten.berlin.de/datensaetze/gewasserverzeichnis-wfs-353f1716');
-  if (data.date) credit = mapCredit(data.date+' 기준 국가 경계 · CShapes 2.1',cshapesSource);
-  container.replaceChildren(map,credit);
+  const credits = [];
+  if (region === 'gyeongin') {
+    credits.push(sourceCredit(koreaSource,'국사편찬위원회 1910년 경인 지역 복원'));
+    if (railView) credits.push(sourceCredit('https://hgis.history.go.kr/pro_g1/dataset.do#tab14','국사편찬위원회 1899년 경인선'));
+  }
+  if (edition) credits.push(sourceCredit(historicalSource));
+  if (region === 'berlin') {
+    credits.push(sourceCredit('https://daten.berlin.de/datensaetze/alkis-berlin-landesgrenze-wfs-07b1347b','베를린시 경계'));
+    credits.push(sourceCredit('https://daten.berlin.de/datensaetze/gewasserverzeichnis-wfs-353f1716','베를린시 수역'));
+  }
+  if (data.date) credits.push(sourceCredit(cshapesSource));
+  container.replaceChildren(map,mapCredits(...credits,shapeSourceCredit(shape),region !== 'gyeongin' && naturalEarthCredit));
   return true;
 }
 
@@ -368,9 +420,10 @@ async function drawRegisteredMap(container,space,shape,pointWidth,date,registere
     if (region && !(key === 'geo_seoul' && pointBackdrop(space,date) === 'gyeongseong')) {
       if (await drawRegion(container,space,shape,region,date)) return;
     }
-    let map;
+    let map, geographic = true;
     if (type === 'svg-area' || type === 'svg-line' || shape.데이터형식 === 'svg_legacy') {
-      const {box,geographic} = registeredSvgFrame(url);
+      const {box,geographic:usesBasemap} = registeredSvgFrame(url);
+      geographic = Boolean(usesBasemap);
       map = mapFrame(space.공간명,box,geographic);
       const image = svg('image',{href:url,x:box[0],y:box[1],width:box[2],height:box[3],class:'space-shape-image'});
       image.addEventListener('error',()=>{container.textContent='등록된 지도 도형을 불러오지 못했습니다.';});
@@ -380,7 +433,7 @@ async function drawRegisteredMap(container,space,shape,pointWidth,date,registere
       const backdrop = pointBackdrop(space,date);
       if (backdrop) {
         try {
-          const [region,credit] = await regionalPointMap(backdrop,space.공간명,lon,lat);
+          const [region,credit] = await regionalPointMap(backdrop,space.공간명,lon,lat,shape);
           container.replaceChildren(region,credit);
           const point = new DOMPoint(lon,-lat);
           for (const country of region.querySelectorAll('.context-country')) {
@@ -403,7 +456,8 @@ async function drawRegisteredMap(container,space,shape,pointWidth,date,registere
       map = mapFrame(space.공간명,[west,-north,east-west,north-south],true);
       map.append(svg('path',{d:pathData(paths,type==='area'),class:type==='area'?'space-map-area':'space-map-line','fill-rule':'evenodd'}));
     }
-    container.replaceChildren(map);
+    const credits = mapCredits(shapeSourceCredit(shape),geographic && naturalEarthCredit);
+    container.replaceChildren(...(credits.hasChildNodes() ? [map,credits] : [map]));
   } catch {
     container.textContent = '등록된 지도 도형을 불러오지 못했습니다.';
   }

@@ -6,6 +6,15 @@ export type MapLayer={box:number[];point?:number[];paths?:number[][][];line?:boo
 type Basemap={box:string;paths:string[]};
 const basemaps=new Map<string,Promise<Basemap>>();
 
+export function mapLayerFrame(layers:MapLayer[]){
+ if(!layers.length)return;
+ const left=Math.min(...layers.map(l=>l.box[0])),right=Math.max(...layers.map(l=>l.box[0]+l.box[2]));
+ const top=Math.min(...layers.map(l=>l.box[1])),bottom=Math.max(...layers.map(l=>l.box[1]+l.box[3]));
+ const pad=Math.max(1,(right-left)*.08,(bottom-top)*.12);
+ const x=Math.max(-180,left-pad),y=Math.max(-90,top-pad);
+ return [x,y,Math.min(180,right+pad)-x,Math.min(90,bottom+pad)-y];
+}
+
 export function historicalMapPath(path:string){
  return mapAsset(path,'svg')&&/^assets\/event-geometry\/world-\d+\.svg$/.test(path);
 }

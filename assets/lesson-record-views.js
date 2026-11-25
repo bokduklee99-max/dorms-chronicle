@@ -3,14 +3,14 @@ import {countryFlag} from './country-flag.js';
 import {eventPeriods} from '../swimlane-data.js';
 
 // Join the current lesson, including filtered lessons and unpublished package drafts.
-export function lessonRecordViews({events,categories,detailActors,relations,leadership,name='',packageId=''}){
+export function lessonRecordViews({events,categories,detailActors,relations,leadership,packages,name='',packageId=''}){
   const rows={사건:[],주체:[],카테고리:[],관계:[],공간:[],직위:[],재임:[],패키지:[],사건_주체:[],사건_카테고리:[]};
   const add=(tab,id,fields)=>rows[tab].push({tab,id,n:rows[tab].length+1,...fields});
-  add('패키지',packageId,{패키지명:name});
+  for(const pkg of packages??[{패키지ID:packageId,패키지명:name}])add('패키지',pkg.패키지ID,{패키지명:pkg.패키지명});
   const categoryNames=new Map(),actorNames=new Map();
   for(const c of categories){
     categoryNames.set(c.kind+'|'+c.name,c.id);
-    add('카테고리',c.id,{카테고리유형:c.kind,카테고리명:c.name,시작일:c.start||'',종료일:c.end||'',설명:c.body,패키지ID:packageId,출처:c.source});
+    add('카테고리',c.id,{카테고리유형:c.kind,카테고리명:c.name,시작일:c.start||'',종료일:c.end||'',설명:c.body,패키지ID:c.packageId??packageId,출처:c.source});
   }
   for(const a of detailActors){
     actorNames.set(a.title,a.id);

@@ -47,6 +47,8 @@ export async function loadSwimlane(config, parser, packageId, request = readLess
 }
 
 export function buildSwimlane(tables, parser, packageId) {
+  const allPackages = packageId == null;
+  const inPackage = row => allPackages || row.패키지ID === packageId;
   const members = tables.packageLinks && new Set(tables.packageLinks.filter(row => row.패키지ID === packageId).map(row => row.사건ID));
   const places = (links,field) => parser.linkedSpaceNames(tables.spaces || [],links || [],field);
   const eventPlaces = places(tables.eventSpaces,'사건ID');
@@ -56,8 +58,9 @@ export function buildSwimlane(tables, parser, packageId) {
   const catalog = tables.categories.map(row => ({
     topic_id: row.카테고리ID, name: row.카테고리명, category_type: row.카테고리유형
   }));
-  const categories = tables.categories.filter(row => row.패키지ID === packageId).map(row => ({
+  const categories = tables.categories.filter(inPackage).map(row => ({
     id: row.카테고리ID, name: row.카테고리명, kind: row.카테고리유형,
+    ...(allPackages ? {packageId: row.패키지ID} : {}),
     source:row.출처,start: row.시작일, end: row.종료일, body: row.설명, place: namesOfPlaces(categoryPlaces,row.카테고리ID,row.주공간), row: row.row
   }));
   const categoriesById = new Map(categories.map(record => [record.id, record]));
@@ -70,15 +73,18 @@ export function buildSwimlane(tables, parser, packageId) {
   }
   const actorNames = new Map(tables.actors.map(row => [row.주체ID, row.주체명]));
   const eventActors = new Map();
+  const includesEvent = id => id && (allPackages || (members || memberships).has(id));
   for (const row of tables.participants) {
-    if (!(members || memberships).has(row.사건ID) || !actorNames.has(row.주체ID)) continue;
+    if (!includesEvent(row.사건ID) || !actorNames.has(row.주체ID)) continue;
     if (!eventActors.has(row.사건ID)) eventActors.set(row.사건ID, []);
     eventActors.get(row.사건ID).push({id:row.주체ID, name:actorNames.get(row.주체ID), role:row.역할});
   }
-  const events = tables.events.filter(row => (members || memberships).has(row.사건ID)).map(row => {
-    const start = parser.dateRange(row.날짜);
+  const events = tables.events.filter(row => includesEvent(row.사건ID)).map(row => {
     const end = row.종료일?.trim() || '';
-    if (end && parser.dateRange(end).end < start.start) throw Error(`${row.사건명}의 시작일과 종료일을 확인해 주세요.`);
+    if (!allPackages) {
+      const start = parser.dateRange(row.날짜);
+      if (end && parser.dateRange(end).end < start.start) throw Error(`${row.사건명}의 시작일과 종료일을 확인해 주세요.`);
+    }
     const categories = memberships.get(row.사건ID) || [];
     const names = kind => categories.filter(category => category.kind === kind).map(category => category.name);
     return {
@@ -89,20 +95,20 @@ export function buildSwimlane(tables, parser, packageId) {
   });
   if (!events.length) throw Error('패키지에 연결된 연표 자료를 찾지 못했습니다.');
   const periods = categories.filter(record => record.kind === 'period');
-  for (const period of periods) {
+  for (const period of allPackages ? [] : periods) {
     const start = period.start ? parser.dateRange(period.start).start : -Infinity;
     const end = period.end ? parser.dateRange(period.end).end : Infinity;
     if (start > end) throw Error(`${period.name}의 시작일과 종료일을 확인해 주세요.`);
   }
   const eventNames = new Map(tables.events.map(row => [row.사건ID, row.사건명]));
   const names = {event: eventNames, actor: actorNames, category: new Map(tables.categories.map(row => [row.카테고리ID, row.카테고리명]))};
-  const packageRelations = tables.relations.filter(row => row.패키지ID === packageId);
+  const packageRelations = tables.relations.filter(inPackage);
   const actorIds = new Set(packageRelations.flatMap(row =>
     ['출발', '도착'].filter(side => row[side + '유형'] === 'actor').map(side => row[side + 'ID'])));
   const participantIds = new Set(events.flatMap(event => event.actors.map(actor => actor.id)));
-  const detailActors = tables.actors.filter(row => actorIds.has(row.주체ID) || participantIds.has(row.주체ID)).map(row => {
+  const detailActors = tables.actors.filter(row => row.주체ID && (allPackages || actorIds.has(row.주체ID) || participantIds.has(row.주체ID))).map(row => {
     const start = row['존속 시작일'] || '';
-    if (start) parser.dateRange(start);
+    if (start && !allPackages) parser.dateRange(start);
     return {id: row.주체ID, title: row.주체명, start, end: row['존속 종료일'], body: row.소개, kind: row.구분, originalName:row.원어명,iso3:row.국가코드,
       orientation:row.성향,status:row.검토상태,periodNotes:row['기간 설명'],
       place: namesOfPlaces(actorPlaces,row.주체ID,row.거점공간)};

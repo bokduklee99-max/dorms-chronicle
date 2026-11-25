@@ -78,18 +78,22 @@ async function loadMapTables(){
 }
 
 let leadershipRequest;
+export function sheetLeadership(actors,jobs,terms){
+ const people=new Map(actors.map(a=>[a.주체ID,a])),offices=new Map(jobs.map(j=>[j.직위ID,j]));
+ const tenures=terms.flatMap(t=>{
+  const job=offices.get(t.직위ID),person=people.get(t.주체ID);
+  if(!job||!person||!t.시작일)return [];
+  return [{id:t.재임ID,actorId:job.국가ID,organizationId:job.조직ID,officeId:t.직위ID,title:job.직위명,
+   person:person.주체명,personId:t.주체ID,startDate:t.시작일,endDate:t.종료일}];
+ });
+ return {countries:actors.filter(a=>['state','territory'].includes(a.구분)).map(a=>({actor_id:a.주체ID,iso3:a.국가코드})),people,tenures};
+}
+
 function readLeadership(){
  if(!leadershipRequest)leadershipRequest=(async()=>{
   const read=(tab,fields)=>SheetData.sheetRecords(SHEET_CONFIG,tab,fields,readLessonSheet);
   const [actors,jobs,terms]=await Promise.all([read('주체',['주체ID','주체명']),read('직위',['직위ID','직위명']),read('재임',['주체ID','직위ID','시작일'])]);
-  const people=new Map(actors.map(a=>[a.주체ID,a])),offices=new Map(jobs.map(j=>[j.직위ID,j]));
-  const tenures=terms.flatMap(t=>{
-   const job=offices.get(t.직위ID),person=people.get(t.주체ID);
-   if(!job||!person||!t.시작일)return [];
-   return [{id:t.재임ID,actorId:job.국가ID,organizationId:job.조직ID,officeId:t.직위ID,title:job.직위명,
-    person:person.주체명,personId:t.주체ID,startDate:t.시작일,endDate:t.종료일}];
-  });
-  return {countries:actors.filter(a=>['state','territory'].includes(a.구분)).map(a=>({actor_id:a.주체ID,iso3:a.국가코드})),people,tenures};
+  return sheetLeadership(actors,jobs,terms);
  })().catch(()=>{leadershipRequest=null;return null;});
  return leadershipRequest;
 }
@@ -107,7 +111,7 @@ export function getSwimlaneEmbed(frame){
 }
 
 /**
- * @param {{events: Array, categories: Array, actors: Array, detailActors?: Array, relations: Array, geography?: object, leadership?: object, name?: string, packageId?: string}} data
+ * @param {{events: Array, categories: Array, actors: Array, detailActors?: Array, relations: Array, geography?: object, leadership?: object, name?: string, packageId?: string, packages?: Array}} data
  * @param {Element|null} [frame]
  * @param {((id: string|null, host: HTMLElement|null) => void)|null} [onEventContext]
  * @param {HTMLElement|null} [panel] Inline host for a non-modal record reader.
@@ -159,12 +163,13 @@ export function setupSwimlaneModal(data,frame=null,onEventContext=null,panel=nul
  const jump=(text,id)=>records.has(id)?action(text,()=>open(id),'jump'):make('span','',text);
  async function fillPlaces(host,record){
   if(record.place)host.append(section('장소',make('p','prose',record.place)));
+  const tab=record.view==='event'?'사건':record.view==='actor'?'주체':'카테고리';
+  const linkTab=tab+'_공간';
   const local=geography||frame?.hasAttribute('data-package-draft');
-  if(local&&!record.spaceIds?.length)return;
+  if(local&&!record.spaceIds?.length&&!geography?.[linkTab])return;
   const tables=await (local?(geography||frame.draftGeography):readMapTables());
   if(!tables||!host.isConnected)return;
-  const tab=record.view==='event'?'사건':record.view==='actor'?'주체':'카테고리';
-  const ids=local?record.spaceIds:(tables[tab+'_공간']||[]).filter(row=>[record.id,record.legacyId,record.sourceId].filter(Boolean).includes(row[tab+'ID'])).map(row=>row.공간ID);
+  const ids=(local&&record.spaceIds)||(tables[linkTab]||[]).filter(row=>[record.id,record.legacyId,record.sourceId].filter(Boolean).includes(row[tab+'ID'])).map(row=>row.공간ID);
   const spaces=[...new Set(ids)].map(id=>tables.공간.find(space=>space.공간ID===id)).filter(Boolean);
   if(!spaces.length)return;
   const list=make('ol','place-key');

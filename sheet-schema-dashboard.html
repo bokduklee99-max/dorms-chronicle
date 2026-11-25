@@ -307,6 +307,7 @@
     }
     .sheet-tab-btn {
       display: flex;
+      min-width: 0;
       white-space: nowrap;
       align-items: center;
       gap: 6px;
@@ -318,6 +319,10 @@
       color: #0f172a;
       cursor: pointer;
     }
+    .sheet-tab-btn span { overflow: hidden; text-overflow: ellipsis; }
+    .sheet-tab-btn .sheet-dot, .sheet-tab-btn small { flex: none; }
+    .sheet-tab-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; }
+    .sheet-tab-actions .sheet-full-btn { padding: 3px 7px; white-space: nowrap; }
     .sheet-dot {
       width: 9px;
       height: 9px;
@@ -413,8 +418,8 @@
     @media (max-width: 760px) {
       .mini-grid th.map-key-col { width: 52px; }
     }
-    .mini-map-cell { display: flex; align-items: center; gap: 4px; }
-    .mini-map-cell > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .map-key-cell { display: flex; align-items: center; gap: 4px; }
+    .map-key-cell > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .mini-grid tr:last-child td { border-bottom: 0; }
     .mini-grid td.rn {
       background: #f8f9fa;
@@ -680,8 +685,8 @@
       cursor: pointer;
       vertical-align: middle;
     }
-    .mini-map-cell .map-prev-btn { margin-inline-end: 0; }
-    .mini-map-cell .map-prev-btn:focus-visible { outline-offset: -2px; }
+    .map-key-cell .map-prev-btn { margin-inline-end: 0; }
+    .map-key-cell .map-prev-btn:focus-visible { outline-offset: -2px; }
     .map-prev-btn:hover { background: #fef3c7; border-color: #f59e0b; }
     dialog.map-modal {
       width: min(820px, 94vw);
@@ -699,6 +704,52 @@
     }
     dialog.map-modal {width:min(1060px,96vw);overflow:auto;background:#fffdf7;border:0}
     .schema-shape-footer {padding:0 28px 22px;color:#3c5947;font-size:14px}
+    .full-sheet-modal {
+      width: min(1180px, calc(100% - 24px));
+      max-height: calc(100dvh - 32px);
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 24px 60px #0f172a40;
+    }
+    .full-sheet-modal[open] { display: flex; flex-direction: column; }
+    .full-sheet-modal::backdrop { background: #0f172a70; }
+    .full-sheet-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding: 14px 16px; }
+    .full-sheet-head h2 { margin: 0 0 3px; font-size: 1.2rem; }
+    .full-sheet-head p { margin: 0; color: var(--muted); font-size: .85rem; }
+    .full-sheet-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; border-top: 1px solid var(--sheet-grid); }
+    .full-sheet-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .85rem; }
+    .full-sheet-table th, .full-sheet-table td {
+      padding: 7px 9px;
+      border-right: 1px solid var(--sheet-grid);
+      border-bottom: 1px solid var(--sheet-grid);
+      text-align: left;
+      vertical-align: top;
+    }
+    .full-sheet-table td { min-width: 4.5rem; max-width: 22rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .full-sheet-table thead th { position: sticky; top: 0; z-index: 2; background: var(--sheet-head); white-space: nowrap; }
+    .full-sheet-table tr > th:first-child { width: 1%; position: sticky; left: 0; color: var(--muted); background: var(--sheet-head); white-space: nowrap; }
+    .full-sheet-table thead th:first-child { z-index: 3; }
+    .full-sheet-table th small { color: var(--muted); }
+    .full-sheet-table thead th[data-related] { color: #5b3b8c; background: #f2ecfb; }
+    .full-sheet-table [data-related-start] { border-inline-start: 2px solid #d4c4ee; }
+    .full-sheet-column-select { display: flex; align-items: center; gap: 6px; line-height: 1.35; cursor: pointer; }
+    .full-sheet-column-select input { width: 1rem; height: 1rem; margin: 0; accent-color: #1a73e8; }
+    .full-sheet-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .full-sheet-event-cell { cursor: pointer; }
+    .full-sheet-event-cell button {
+      display: block; width: 100%; padding: 0; border: 0; background: none; color: var(--chronicle-green);
+      font: inherit; text-align: left; white-space: inherit; overflow-wrap: inherit; cursor: pointer;
+      text-decoration: underline; text-decoration-color: #a3b1a8; text-underline-offset: .18em;
+    }
+    .full-sheet-event-cell:hover button { text-decoration-color: currentColor; }
+    .full-sheet-table summary { cursor: pointer; }
+    .full-sheet-value { max-height: 12rem; overflow: auto; margin: 6px 0 0; padding: 6px; background: var(--sheet-head); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .full-sheet-values { margin: 0; padding: 0; list-style: none; }
+    .full-sheet-values > li + li { margin-top: 4px; }
+    .full-sheet-table details .full-sheet-values { max-height: 14rem; overflow: auto; margin-top: 4px; }
     .empty-td { text-align: center; padding: 22px !important; color: #94a3b8; }
     @media (max-width: 600px) {
       .shell { padding-inline: 12px; gap: 10px; }
@@ -707,12 +758,14 @@
       .sheet-row-group { flex-direction: column; align-items: stretch; }
       .mini-sheet { flex: none; }
       .inspector { padding: 12px; }
+      .full-sheet-table { width: max-content; min-width: 100%; }
+      .full-sheet-table td { max-width: 16rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       .mini-sheet, .arrow-label-btn { transition: none; }
     }
   </style>
-  <link rel="stylesheet" href="./assets/record-presentation.css">
+  <link rel="stylesheet" href="./assets/swimlane-modal.css">
 </head>
 <body>
   <a class="skip-link" href="#schema-content">본문으로 건너뛰기</a>
@@ -766,12 +819,30 @@
 
   <aside id="canvas-trace-bar" class="canvas-trace-bar" aria-label="선택한 행의 연결" hidden></aside>
 
+  <dialog id="full-sheet-modal" class="full-sheet-modal" aria-labelledby="full-sheet-title">
+    <header class="full-sheet-head">
+      <div><h2 id="full-sheet-title"></h2><p id="full-sheet-count"></p></div>
+      <div class="full-sheet-filters" role="group" aria-label="표시할 열">
+        <button type="button" class="btn" id="full-sheet-show-all" aria-pressed="true">전체 열</button>
+        <button type="button" class="btn" id="full-sheet-show-selected" aria-pressed="false">선택한 열만</button>
+      </div>
+      <form method="dialog" class="sheet-tab-actions">
+        <a id="full-sheet-link" class="btn" target="_blank" rel="noopener noreferrer">구글 시트 ↗</a>
+        <button type="submit" class="btn" autofocus>닫기</button>
+      </form>
+      <p id="full-sheet-event-status" role="status" hidden></p>
+    </header>
+    <div id="full-sheet-scroll" class="full-sheet-scroll" tabindex="0" role="region" aria-label="시트 데이터"></div>
+  </dialog>
+
   <dialog id="map-preview-modal" class="map-modal record-presentation live-reader" aria-label="지도 도형 미리보기">
     <div class="record-controls"><button type="button" class="record-close" id="btn-close-map-modal" aria-label="닫기">×</button></div>
     <div id="map-preview-content"></div>
     <footer class="schema-shape-footer"><a id="map-modal-sheet-link" target="_blank" rel="noreferrer">시트 행 열기 ↗</a></footer>
   </dialog>
 
+  <script src="./sheet-config.js?v=timeline-images"></script>
+  <script src="./sheets.js?v=normalized-schema"></script>
   <script>
     const SPREADSHEET_ID = '1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0';
     const SHEET_GIDS = {
@@ -854,7 +925,13 @@
       const base = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`;
       return gid ? (rowNum ? `${base}#gid=${gid}&range=A${rowNum}` : `${base}#gid=${gid}`) : base;
     };
-    const colLetter = i => String.fromCharCode(65 + i);
+    function colLetter(index) {
+      let label = '';
+      for (let number = index + 1; number > 0; number = Math.floor((number - 1) / 26)) {
+        label = String.fromCharCode(65 + (number - 1) % 26) + label;
+      }
+      return label;
+    }
 
     function parseCSV(text) {
       const rows = [];
@@ -1021,6 +1098,11 @@
       return `<button type="button" class="map-prev-btn" data-preview-map-key="${esc(key)}" aria-label="${label}" title="${label}" aria-haspopup="dialog">🗺</button>`;
     }
 
+    function fullSheetButton(tab) {
+      return `<button type="button" class="btn sheet-full-btn" data-open-full-sheet="${esc(tab)}"
+        aria-haspopup="dialog" aria-controls="full-sheet-modal" aria-label="${esc(tab)} 전체 표">전체 표</button>`;
+    }
+
     function render() {
       const { stats, pkMaps } = computeArrowStats();
       const tracedInfo = state.tracedRow
@@ -1131,7 +1213,10 @@
                     <span>${esc(s.tab)}</span>
                     <small>${rows.length.toLocaleString()}행</small>
                   </button>
-                  <a class="sheet-ext" href="${esc(sheetUrl(s.tab))}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.tab)} 시트 열기" title="구글 시트 열기">↗</a>
+                  <div class="sheet-tab-actions">
+                    ${fullSheetButton(s.tab)}
+                    <a class="sheet-ext" href="${esc(sheetUrl(s.tab))}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.tab)} 시트 열기" title="구글 시트 열기">↗</a>
+                  </div>
                   ${(!isOriginSheet && tracedEntries.length) || (gq && searchHits.length) ? `<div class="sheet-tab-status">
                     ${!isOriginSheet && tracedEntries.length ? `<span class="linked-count">연결 ${tracedEntries.length}행</span>` : ''}
                     ${gq && searchHits.length ? `<span class="match-count">검색 ${searchHits.length}행</span>` : ''}
@@ -1167,7 +1252,7 @@
                             const rawVal = e.row[col] || '';
                             const cellHtml = (gq && rawVal) ? highlightMatch(rawVal, gq) : esc(rawVal || '—');
                             if (isMapKeyColumn(col) && rawVal && pkMaps.get('지도도형')?.has(rawVal)) {
-                              return `<td title="${esc(rawVal)}"><div class="mini-map-cell">${mapPreviewButton(rawVal)}<span>${cellHtml}</span></div></td>`;
+                              return `<td title="${esc(rawVal)}"><div class="map-key-cell">${mapPreviewButton(rawVal)}<span>${cellHtml}</span></div></td>`;
                             }
                             return `<td title="${esc(rawVal)}">${cellHtml}</td>`;
                           }).join('')}
@@ -1456,7 +1541,10 @@
             </h2>
             ${selArrow ? `<p class="ins-relation">${esc(selArrow.from)}.${esc(selArrow.fromCol)} → ${esc(selArrow.to)}.${esc(selArrow.toCol)}</p>` : ''}
           </div>
-          <a class="btn btn-primary" href="${esc(sheetUrl(tab))}" target="_blank" rel="noopener noreferrer">시트에서 열기 ↗</a>
+          <div class="sheet-tab-actions">
+            ${fullSheetButton(tab)}
+            <a class="btn btn-primary" href="${esc(sheetUrl(tab))}" target="_blank" rel="noopener noreferrer">시트에서 열기 ↗</a>
+          </div>
         </div>
 
         <div class="rel-strip">
@@ -1783,6 +1871,241 @@
         };
       }
     }
+
+    const fullSheetModal = document.getElementById('full-sheet-modal');
+    const fullSheetScroll = document.getElementById('full-sheet-scroll');
+    const fullSheetShowAll = document.getElementById('full-sheet-show-all');
+    const fullSheetShowSelected = document.getElementById('full-sheet-show-selected');
+    const fullSheetEventStatus = document.getElementById('full-sheet-event-status');
+    const fullSheetSelections = new Map();
+    let fullSheetTab = '';
+    let fullSheetSelectedOnly = false;
+    let fullSheetEventReader, pendingEventButton;
+
+    async function createFullSheetEventReader() {
+      const [{ setupSwimlaneModal, sheetLeadership }, { buildSwimlane }] = await Promise.all([
+        import('./assets/swimlane-modal.js'), import('./swimlane-data.js'),
+      ]);
+      const data = state.data;
+      const events = data.사건.map((row, index) => ({ ...row, row: index + 2 }));
+      const categoryLinks = state.headers.사건_카테고리.length
+        ? data.사건_카테고리.map(row => ({ event_id: row.사건ID, topic_id: row.카테고리ID }))
+        : undefined;
+      const records = buildSwimlane({
+        events, categoryLinks, categories: data.카테고리, actors: data.주체, relations: data.관계,
+        participants: data.사건_주체, spaces: data.공간, eventSpaces: data.사건_공간,
+        actorSpaces: data.주체_공간, categorySpaces: data.카테고리_공간,
+      }, SheetData);
+      return setupSwimlaneModal({
+        ...records, packages: data.패키지, geography: data,
+        leadership: sheetLeadership(data.주체, data.직위, data.재임),
+      });
+    }
+
+    async function openFullSheetEvent(button) {
+      pendingEventButton = button;
+      fullSheetEventStatus.hidden = true;
+      try {
+        fullSheetEventReader ||= createFullSheetEventReader().catch(error => {
+          fullSheetEventReader = null;
+          throw error;
+        });
+        const reader = await fullSheetEventReader;
+        if (pendingEventButton !== button || !fullSheetModal.open || !button.isConnected) return;
+        button.focus({ preventScroll: true });
+        reader.open('event', { id: button.dataset.sheetEventId });
+      } catch (error) {
+        if (pendingEventButton !== button || !fullSheetModal.open || !button.isConnected) return;
+        console.error(error);
+        fullSheetEventStatus.textContent = '사건 상세를 열지 못했습니다.';
+        fullSheetEventStatus.hidden = false;
+      }
+    }
+
+    function fullSheetEventRelations(rows) {
+      const indexes = new Map();
+      const columns = [];
+
+      function matchingRows(sheet, column, key) {
+        if (!key) return [];
+        const indexKey = `${sheet}.${column}`;
+        if (!indexes.has(indexKey)) {
+          const index = new Map();
+          for (const row of state.data[sheet]) {
+            const value = row[column];
+            if (!value) continue;
+            if (!index.has(value)) index.set(value, []);
+            index.get(value).push(row);
+          }
+          indexes.set(indexKey, index);
+        }
+        return indexes.get(indexKey).get(key) || [];
+      }
+
+      for (const arrow of ARROWS) {
+        const { from, fromCol, to, toCol, viaTab, viaFromCol, viaToCol } = arrow;
+        if (arrow.kind === 'junction' && from === '사건' && viaTab !== '관계') {
+          columns.push({ label: to, values: row => matchingRows(viaTab, viaFromCol, row[fromCol]).flatMap(link =>
+            matchingRows(to, toCol, link[viaToCol]).map(record => ({ sheet: to, record, note: link.역할 }))) });
+        } else if (arrow.kind === 'fk' && to === '사건') {
+          columns.push({ label: from, values: row => matchingRows(from, fromCol, row[toCol]).map(record => ({ sheet: from, record })) });
+        }
+      }
+
+      for (const [side, opposite] of [['출발', '도착'], ['도착', '출발']]) {
+        columns.push({ label: `관계 ${opposite}`, values: row =>
+          matchingRows('관계', side + 'ID', row.사건ID).flatMap(link => {
+            if (relationEndpointTabs.get(link[side + '유형']?.toLowerCase()) !== '사건') return [];
+            const sheet = relationEndpointTabs.get(link[opposite + '유형']?.toLowerCase());
+            if (!sheet) return [];
+            return matchingRows(sheet, getSheetSpec(sheet).pk, link[opposite + 'ID'])
+              .map(record => ({ sheet, record, note: link.라벨 || link.관계유형 }));
+          }),
+        });
+      }
+
+      return columns.map(({ label, values }) => ({ label, rows: rows.map(values) }))
+        .filter(column => column.rows.some(values => values.length));
+    }
+
+    function fullSheetCell(value, rowIndex, columnIndex, hasMap) {
+      if (hasMap) return `<td><div class="map-key-cell">${mapPreviewButton(value)}<span>${esc(value)}</span></div></td>`;
+      if (value.length <= 120) return `<td>${esc(value || '—')}</td>`;
+      return `<td><details data-sheet-row="${rowIndex}" data-sheet-column="${columnIndex}">
+        <summary>${esc(value.slice(0, 100))}…</summary><pre class="full-sheet-value" tabindex="0"></pre>
+      </details></td>`;
+    }
+
+    function fullSheetRelatedCell(values, mapKeys, first) {
+      const items = new Set();
+      for (const { sheet, record, note } of values) {
+        let label = record[getSheetSpec(sheet).labelCol];
+        if (sheet === '영토변화') {
+          const dateRange = [record.시작일, record.종료일].filter(Boolean).join(' – ');
+          label = [record.영토유형, dateRange].filter(Boolean).join(' · ');
+        }
+        const value = esc([label, note].filter(Boolean).join(' · ') || '—');
+        const mapKey = record.지도참조키 || record.배경지도키;
+        items.add(mapKeys.has(mapKey)
+          ? `<div class="map-key-cell">${mapPreviewButton(mapKey)}<span>${value}</span></div>`
+          : value);
+      }
+      const entries = [...items];
+      const start = first ? ' data-related-start' : '';
+      function list(values) {
+        return `<ul class="full-sheet-values">${values.map(value => `<li>${value}</li>`).join('')}</ul>`;
+      }
+      if (entries.length <= 1) return `<td${start}>${entries[0] || '—'}</td>`;
+      const more = entries.length > 3
+        ? `<details><summary>+${entries.length - 3}개</summary>${list(entries.slice(3))}</details>`
+        : '';
+      return `<td${start}>${list(entries.slice(0, 3))}${more}</td>`;
+    }
+
+    function updateFullSheetFilter() {
+      const selected = fullSheetSelections.get(fullSheetTab);
+      const rowCount = state.data[fullSheetTab].length;
+      const table = fullSheetScroll.querySelector('table');
+      const columnCount = table.tHead.rows[0].cells.length - 1;
+      const visible = fullSheetSelectedOnly ? selected.size : columnCount;
+      const emptySelection = fullSheetSelectedOnly && selected.size === 0;
+      if (!emptySelection) {
+        for (const row of table.rows) {
+          for (let index = 0; index < columnCount; index++) {
+            row.cells[index + 1].hidden = fullSheetSelectedOnly && !selected.has(index);
+          }
+        }
+      }
+      table.hidden = emptySelection;
+      fullSheetScroll.querySelector('[data-empty-selection]').hidden = !emptySelection;
+      fullSheetScroll.querySelector('[data-empty-sheet]').hidden = emptySelection || rowCount > 0;
+      fullSheetShowAll.setAttribute('aria-pressed', String(!fullSheetSelectedOnly));
+      fullSheetShowSelected.setAttribute('aria-pressed', String(fullSheetSelectedOnly));
+      fullSheetShowSelected.textContent = selected.size ? `선택한 열만 (${selected.size.toLocaleString()})` : '선택한 열만';
+      document.getElementById('full-sheet-count').textContent = `${rowCount.toLocaleString()}행 · ${visible.toLocaleString()}열`;
+    }
+
+    function openFullSheet(tab) {
+      fullSheetTab = tab;
+      fullSheetSelectedOnly = false;
+      fullSheetEventStatus.hidden = true;
+      if (!fullSheetSelections.has(tab)) fullSheetSelections.set(tab, new Set());
+      const selected = fullSheetSelections.get(tab);
+      const rows = state.data[tab], headers = state.headers[tab];
+      const related = tab === '사건' ? fullSheetEventRelations(rows) : [];
+      const mapKeys = new Set(state.data.지도도형.map(row => row.지도참조키).filter(Boolean));
+      document.getElementById('full-sheet-title').textContent = tab;
+      document.getElementById('full-sheet-link').href = sheetUrl(tab);
+      function columnHeader(name, index, isRelated, firstRelated = false) {
+        return `<th scope="col"${isRelated ? ' data-related' : ''}${firstRelated ? ' data-related-start' : ''}>
+          <label class="full-sheet-column-select"><input type="checkbox" data-sheet-select="${index}"
+            aria-label="${esc(name)} 열 선택"${selected.has(index) ? ' checked' : ''}>${
+              isRelated ? '' : `<small>${colLetter(index)}</small>`
+            }${esc(name)}</label>
+        </th>`;
+      }
+      const body = rows.map((row, rowIndex) => `<tr><th scope="row">${rowIndex + 2}</th>${
+        headers.map((header, columnIndex) => {
+          const value = row[header] || '';
+          if (tab === '사건' && header === '사건명' && value && row.사건ID) {
+            return `<td class="full-sheet-event-cell"><button type="button" data-sheet-event-id="${esc(row.사건ID)}"
+              aria-haspopup="dialog">${esc(value)}</button></td>`;
+          }
+          return fullSheetCell(value, rowIndex, columnIndex, isMapKeyColumn(header) && mapKeys.has(value));
+        }).join('')
+      }${
+        related.map((column, index) => fullSheetRelatedCell(column.rows[rowIndex], mapKeys, index === 0)).join('')
+      }</tr>`).join('');
+      fullSheetScroll.innerHTML = `<table class="full-sheet-table" aria-labelledby="full-sheet-title">
+        <thead><tr><th scope="col">행</th>${
+          headers.map((header, index) => columnHeader(header, index, false)).join('')
+        }${
+          related.map((column, index) => columnHeader(column.label, headers.length + index, true, index === 0)).join('')
+        }</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+      <p class="empty-td" data-empty-sheet hidden>표시할 시트 행이 없습니다.</p>
+      <p class="empty-td" data-empty-selection hidden>선택한 열이 없습니다.</p>`;
+      updateFullSheetFilter();
+      fullSheetModal.showModal();
+      fullSheetScroll.scrollTo(0, 0);
+    }
+
+    document.addEventListener('click', event => {
+      const button = event.target.closest('button[data-open-full-sheet]');
+      if (button) openFullSheet(button.dataset.openFullSheet);
+    });
+    fullSheetScroll.addEventListener('click', event => {
+      const map = event.target.closest('button[data-preview-map-key]');
+      if (map) openMapPreview(map.dataset.previewMapKey);
+      const eventButton = event.target.closest('.full-sheet-event-cell')?.querySelector('button');
+      if (eventButton) void openFullSheetEvent(eventButton);
+    });
+    fullSheetScroll.addEventListener('toggle', event => {
+      const cell = event.target;
+      if (!cell.matches('details[data-sheet-row]')) return;
+      const row = state.data[fullSheetTab][cell.dataset.sheetRow];
+      const column = state.headers[fullSheetTab][cell.dataset.sheetColumn];
+      cell.querySelector('pre').textContent = cell.open ? row[column] : '';
+    }, true);
+    fullSheetScroll.addEventListener('change', event => {
+      const checkbox = event.target;
+      if (!checkbox.matches('input[data-sheet-select]')) return;
+      const selected = fullSheetSelections.get(fullSheetTab);
+      const index = Number(checkbox.dataset.sheetSelect);
+      if (checkbox.checked) selected.add(index);
+      else selected.delete(index);
+      updateFullSheetFilter();
+      if (fullSheetSelectedOnly && !checkbox.checked) fullSheetShowSelected.focus();
+    });
+    for (const button of [fullSheetShowAll, fullSheetShowSelected]) {
+      button.addEventListener('click', () => {
+        fullSheetSelectedOnly = button === fullSheetShowSelected;
+        updateFullSheetFilter();
+        fullSheetScroll.scrollLeft = 0;
+      });
+    }
+    fullSheetModal.addEventListener('close', () => fullSheetScroll.replaceChildren());
 
     async function openMapPreview(mapKey){
       const modal=document.getElementById('map-preview-modal');

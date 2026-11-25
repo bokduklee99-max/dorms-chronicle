@@ -1377,7 +1377,7 @@ button:is(.dark, .add):not(:disabled):hover {
 #place-catalog.show-results #choices { display: block; }
 #place-catalog.show-results #choices.by-kind {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.35fr) minmax(126px, .52fr) minmax(0, 1fr);
   gap: 14px 10px;
   max-height: min(49dvh, 405px);
   padding: 12px;
@@ -1472,9 +1472,35 @@ button:is(.dark, .add):not(:disabled):hover {
 .place-kind h5 { margin: 9px 6px 3px; color: var(--muted); font-size: 13px; }
 .kind-places { max-height: min(39dvh, 335px); overflow-y: auto; scrollbar-width: thin; }
 #place-catalog .kind-places .choice { padding-inline: 6px; overflow-wrap: anywhere; }
+.kind-places:is([data-scroll-key="point"], [data-scroll-key="area"]) .place-kind,
+.kind-places[data-scroll-key="area"] .area-versions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--place-cell-width)), 1fr));
+  align-items: start;
+  gap: 2px 8px;
+}
+.kind-places[data-scroll-key="point"] { --place-cell-width: 140px; }
+.kind-places[data-scroll-key="area"] { --place-cell-width: 118px; }
+.kind-places:is([data-scroll-key="point"], [data-scroll-key="area"]) .place-kind > h5,
+.kind-places[data-scroll-key="area"] .area-group[open] { grid-column: 1 / -1; }
+.kind-places[data-scroll-key="point"] .place-kind + .place-kind { margin-top: 10px; border-top: 1px solid var(--line); }
+.kind-places[data-scroll-key="point"] .place-kind > h5 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 6px;
+  background: var(--chronicle-surface);
+  color: var(--chronicle-green);
+}
+#place-catalog .kind-places[data-scroll-key="point"] .choice { gap: 6px; min-width: 0; }
+#place-catalog .kind-places[data-scroll-key="area"] button.choice { flex-wrap: wrap; gap: 2px 6px; min-width: 0; }
+@media (max-width: 700px) {
+  #place-catalog.show-results #choices.by-kind { grid-template-columns: minmax(0, 1fr); }
+  .kind-places { max-height: min(23dvh, 170px); }
+}
 @media (max-width: 600px) {
   #place-catalog.show-results #choices.by-kind { gap: 4px; padding: 6px; }
-  #place-catalog .kind-places .choice { align-items: flex-start; flex-direction: column; gap: 1px; }
 }
 #place-catalog .choice { min-height: 36px; margin: 0; }
 #place-catalog .choice small { flex: none; }

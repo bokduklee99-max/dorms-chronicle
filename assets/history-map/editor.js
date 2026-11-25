@@ -1,5 +1,6 @@
 import { historyCamera } from './cold-war.js';
 import { readPackedMapData } from '../packed-map-data.js';
+import { pointContinent, unclassifiedContinent } from './point-continents.js';
 import { loadSheetLibrary, sheetPoint, refreshDrawing, groupAreaChoices } from './sheet-library.js?v=area-groups-1';
 import {
   W,
@@ -71,15 +72,18 @@ async function packedMapData(name) {
   return readPackedMapData(response);
 }
 async function start() {
-  const [library, bases, editions, boundaries] = await Promise.all([
+  const [library, bases, editions, boundaries, { continents }] = await Promise.all([
     json('presets.json').then((presets) =>
       loadSheetLibrary(SHEET_CONFIG, presets, SheetData.sheetRecords),
     ),
     json('bases.json?v=global-coasts-1'),
     packedMapData('editions.json.gz').catch(() => null),
     packedMapData('boundaries.json.gz?v=2').catch(() => null),
+    json('continents.json').catch(() => ({ continents: [] })),
   ]);
   const { places, themes, eras } = library;
+  const continentsByPlace = new Map(places.map(place => [place.id, pointContinent(place, continents)]));
+  const continentOrder = [...continents.map(({ name }) => name), unclassifiedContinent];
   const historical = {
     ...(library.history || { events: {}, layers: {} }),
     boundaries,
@@ -938,10 +942,10 @@ async function start() {
     for (const [i, r] of rows.entries()) {
       if (topic && (r.source === '시트 주제' || !r.places.length)) continue;
       if (era && (topic ? r.era !== era : r.eras.length && !r.eras.includes(era))) continue;
-      if (![r.name, r.keywords || '', r.kind || ''].some((s) => s.includes(query))) continue;
+      const continent = topic ? '' : continentsByPlace.get(r.id);
+      if (![r.name, r.keywords, r.kind, continent].some((value) => value?.includes(query))) continue;
       if (!topic) {
-        const kind = !r.kind || r.kind === '지점' ? '지점·도시' : r.kind;
-        addResult('point', kind, placeChoice(r));
+        addResult('point', continent, placeChoice(r));
         continue;
       }
       const button = '<button class="choice" data-index="' + i + '"><span>' + esc(r.name) +
@@ -974,7 +978,8 @@ async function start() {
         const kind = group.every(entry => entry.kind === group[0].kind) ? group[0].kind : '영토';
         addResult('area', kind, areaChoice(group, 'places'));
       }
-      results.push(catalogColumn('point', '점', groups.point), catalogColumn('line', '선', groups.line),
+      const pointGroups = continentOrder.filter(name => groups.point.has(name)).map(name => [name, groups.point.get(name)]);
+      results.push(catalogColumn('point', '점', pointGroups), catalogColumn('line', '선', groups.line),
         catalogColumn('area', '면', groups.area));
     }
     const html = results.join('') || '<p class="empty">' + empty + '</p>';

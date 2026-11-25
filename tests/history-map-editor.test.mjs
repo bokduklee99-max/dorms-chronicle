@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { W, canvasFrame, camera, comparisonYears, zoomView, definitions, draw, historicalDefinitions, presets, xy, ll, mapHeight } from '../assets/history-map/cartography.js';
+import { pointContinent, unclassifiedContinent } from '../assets/history-map/point-continents.js';
 
 const data = (name) => JSON.parse(readFileSync(new URL('../assets/history-map/' + name, import.meta.url)));
 const bases = data('bases.json');
@@ -13,6 +14,22 @@ const places = [
   { lon: -77.0369, lat: 38.9072 },
   { lon: 0, lat: 0 },
 ];
+test('the place catalog groups sheet coordinates by continent, including coastal sites', () => {
+  const { continents } = data('continents.json');
+  const features = JSON.parse(readFileSync(new URL('../assets/event-geometry/place-points.geojson', import.meta.url))).features;
+  for (const [id, expected] of [
+    ['geo_seoul', '아시아'],
+    ['geo_moscow', '유럽'],
+    ['geo_beulradiboseutokeu', '아시아'],
+    ['geo_bay_of_pigs', '북아메리카'],
+    ['geo_cairo', '아프리카'],
+  ]) {
+    const [lon, lat] = features.find(feature => feature.id === id).geometry.coordinates;
+    assert.equal(pointContinent({ lon, lat }, continents), expected, id);
+  }
+  assert.equal(pointContinent({ lon: 0, lat: 0 }, continents), unclassifiedContinent);
+});
+
 test('clicking a projected point gives the same coordinates for each extent', () => {
   for (const key of Object.keys(presets)) {
     const view = camera(key);

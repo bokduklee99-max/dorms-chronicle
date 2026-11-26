@@ -263,7 +263,7 @@ export function WorkspaceSetup(){
  return <>
   <ChronicleHeader><a href="/">← 처음으로</a></ChronicleHeader>
   <main className="setup-page">
-   <div className="setup-intro"><h1>나의 <em>역사 탐색.</em></h1><button ref={newButton} className="setup-action" type="button" onClick={()=>location.assign(setupHref()+'&lesson=new')}>새 수업 만들기 <span aria-hidden="true">＋</span></button></div>
+   <div className="setup-intro"><h1>나의 <em>연표 커스텀</em></h1><button ref={newButton} className="setup-action" type="button" onClick={()=>location.assign(setupHref()+'&lesson=new')}>새 수업 만들기 <span aria-hidden="true">＋</span></button></div>
    <section className="setup-saved" aria-labelledby="setup-saved-title">
     <div className="setup-section-heading"><h2 id="setup-saved-title">수업 목록</h2><span>{saved.length+1}개</span></div>
     <ul>

@@ -2,6 +2,7 @@ import type {EventRecord} from './metro-model';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {useSheetHistory} from './use-sheet-history';
 import {CategoryEventMap} from './CategoryEventMap';
+import {ChronicleHeader} from './ChronicleHeader';
 import {readEventImportance,swimlaneSnapshot,type ImportanceRow} from './event-importance';
 import {importanceLabels,matchSwimlaneEvents} from '../swimlane-data.js';
 import {CategoryMap,EventMap,useLessonMaps} from './LessonMap';
@@ -147,7 +148,7 @@ export function LessonWizard(){
   }catch{setError('이 브라우저에 수업을 저장할 수 없습니다.');}
  }
  return <>
- <header className="landing-nav setup-nav"><a className="wordmark" href="/">Dorms' Chronicle<span aria-hidden="true">✳</span></a><nav><a href={setupHref()}>수업 목록으로</a></nav></header>
+ <ChronicleHeader><a href={setupHref()}>← 수업 목록으로</a></ChronicleHeader>
  <main className="lesson-page">
   <header className="lesson-title"><h1>새 수업 만들기</h1><ol aria-label="수업 만들기 단계">{steps.map(([key,name],i)=><li key={key}><button type="button" aria-current={i===step?'step':undefined} disabled={i>allowed} onClick={()=>{if(i!==step)go(i);}}><span>{i+1}</span>{name}</button></li>)}</ol></header>
   <div className="lesson-section-title"><h2 tabIndex={-1} ref={heading}>{['수업에 사용할 패키지','수업에 담을 카테고리','카테고리별 사건 선택','수업 설정'][step]}</h2>

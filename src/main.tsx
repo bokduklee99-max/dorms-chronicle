@@ -10,6 +10,7 @@ import {SwimlaneTimeline,useLessonRecords} from './SwimlaneTimeline';
 import {BasicTimeline} from './BasicTimeline';
 import {TimeSpaceRadar} from './TimeSpaceRadar';
 import {CreatorCredit} from './CreatorCredit';
+import {ChronicleHeader} from './ChronicleHeader';
 import {useSheetHistory} from './use-sheet-history';
 import type {PackageSheet} from './package-catalog';
 import type {GeographySheet,SheetParser,SheetTables} from './package-content';
@@ -54,8 +55,16 @@ function SampleTimeline(){
   load().catch(()=>{if(active)setFailed(true);});
   return ()=>{active=false;};
  },[]);
- if(!sample)return <p role="status">{failed?<>연표 예시를 불러오지 못했습니다. <button onClick={()=>location.reload()}>다시 열기</button></>:'연표를 불러오는 중입니다.'}</p>;
+ if(!sample)return <><TimelineHeader sample/><p role="status">{failed?<>연표 예시를 불러오지 못했습니다. <button onClick={()=>location.reload()}>다시 열기</button></>:'연표를 불러오는 중입니다.'}</p></>;
  return <Timeline {...sample} packageId="japan" selectedPackageName="일제강점기와 독립운동" pending={false} sample/>;
+}
+
+function TimelineHeader({sample, workspace}: {sample?: boolean; workspace?: Workspace}){
+ return <ChronicleHeader hidden={showroom}>
+  <a href={setupHref()}>← 수업 목록으로</a>
+  {sample?<a href="/classroom.html?sample=japan">학습 콘텐츠 열기 ↗</a>:
+   !workspace&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}
+ </ChronicleHeader>;
 }
 
 function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,sample=false}:{
@@ -140,9 +149,8 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  const territoryQuery=new URLSearchParams();
  if(Number.isFinite(firstYear))territoryQuery.set('year',String(firstYear));
  if(packageId==='japan')territoryQuery.set('scope','korea');
- return <><nav className="topbar" hidden={showroom}>
-  <div className="lesson-nav-links"><a href={setupHref()}>← 수업 목록으로</a>{sample&&<a href="/classroom.html?sample=japan">학습 콘텐츠 열기 ↗</a>}</div>
-  <a href="/">Dorms' Chronicle</a>{!workspace&&!sample&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main ref={main} data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
+ return <><TimelineHeader {...{sample,workspace}}/>
+ <main ref={main} data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
  <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{timelineViews.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=timelineViews[ev.key==='Home'?0:ev.key==='End'?timelineViews.length-1:(index+(ev.key==='ArrowRight'?1:-1)+timelineViews.length)%timelineViews.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
  {view!=='territory'&&!data.events.length&&<p role="status">{pending?'시트에서 사건을 읽는 중이에요.':<>표시할 사건이 없어요. <a href={setupHref({workspace:workspace?.id})}>탐색 설정에서 구성을 확인해 주세요.</a></>}</p>}
  {view==='swimlane'&&data.events.length>0&&<SwimlaneTimeline lesson={pending?undefined:lesson} packageId={packageId} name={selectedPackageName}/>}
@@ -162,7 +170,7 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
   <a href="/classroom.html">연표·활동 ↗</a><CreatorCredit/>
  </>}</footer>}</main></>;
 }
-class ErrorBoundary extends React.Component<{children:React.ReactNode},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true};}render(){return this.state.failed?<main className="empty"><h1>연표를 불러오지 못했어요.</h1><p>새로고침하거나 기존 연표를 열어 주세요.</p><a href="/">기존 연표 열기 ↗</a></main>:this.props.children;}}
+class ErrorBoundary extends React.Component<{children:React.ReactNode},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true};}render(){return this.state.failed?<><ChronicleHeader hidden={showroom}><a href={setupHref()}>← 수업 목록으로</a></ChronicleHeader><main className="empty"><h1>연표를 불러오지 못했어요.</h1><p>새로고침하거나 기존 연표를 열어 주세요.</p><a href="/">기존 연표 열기 ↗</a></main></>:this.props.children;}}
 if(workspaceId&&!workspace)document.title="저장한 구성을 찾을 수 없어요 · Dorms' Chronicle";
 createRoot(document.getElementById('root')!).render(<ErrorBoundary>{workspaceId&&!workspace?
- <main className="metro-app"><h1>저장한 구성을 찾을 수 없어요.</h1><p>구성은 저장한 브라우저에서 열 수 있어요.</p><a href={setupHref()}>탐색 설정 ↗</a></main>:params.get('sample')==='japan'?<SampleTimeline/>:<App workspace={workspace}/>}</ErrorBoundary>);
+ <><ChronicleHeader hidden={showroom}><a href={setupHref()}>← 수업 목록으로</a></ChronicleHeader><main className="metro-app"><h1>저장한 구성을 찾을 수 없어요.</h1><p>구성은 저장한 브라우저에서 열 수 있어요.</p></main></>:params.get('sample')==='japan'?<SampleTimeline/>:<App workspace={workspace}/>}</ErrorBoundary>);

@@ -1,8 +1,14 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>스윔레인 · 구간 확대</title>
+<script src="./assets/chronicle-frame.js"></script>
 <link rel="stylesheet" href="./assets/chronicle-theme.css"><link rel="stylesheet" href="./assets/swimlane-focus.css"><link rel="stylesheet" href="./assets/space-preview.css"><link rel="stylesheet" href="./assets/swimlane-modal.css"></head>
-<body><main class="chronicle-visualization">
+<body>
+<header class="chronicle-header" data-standalone-header>
+  <a class="chronicle-brand" href="/">DoRms' Chronicle<span aria-hidden="true">✳</span></a>
+  <nav class="chronicle-header-menu" aria-label="주요 메뉴"><a href="/?setup=1">← 수업 목록으로</a></nav>
+</header>
+<main class="chronicle-visualization">
 <section class="atlas" aria-label="전체 연표"><header><b>전체 흐름</b><span id="extent"></span></header><div id="overview" role="group" aria-label="연도 선택"></div><div id="ruler"></div><div id="era-overview" role="group" aria-label="시트의 시기와 적용 기간"></div></section>
 <div class="controls">
  <div class="move" role="group" aria-label="표시 구간 이동">

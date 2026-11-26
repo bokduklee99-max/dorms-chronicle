@@ -2,10 +2,16 @@
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>사건을 지도로 읽기</title>
+<script src="./assets/chronicle-frame.js"></script>
 <link rel="stylesheet" href="./assets/chronicle-theme.css">
 <link rel="stylesheet" href="./assets/space-preview.css">
 <link rel="stylesheet" href="./assets/event-map-reader.css">
-</head><body><main>
+</head><body>
+<header class="chronicle-header" data-standalone-header>
+  <a class="chronicle-brand" href="/">DoRms' Chronicle<span aria-hidden="true">✳</span></a>
+  <nav class="chronicle-header-menu" aria-label="주요 메뉴"><a href="/metro/">연표 보기</a></nav>
+</header>
+<main>
 <p id="status" role="status">사건과 연결된 지도를 불러오는 중입니다.</p>
 <button type="button" id="retry" hidden>다시 불러오기</button>
 <section id="reader" hidden aria-label="사건 지도">

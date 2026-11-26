@@ -1,11 +1,12 @@
 @import url("./chronicle-controls.css");
+@import url("./chronicle-header.css");
 :root{color-scheme:light;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1c302f;background:#f5f2e8}
 *{box-sizing:border-box}
 body{margin:0}
 main{max-width:1390px;margin:auto;padding:32px clamp(17px,4.8vw,72px)}
 a{color:inherit;text-underline-offset:4px}
-.back{text-decoration:none;font-weight:650;font-size:15px}
-.back:hover,footer a:hover{text-decoration:underline}
+footer a:hover{text-decoration:underline}
+[data-chronicle-embedded] .story-nav { min-height: 0; padding-block: 0; border: 0; background: transparent }
 .heading{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap;margin:19px 0 24px}
 h1,h2,p,ol{margin:0}
 h1,.caption h2,nav h2{font-family:var(--font-heading)}

@@ -315,9 +315,8 @@ async function startClassroom(){
   if(!query.has('workspace')&&!sharedPackage&&!example){initialize();return;}
   $('#panel-timeline').hidden=true;$('.main-tabs').hidden=true;
   $('.data-actions').hidden=true;
-  $('.site-header').hidden=true;
-  $('#lesson-nav').hidden=false;
-  $('.lesson-nav-links').hidden=Boolean(sharedPackage);
+  $('#classroom-menu').hidden=true;
+  $('#lesson-nav').hidden=Boolean(sharedPackage);
   document.body.classList.add('lesson-classroom');
   const heading=sharedPackage||example?'학습 콘텐츠':'퀴즈 출제실';
   $('.page-heading h1').textContent=heading;

@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import {CreatorCredit} from './CreatorCredit';
+import {ChronicleHeader} from './ChronicleHeader';
 import type {EventRecord} from './metro-model';
 import {fetchWorkspaceGeography,type readWorkspaceGeography} from './package-content';
 import {useSheetHistory} from './use-sheet-history';
@@ -256,7 +257,7 @@ export function WorkspaceSetup(){
  }
 
  return <>
-  <header className="landing-nav setup-nav"><a className="wordmark" href="/">Dorms' Chronicle<span aria-hidden="true">✳</span></a><nav aria-label="주요 메뉴"><a className="setup-back" href="/">← 처음으로</a></nav></header>
+  <ChronicleHeader><a href="/">← 처음으로</a></ChronicleHeader>
   <main className="setup-page">
    <div className="setup-intro"><h1>나의 <em>역사 탐색.</em></h1><button ref={newButton} className="setup-action" type="button" onClick={()=>location.assign(setupHref()+'&lesson=new')}>새 수업 만들기 <span aria-hidden="true">＋</span></button></div>
    <section className="setup-saved" aria-labelledby="setup-saved-title">

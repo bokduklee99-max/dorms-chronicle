@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>일제강점기와 독립운동 · 스윔레인</title>
+<script src="./assets/chronicle-frame.js"></script>
 <link rel="stylesheet" href="./assets/chronicle-theme.css">
 <style>
 :root{color-scheme:light;--ink:#25251f;--muted:#615d52;--line:#e1dbcf;--paper:#f6f3ec;--panel:#fdfbf6;--select:#a0392b;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif}
@@ -119,6 +120,10 @@ select.source{background:var(--panel);font-variant-numeric:tabular-nums}
 <link rel="stylesheet" href="./assets/space-preview.css"><link rel="stylesheet" href="./assets/swimlane-modal.css">
 </head>
 <body>
+<header class="chronicle-header" data-standalone-header>
+  <a class="chronicle-brand" href="/">DoRms' Chronicle<span aria-hidden="true">✳</span></a>
+  <nav class="chronicle-header-menu" aria-label="주요 메뉴"><a href="/metro/?package=japan">← 사건 연표</a></nav>
+</header>
 <main class="chronicle-visualization">
  <header><div><h1>일제강점기와 독립운동</h1><p class="range" id="range">1910–1945</p></div><div class="header-actions"><select id="year-jump" class="source" aria-label="연도 이동" disabled><option value="">연도 이동</option></select><button type="button" class="source" id="all-relations" disabled>전체 관계</button><a class="source" href="https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit#gid=201117001" target="_blank" rel="noopener">원본 시트 ↗</a></div></header>
  <p class="chart-note" id="load-status" role="status">연표를 불러오는 중입니다.</p>

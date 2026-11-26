@@ -1,4 +1,5 @@
 @import url("./assets/chronicle-controls.css");
+@import url("./assets/chronicle-header.css");
 @font-face{font-family:Pretendard;src:url('./assets/Pretendard-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
 @font-face{font-family:Pretendard;src:url('./assets/Pretendard-SemiBold.woff2') format('woff2');font-weight:600 900;font-display:swap}
 body{display:flex;flex-direction:column}
@@ -36,7 +37,7 @@ body{display:flex;flex-direction:column}
 .board-detail-action span{font-size:13px;text-align:right;color:#5d6259}
 @media(max-width:560px){.board-bar{padding-inline:8px;gap:5px 8px}.board-detail-action{grid-template-columns:minmax(0,1fr)}.board-detail-action span{text-align:left}}
 @media print{
- .board-bar,#board-detail{display:none!important}
+ .chronicle-header,.board-bar,#board-detail{display:none!important}
  #board-scroll{overflow:visible}
  #board-size{width:1920px!important;height:1080px!important;margin:0}
  .teacher #arrows path[data-opens-board-detail]{stroke-width:1.6;stroke:#57534B}

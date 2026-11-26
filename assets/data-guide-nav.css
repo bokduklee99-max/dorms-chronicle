@@ -1,28 +1,9 @@
 .skip-link { position: fixed; top: 10px; left: 10px; z-index: 70; padding: 10px; background: var(--chronicle-surface); transform: translateY(-180%) }
 .skip-link:focus { transform: none }
-.guide-nav { font-family: var(--font-sans); color: var(--chronicle-ink); border-bottom: 1px solid var(--chronicle-line); background: var(--chronicle-paper) }
-.guide-nav a { text-decoration: none }
-.guide-nav-inner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding-inline: var(--data-edge, clamp(16px, 4vw, 54px)); min-height: 76px }
-.guide-nav .wordmark { color: var(--chronicle-ink); width: fit-content; font: 600 clamp(19px, 2.4vw, 25px) Georgia, serif; letter-spacing: -.04em; white-space: nowrap }
-.guide-nav .wordmark span { margin-left: 7px; color: var(--chronicle-accent) }
-.guide-nav nav { display: flex; gap: 24px; min-height: inherit }
-.guide-nav nav a { display: grid; place-items: center; border-bottom: 2px solid transparent; color: var(--chronicle-muted); white-space: nowrap }
+.guide-nav nav a { border-bottom: 2px solid transparent; color: var(--chronicle-muted) }
 .guide-nav nav a[aria-current=page] { border-color: var(--chronicle-accent); color: var(--chronicle-ink); font-weight: 600 }
 .guide-nav #open-sheet {
-  justify-self: end; display: inline-flex; align-items: center; gap: 6px;
   min-height: 42px; padding: 7px 12px; border: 1px solid var(--chronicle-green);
   border-radius: var(--chronicle-button-radius); background: var(--chronicle-green);
   color: var(--chronicle-surface); font-size: 14px; font-weight: 600; white-space: nowrap;
-}
-@media (max-width: 1000px) {
-  .guide-nav nav { gap: 10px; font-size: 14px }
-}
-@media (max-width: 840px) {
-  .guide-nav-inner { grid-template-columns: 1fr 1fr; padding-top: 12px; gap: 2px 10px }
-  .guide-nav nav { grid-column: 1 / -1; grid-row: 2; min-width: 0; overflow-x: auto; min-height: 48px; gap: clamp(8px, 2.5vw, 24px); font-size: 14px }
-  .guide-nav #open-sheet { grid-column: 2; grid-row: 1 }
-}
-@media (max-width: 560px) {
-  .guide-nav nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; gap: 0 8px }
-  .guide-nav nav a { min-height: 40px; padding: 4px 1px; text-align: center }
 }

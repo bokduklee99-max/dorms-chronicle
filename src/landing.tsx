@@ -4,6 +4,7 @@ import {chronicleCards} from './landing-model';
 import {LessonWizard} from './LessonWizard';
 import {WorkspaceSetup} from './WorkspaceSetup';
 import {CreatorCredit} from './CreatorCredit';
+import {ChronicleHeader} from './ChronicleHeader';
 import {clearBrowserPackages} from '../assets/studio-library.js';
 import './landing.css';
 import '../assets/chronicle-theme.css';
@@ -16,7 +17,7 @@ function LandingCredits(){
 function Landing(){
  return <>
  <a className="skip-link" href="#archive">사건 목록으로 건너뛰기</a>
- <header className="landing-nav"><a href="/" className="wordmark">DoRms' Chronicle<span aria-hidden="true">✳</span></a><nav aria-label="주요 메뉴"><a href="/metro/?sample=japan">수업 예시</a><a href="/data-explorer.html">데이터 편집</a></nav></header>
+ <ChronicleHeader><a href="/metro/?sample=japan">수업 예시</a><a href="/data-explorer.html">데이터 편집</a></ChronicleHeader>
  <main><ScrollMorphHero cards={cards}/>
   <div className="landing-footer"><LandingCredits/></div>
   <section className="archive-section" id="archive" aria-labelledby="archive-title">

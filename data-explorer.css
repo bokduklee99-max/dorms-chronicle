@@ -680,12 +680,6 @@
 @media (max-width:580px) { .geo-trace-layout { grid-template-columns:minmax(0,1fr); gap:12px } }
 
 #main-content.studio-active{max-width:none;padding:0}
-.chronicle-data:has(#main-content.studio-active) .guide-nav-inner{padding-inline:clamp(12px,2.6vw,36px)}
-.chronicle-data:has(#main-content.studio-active) #open-sheet{white-space:nowrap}
-@media(min-width:841px) and (max-width:1000px){
-  .chronicle-data:has(#main-content.studio-active) .guide-nav-inner{grid-template-columns:auto minmax(0,1fr) auto;gap:12px;min-height:62px}
-  .chronicle-data:has(#main-content.studio-active) .guide-nav nav{justify-content:center;gap:clamp(10px,1.6vw,16px);font-size:14px}
-}
 #main-content.studio-active>:not(#studio-frame){display:none}
 #studio-frame{border:0;width:100%;display:block;min-height:60vh}
 #studio-frame[hidden]{display:none}

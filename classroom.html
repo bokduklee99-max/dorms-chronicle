@@ -24,21 +24,18 @@
   <link rel="stylesheet" href="/assets/event-importance.css?v=event-importance-1">
 </head>
 <body class="chronicle-classroom">
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="wordmark" href="./" aria-label="연표 처음으로"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 7h22M3 14h22M3 21h22"/><circle cx="10" cy="7" r="3"/><circle cx="19" cy="14" r="3"/><circle cx="12" cy="21" r="3"/></svg>연표</a>
-      <span class="header-divider"></span><span class="workspace-name">우리의 역사 수업</span>
-      <div class="header-actions">
-        <a class="button quiet" href="metro/">연표 보기 ↗</a>
-        <button class="icon-button" id="theme-button" aria-label="어두운 화면으로 전환"></button>
-        <button class="button quiet" id="fullscreen-button"></button>
-      </div>
-    </div>
+  <header class="chronicle-header">
+    <a class="chronicle-brand" href="/">DoRms' Chronicle<span aria-hidden="true">✳</span></a>
+    <nav class="chronicle-header-menu" id="classroom-menu" aria-label="주요 메뉴">
+      <a class="button quiet" href="metro/">연표 보기 ↗</a>
+      <button class="icon-button" id="theme-button" aria-label="어두운 화면으로 전환"></button>
+      <button class="button quiet" id="fullscreen-button"></button>
+    </nav>
+    <nav class="chronicle-header-menu" id="lesson-nav" aria-label="수업 탐색" hidden>
+      <a href="/?setup=1">← 수업 목록으로</a>
+      <a id="lesson-timeline-link" hidden>연표 열기 ↗</a>
+    </nav>
   </header>
-  <nav class="topbar" id="lesson-nav" aria-label="수업 탐색" hidden>
-    <div class="lesson-nav-links"><a href="/?setup=1">← 수업 목록으로</a><a id="lesson-timeline-link" hidden>연표 열기 ↗</a></div>
-    <a href="/">Dorms' Chronicle</a>
-  </nav>
   <main class="app-shell">
     <div class="page-heading">
       <div><p class="breadcrumb">세계사 <span>/</span> 국제정치</p><h1><span class="title-short">냉전의 장면들</span><span class="title-long">냉전, 같은 시간의<br>다른 세계</span> <span id="date-span"></span></h1><p id="sheet-status" role="status">시트 데이터를 불러오는 중입니다.</p></div>

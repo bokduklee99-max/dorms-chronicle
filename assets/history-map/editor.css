@@ -67,9 +67,6 @@ i,
   height: 17px;
   flex: none;
 }
-.top,
-.wordmark,
-.top nav,
 .side-head,
 .doc-head,
 .category,
@@ -83,38 +80,14 @@ i,
   display: flex;
   align-items: center;
 }
-.top {
-  height: 76px;
-  padding: 0 clamp(16px, 4vw, 54px);
-  background: var(--chronicle-paper);
-  border-bottom: 1px solid var(--line);
-  gap: 17px;
-}
-.brand-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--line);
-}
 h1 {
   font-size: 16px;
   letter-spacing: -0.6px;
 }
-.top nav {
-  margin-left: auto;
-  gap: 20px;
-}
-.top a,
 .source {
   color: var(--muted);
   text-decoration: none;
 }
-.top a {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-}
-.top a .ic,
 .source .ic:last-child {
   width: 13px;
 }
@@ -482,33 +455,10 @@ dialog::backdrop {
   .work {
     padding: 17px 12px;
   }
-  .top {
-    padding: 0 16px;
-  }
 }
 @media (max-width: 680px) {
-  .top {
-    padding: 8px 12px;
-    gap: 9px;
-    height: 54px;
-  }
-  .brand-divider,
-  .top nav a {
-    display: none;
-  }
-  .top h1 {
+  .chronicle-header h1 {
     font-size: 13px;
-  }
-  .top .dark {
-    font-size: 12px;
-    min-height: 30px;
-    padding: 4px 7px;
-  }
-  .top nav {
-    gap: 0;
-  }
-  .top .dark .ic {
-    width: 14px;
   }
   main {
     display: flex;
@@ -603,19 +553,6 @@ dialog::backdrop {
 [hidden] {
   display: none !important;
 }
-.top .wordmark {
-  font:
-    600 24px Georgia,
-    serif;
-  letter-spacing: -1px;
-  color: var(--ink);
-  gap: 9px;
-}
-.wordmark span {
-  font: 30px Georgia, serif;
-  color: var(--accent);
-}
-.top nav,
 .doc-actions {
   display: flex;
   align-items: center;
@@ -698,23 +635,6 @@ button:is(.dark, .add):not(:disabled):hover {
   flex: none;
 }
 @media (max-width: 680px) {
-  .top {
-    height: auto;
-    min-height: 54px;
-    flex-wrap: wrap;
-  }
-  .top .wordmark {
-    font-size: 19px;
-    gap: 4px;
-  }
-  .top nav {
-    gap: 3px;
-  }
-  .top nav button {
-    padding: 4px 6px;
-    font-size: 12px;
-    min-height: 30px;
-  }
   .stage-tools {
     row-gap: 0;
   }
@@ -829,7 +749,7 @@ button:is(.dark, .add):not(:disabled):hover {
     display: flex;
     flex-direction: column;
   }
-  .top,
+  .chronicle-header,
   .lesson-selector {
     flex: none;
   }

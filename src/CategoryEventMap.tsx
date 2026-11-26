@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useId,useMemo,useState} from 'react';
 import {projectedPath} from './map-view.js';
 import {mapLayerFrame,placeLayer,type MapLayer} from './map-layers';
 import {CategoryMap,SpaceDrawing,type LessonMaps} from './LessonMap';
@@ -8,6 +8,8 @@ import type {EventRecord} from './metro-model';
 
 export function CategoryEventMap({events,meta,maps}:{events:EventRecord[];meta?:CategoryMetadata;maps:LessonMaps}){
  const [activeId,setActiveId]=useState('');
+ const [placesExpanded,setPlacesExpanded]=useState(false);
+ const extraPlacesId=useId();
  const [layers,setLayers]=useState<Map<string,MapLayer>>();
  const groups=useMemo(()=>{
   const places=new Map<string,{space:WorkspaceSpace;events:EventRecord[]}>();
@@ -41,6 +43,14 @@ export function CategoryEventMap({events,meta,maps}:{events:EventRecord[];meta?:
  const place=groups.places.find(g=>g.space.id===activeId);
  const missing=activeId==='unlinked';
  const shownEvents=missing?groups.unlinked:place?.events??groups.all;
+ const placeOptions=groups.places.map(({space,events:linked})=>({id:space.id,label:space.name,count:linked.length}));
+ if(groups.unlinked.length)placeOptions.push({id:'unlinked',label:'장소 미연결',count:groups.unlinked.length});
+ const visiblePlaces=placeOptions.slice(0,3);
+ const selectedPlace=placeOptions.find(option=>option.id===activeId);
+ if(!placesExpanded&&selectedPlace&&!visiblePlaces.includes(selectedPlace))visiblePlaces[visiblePlaces.length-1]=selectedPlace;
+ const extraPlaces=placeOptions.filter(option=>!visiblePlaces.includes(option));
+ const placeButton=({id,label,count}:typeof placeOptions[number])=><button type="button" key={id}
+  aria-pressed={activeId===id} onClick={()=>setActiveId(id)}>{label} {count}</button>;
  const drawn=(place?[place]:groups.places).flatMap(g=>{
   const layer=layers.get(g.space.id);return layer?[{...g,layer}]:[];
  }).sort((a,b)=>Number(!!a.layer.point)-Number(!!b.layer.point)||(b.layer.box[2]*b.layer.box[3]-a.layer.box[2]*a.layer.box[3]));
@@ -73,8 +83,14 @@ export function CategoryEventMap({events,meta,maps}:{events:EventRecord[];meta?:
    </CategoryMap>:<p className="lesson-empty-map">{missing||!groups.places.length?'지도로 표시할 장소가 없습니다.':'장소를 선택하면 등록된 도형을 볼 수 있습니다.'}</p>}
   <div className="category-map-filter lesson-spaces" role="group" aria-label="장소별 사건">
    <button type="button" aria-pressed={!activeId} onClick={()=>setActiveId('')}>전체</button>
-   {groups.places.map(({space,events:linked})=><button type="button" key={space.id} aria-pressed={activeId===space.id} onClick={()=>setActiveId(space.id)}>{space.name} {linked.length}</button>)}
-   {!!groups.unlinked.length&&<button type="button" aria-pressed={missing} onClick={()=>setActiveId('unlinked')}>장소 미연결 {groups.unlinked.length}</button>}
+   {visiblePlaces.map(placeButton)}
+   {!!extraPlaces.length&&<>
+    <button type="button" className="category-map-more" aria-expanded={placesExpanded} aria-controls={extraPlacesId}
+     aria-label={placesExpanded?'장소 필터 접기':`장소 필터 ${extraPlaces.length}개 더 보기`} onClick={()=>setPlacesExpanded(open=>!open)}>
+     {placesExpanded?'−':`+${extraPlaces.length}`}
+    </button>
+    <div id={extraPlacesId} className="category-map-extra" hidden={!placesExpanded}>{extraPlaces.map(placeButton)}</div>
+   </>}
   </div>
   <ol className="category-map-events" aria-label={(place?.space.name??'카테고리')+' 사건 연표'} tabIndex={0}>{shownEvents.map(e=><li key={e.id}><time>{e.date}</time><span>{e.title}{!place&&!missing&&<small>{groups.places.filter(g=>g.events.includes(e)).map(g=>g.space.name).join(' · ')||'장소 미연결'}</small>}</span></li>)}</ol>
  </div>;

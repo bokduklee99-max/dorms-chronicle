@@ -52,8 +52,8 @@
 .time-radar-summary .radar-description { color:var(--chronicle-ink); white-space:pre-line }
 .time-radar-event-list section { display:grid; gap:5px }
 .time-radar-event-list h4 { margin:3px 0 1px; color:var(--chronicle-green); font-size:14px; font-weight:600 }
-.time-radar-event-list button { display:grid; gap:3px; width:100%; padding:8px 9px; border:1px solid var(--chronicle-line); background:var(--chronicle-paper); text-align:left; color:inherit; cursor:pointer; overflow-wrap:anywhere }
-.time-radar-event-list button:hover { background:#e9eee4; border-color:#879988 }
+.time-radar-event-list button[aria-controls] { display:grid; gap:3px; width:100%; padding:8px 9px; border:1px solid var(--chronicle-line); background:var(--chronicle-paper); text-align:left; color:inherit; cursor:pointer; overflow-wrap:anywhere }
+.time-radar-event-list button[aria-controls]:hover { background:#e9eee4; border-color:#879988 }
 .time-radar-event-list button strong { font-size:14px; font-weight:600 }
 .time-radar-event-list button small { color:var(--chronicle-green); font-size:12px }
 .radar-reader:empty { display:none }

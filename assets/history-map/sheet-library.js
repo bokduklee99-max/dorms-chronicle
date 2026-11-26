@@ -15,15 +15,10 @@ function coordinate(value, limit) {
   return Number.isFinite(n) && Math.abs(n) <= limit ? n : null;
 }
 
-const defaultKindLabels = {
+const kindLabels = {
   point: '지점·도시', line: '경계·선', area: '권역·지역',
   sovereignty: '주권·국경', occupation: '점령·전선', sphere: '세력권·진영',
 };
-
-function kindLabel(tables, tab, column, value) {
-  return tables.유형설명?.find((row) => row.시트명 === tab && row.컬럼명 === column && row.유형값 === value)?.한글명 ||
-    defaultKindLabels[value] || value;
-}
 
 function territoryPeriod(start, end) {
   const label = (date) => {
@@ -50,7 +45,7 @@ export function shapeCatalog(tables) {
   for (const row of tables.공간) {
     const type = row.공간유형, key = row.지도참조키;
     if (!key || !row.공간명 || !['line', 'area'].includes(type) || (shapes.has(key) && shapes.get(key).도형유형 !== type)) continue;
-    const entry = register(key, type, row.공간명, kindLabel(tables, '공간', '공간유형', type), [row.시대별칭, row.설명].join(' '));
+    const entry = register(key, type, row.공간명, kindLabels[type], [row.시대별칭, row.설명].join(' '));
     if (entry.name === row.공간명) {
       entry.description = row.설명;
       entry.spaceRow = row.sheetRow;
@@ -59,7 +54,8 @@ export function shapeCatalog(tables) {
   for (const row of tables.영토변화 || []) {
     const key = row.지도참조키, shape = shapes.get(key);
     if (!['line', 'area'].includes(shape?.도형유형) || !row.영토유형) continue;
-    const kind = kindLabel(tables, '영토변화', '영토유형', row.영토유형);
+    const type = row.영토유형;
+    const kind = Object.hasOwn(kindLabels, type) ? kindLabels[type] : type;
     const actorName = shape.도형유형 === 'area' ? actorNames.get(row.주체ID) : '';
     const name = shape.도형유형 === 'area' ? actorName || '이름 미등록' : shape.기준시점 || key;
     const entry = register(key, shape.도형유형, name, kind, [actorName, row.설명].filter(Boolean).join(' '));
@@ -119,7 +115,7 @@ export function sheetLibrary(tables, presets) {
     const kind =
       description.includes(' (history-map-maker') && classification.length === 2
         ? classification[1]
-        : kindLabel(tables, '공간', '공간유형', 'point');
+        : kindLabels.point;
     byId.set(id, {
       id,
       shapeKey: row.지도참조키,
@@ -172,7 +168,7 @@ export function sheetLibrary(tables, presets) {
 }
 
 export async function loadSheetLibrary(config, presets, readRecords) {
-  const fields = { ...required, ...historyTables, 주체: ['주체ID', '주체명'], 유형설명: ['시트명', '컬럼명', '유형값', '한글명'] };
+  const fields = { ...required, ...historyTables, 주체: ['주체ID', '주체명'] };
   const failedTabs = [];
   const entries = await Promise.all(Object.entries(fields).map(async ([name, columns]) => {
     try {

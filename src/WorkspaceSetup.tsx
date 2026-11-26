@@ -4,7 +4,7 @@ import {ChronicleHeader} from './ChronicleHeader';
 import type {EventRecord} from './metro-model';
 import {fetchWorkspaceGeography,type readWorkspaceGeography} from './package-content';
 import {useSheetHistory} from './use-sheet-history';
-import {deleteWorkspace,exploreHref,filterPackage,learningHref,loadWorkspaces,matchesWorkspaceScope,packageName,packageTopics,saveWorkspace,selectWorkspaceEvents,setupHref,viewName,views,workspaceDraft,workspaceSelectionChanges,type Workspace,type WorkspaceDraft} from './workspace-model';
+import {deleteWorkspace,exploreHref,filterPackage,learningHref,loadWorkspaces,matchesWorkspaceScope,packageName,packageTopics,saveWorkspace,selectWorkspaceEvents,setupHref,viewName,views,workspaceDraft,workspaceEventCategories,workspaceSelectionChanges,type Workspace,type WorkspaceDraft} from './workspace-model';
 import './workspace.css';
 
 const typeNames = {period:'시기',policy:'정책·법령',event:'사건',context:'배경',publication:'저술·선언'};
@@ -88,10 +88,11 @@ export function WorkspaceSetup(){
   {label:'주제',choices:categoryChoices.filter(topic=>topic.type==='theme')},
   {label:categoryChoices.some(topic=>['period','arc','theme'].includes(topic.type))?'미분류':'',choices:categoryChoices.filter(topic=>!['period','arc','theme'].includes(topic.type))}
  ].filter(group=>group.choices.length);
- const selected = filterPackage(data,draft.hiddenTopics,draft.hiddenEvents,draft.includedEvents);
+ const selected = filterPackage(data,draft.hiddenTopics,draft.hiddenEvents,draft.includedEvents,draft.eventCategoryChanges);
  const selectedIds = new Set(selected.events.map(event=>event.id));
  const visibleTopics = new Set(topics.filter(topic=>!draft.hiddenTopics.includes(topic.topic_id)).map(topic=>topic.topic_id));
- const eventScope = allEvents?data.events:data.events.filter(event=>selectedIds.has(event.id)||event.directTopicIds.some(id=>visibleTopics.has(id)));
+ const scopedEvents = workspaceEventCategories(data.events,draft.eventCategoryChanges);
+ const eventScope = allEvents?scopedEvents:scopedEvents.filter(event=>selectedIds.has(event.id)||event.directTopicIds.some(id=>visibleTopics.has(id)));
  const {config,SheetData} = window.HistorySource;
  const {actorFilterOptions,filterActorEvents} = SheetData;
  const {groups,leans} = actorFilterOptions(data.events,data.actors);
@@ -203,7 +204,10 @@ export function WorkspaceSetup(){
   setDraft({...draft,packageId,
    hiddenTopics:previous?.hiddenTopics??target.topics.map(topic=>topic.topic_id),
    hiddenEvents:previous?.hiddenEvents??target.events.map(event=>event.legacyId??event.id),
-   includedEvents:previous?.includedEvents??[]});
+   includedEvents:previous?.includedEvents??[],
+   eventCategoryChanges:previous?.eventCategoryChanges,
+   categoryColors:previous?.categoryColors,
+   swimlaneInk:previous?.swimlaneInk});
   resetSearch();
  }
  function go(next:number){
@@ -268,7 +272,7 @@ export function WorkspaceSetup(){
      {saved.map(item=>{
       const packageLabel=packageName(packages,item.packageId);
       const itemData=packageData(item.packageId);
-      const count=filterPackage(itemData,item.hiddenTopics,item.hiddenEvents,item.includedEvents).events.length;
+      const count=filterPackage(itemData,item.hiddenTopics,item.hiddenEvents,item.includedEvents,item.eventCategoryChanges).events.length;
       return <LessonCard key={item.id} title={item.school} description={packageLabel} view={viewName(item.view)} count={pending?undefined:count}
        preview={`/assets/view-previews/${item.view}.jpg`} timeline={exploreHref(item)} activities={learningHref(item)}>
        <div className="setup-saved-manage">

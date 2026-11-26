@@ -4,7 +4,7 @@ import test from 'node:test';
 import '../sheets.js';
 import '../history.js';
 import {countryFlag} from '../assets/country-flag.js';
-import {buildSwimlane, lessonSwimlane, matchSwimlaneEvents, packTimelineItems, pointRelationPath, cardRelationPaths, relationChain} from '../swimlane-data.js';
+import {buildSwimlane, lessonSwimlane, matchSwimlaneEvents, packTimelineItems, placeRelationLabel, pointRelationPath, cardRelationPaths, relationChain} from '../swimlane-data.js';
 
 test('sheet events retain an optional end date and reject an inverted range', () => {
   const event = {사건ID: 'E1', 날짜: '1910', 종료일: '1918', 사건명: '토지 조사 사업', 주제: '정책', 중요도: ' core '};
@@ -85,6 +85,20 @@ test('relation arrows approach the destination dot from a clear side', () => {
   assert.match(pointRelationPath(from, {x: 360, y: 55, labelSide: -1}), / 360 [\d.]+ 360 64$/);
 });
 
+test('relation labels and detail buttons use free space around the cards', () => {
+  const bounds = {left:100, right:550, top:40, bottom:300};
+  const card = {left:220, right:340, top:90, bottom:152};
+  const upperCard = {...card, top:40, bottom:85};
+  const middle = {x:280, y:120};
+  assert.deepEqual(placeRelationLabel(middle, 88, 28, bounds, [card]), {
+    left:236, right:324, top:58, bottom:86,
+  });
+  assert.deepEqual(placeRelationLabel(middle, 88, 28, bounds, [card, upperCard]), {
+    left:236, right:324, top:156, bottom:184,
+  });
+  assert.equal(placeRelationLabel(middle, 88, 28, bounds, [bounds]), null);
+});
+
 test('focus arrows meet facing card borders in the recorded direction', () => {
   const a = {left: 10, right: 110, top: 10, bottom: 50};
   const b = {...a, left: 150, right: 250};
@@ -123,6 +137,13 @@ test('a selected arrow traces earlier and later links without pulling in side br
   assert.deepEqual(chain.recordIds, new Set(['A','B','C','D']));
 });
 
+test('an arrow with one visible card keeps its direction and stays close to that card', () => {
+  const card = {left:80,right:140,top:20,bottom:40};
+  const atRight = {...card,left:240,right:290};
+  const links = [{id:'out',from:card},{id:'in',to:card},{id:'out-at-edge',from:atRight}];
+  assert.deepEqual(cardRelationPaths(links,300),['M 140 30 H 164','M 56 30 H 80','M 240 30 H 216']);
+});
+
 test('lesson lanes and relations use only the displayed events and their selected topics',()=>{
   const data={topics:[{topic_id:'t',name:'선택'},{topic_id:'other',name:'제외'}],actors:[],
     events:[{id:'E2',legacyId:'old',date:'1940',title:'시트 사건',description:'내용',directTopicIds:['t'],actorIds:[]}]};
@@ -135,6 +156,25 @@ test('lesson lanes and relations use only the displayed events and their selecte
   assert.deepEqual(result.actors.map(a=>a.id),['a']);
   assert.equal(result.relations.length,1);
   assert.deepEqual(lessonSwimlane(data,new Map(),null).events[0].themes,['선택']);
+});
+
+test('a room keeps swimlane relations to hidden events without restoring their cards',()=>{
+  const event={date:'1940',title:'보이는 사건',directTopicIds:[],actorIds:[]};
+  const shown={...event,id:'shown'};
+  const hidden={...event,id:'uuid',legacyId:'hidden',title:'숨긴 사건'};
+  const another={...event,id:'another',title:'다른 숨긴 사건'};
+  const sourceEvents=[shown,hidden,another];
+  const link=(id,fromId,toId)=>({id,fromId,toId,fromType:'event',toType:'event'});
+  const sheet={events:[shown,{id:'hidden'},another],categories:[],actors:[],relations:[
+    link('out','shown','hidden'),link('in','hidden','shown'),link('both-hidden','hidden','another'),link('outside','shown','outside')]};
+  const data={events:[shown],topics:[],actors:[]};
+  const lesson=lessonSwimlane(data,new Map(),sheet,undefined,sourceEvents);
+  assert.deepEqual(lesson.events.map(event=>event.id),['shown']);
+  assert.deepEqual(lesson.relations,[]);
+  assert.deepEqual(lesson.partialRelations.map(rel=>rel.id),['out','in']);
+  const restored=lessonSwimlane({...data,events:sourceEvents},new Map(),sheet);
+  assert.deepEqual(restored.relations.map(rel=>rel.id),['out','in','both-hidden']);
+  assert.deepEqual(restored.partialRelations,[]);
 });
 
 test('a saved lesson opens the unique sheet event and keeps its image and participant details',()=>{

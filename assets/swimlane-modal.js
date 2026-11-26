@@ -133,6 +133,10 @@ export function setupSwimlaneModal(data,frame=null,onEventContext=null,panel=nul
  let viewportListeners;
  function positionModal(){
   if(!embed)return;
+  if(document.documentElement.classList.contains('swimlane-expanded')){
+   for(const property of ['--modal-top','--modal-bottom','--modal-viewport'])dialog.style.removeProperty(property);
+   return;
+  }
   const bounds=embed.bounds();
   const top=Math.max(0,-bounds.top);
   const bottom=Math.max(0,bounds.bottom-embed.scrollWindow.innerHeight);

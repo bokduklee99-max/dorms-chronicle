@@ -399,6 +399,10 @@ button.relation-node:is(:hover,:focus-visible){border-color:var(--accent);backgr
 .live-reader .record-back{padding:6px 12px;border-radius:20px;font-size:13px}
 .live-reader :focus-visible{outline:3px solid #6951b5;outline-offset:2px}
 .live-reader .registered-image{display:block;width:100%;max-height:320px;object-fit:contain}
+.live-reader .photo-feature > .photo-set img {
+  min-height: 0;
+  max-height: min(320px, calc(var(--modal-viewport, 100dvh) * .4));
+}
 .live-reader .photo-feature.no-photo .event-intro,.live-reader .flow-heading,.live-reader .era-cover>.record-title{padding-right:48px}
 .live-reader [data-record-places]:empty{display:none}
 .live-reader .event-board{grid-template-columns:repeat(2,minmax(0,1fr))}

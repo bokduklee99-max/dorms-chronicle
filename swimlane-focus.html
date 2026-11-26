@@ -2,7 +2,7 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>스윔레인 · 구간 확대</title>
 <script src="./assets/chronicle-frame.js"></script>
-<link rel="stylesheet" href="./assets/chronicle-theme.css"><link rel="stylesheet" href="./assets/swimlane-focus.css"><link rel="stylesheet" href="./assets/space-preview.css"><link rel="stylesheet" href="./assets/swimlane-modal.css"></head>
+<link rel="stylesheet" href="./assets/chronicle-theme.css"><link rel="stylesheet" href="./assets/swimlane-focus.css"><link rel="stylesheet" href="./assets/space-preview.css"><link rel="stylesheet" href="./assets/swimlane-modal.css"><link rel="stylesheet" href="./assets/workspace-event-edit.css"></head>
 <body>
 <header class="chronicle-header" data-standalone-header>
   <a class="chronicle-brand" href="/">DoRms' Chronicle<span aria-hidden="true">✳</span></a>
@@ -19,8 +19,16 @@
  </div>
  <div id="zoom" role="group" aria-label="시간축 확대 범위"></div>
 </div>
-<div class="key"><span><i class="point-symbol" aria-hidden="true"></i>시점 사건</span><span><i class="span-symbol" aria-hidden="true"></i>기간 사건</span><div id="importance-key" role="group" aria-label="사건 중요도"></div><button id="empty-lanes" aria-pressed="false">빈 레인 보기</button><button id="relations">전체 관계</button></div>
-<div class="viewport" role="region" aria-label="시기와 카테고리별 시간축" aria-description="좌우 화살표 키로 표시 구간 이동" tabindex="0"><div class="axis row"><strong>시간축</strong><div id="ticks"></div></div>
-<div class="plot"><div id="lanes"></div><svg id="edges" aria-label="시트에 기록된 관계"></svg></div></div>
+<div class="key"><span><i class="point-symbol" aria-hidden="true"></i>시점 사건</span><span><i class="span-symbol" aria-hidden="true"></i>기간 사건</span><div id="importance-key" role="group" aria-label="사건 중요도"></div><button id="relations">전체 관계</button></div>
+<div class="viewport" role="region" aria-label="시기와 카테고리별 시간축" aria-description="좌우 화살표 키로 표시 구간 이동" tabindex="0">
+ <div class="plot"><div id="timeline-heading"><div class="axis row">
+  <div class="axis-tools"><strong>시간축</strong><button id="toggle-lanes" type="button" aria-controls="pinned-lanes lanes" aria-expanded="false" aria-label="모두 펼치기" hidden>
+   <span>모두 펼치기</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-4 5 4M7 15l5 4 5-4"/></svg>
+  </button></div>
+  <div id="ticks"></div>
+ </div><div id="periods"></div><div id="pinned-lanes" role="region" aria-label="고정한 카테고리"></div></div>
+ <div id="lanes"></div><svg id="edges" aria-label="시트에 기록된 관계"></svg></div>
+ <button type="button" id="swimlane-fullscreen" aria-label="전체 화면" title="전체 화면" hidden></button>
+</div>
 <div id="selection" aria-live="polite"></div><p id="status" role="status">연표를 읽는 중입니다.</p>
 </main><script src="./sheet-config.js?v=timeline-images"></script><script src="./sheets.js?v=normalized-schema"></script><script type="module" src="./assets/swimlane-focus.js"></script></body></html>

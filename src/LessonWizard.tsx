@@ -1,14 +1,16 @@
-import type {EventRecord} from './metro-model';
+import type {EventRecord,Topic} from './metro-model';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {useSheetHistory} from './use-sheet-history';
 import {CategoryEventMap} from './CategoryEventMap';
 import {ChronicleHeader} from './ChronicleHeader';
-import {readEventImportance,swimlaneSnapshot,type ImportanceRow} from './event-importance';
+import {readEventImportance,swimlaneSnapshot,type ImportanceRow,type SwimlaneSnapshotCategory} from './event-importance';
 import {importanceLabels,matchSwimlaneEvents} from '../swimlane-data.js';
 import {CategoryMap,EventMap,useLessonMaps} from './LessonMap';
 import {createLesson,exploreHref,packageTopics,setupHref,views,workspaceDraft,type View} from './workspace-model';
+import {categoryFilterLabel} from './timeline-labels';
 import './workspace.css';
 import './lesson-wizard.css';
+import './category-filters.css';
 
 const steps=[['package','패키지'],['categories','카테고리'],['events','사건'],['settings','수업 설정']] as const;
 const categoryTypes=[['period','시기'],['arc','사건군'],['theme','주제'],['','기타']] as const;
@@ -37,7 +39,7 @@ export function LessonWizard(){
  const [query,setQuery]=useState('');
  const [error,setError]=useState('');
  const [importance,setImportance]=useState<{packageId:string;rows:ImportanceRow[]} | null>(null);
- const [savedCategoryTypes,setSavedCategoryTypes]=useState<{packageId:string;types:Map<string,string>} | null>(null);
+ const [savedCategoryData,setSavedCategoryData]=useState<{packageId:string;categories:Map<string,SwimlaneSnapshotCategory>}|null>(null);
  const heading=useRef<HTMLHeadingElement>(null);
  const mapPanel=useRef<HTMLElement>(null);
  const pkg=packages.find(x=>x.id===choice.packageId);
@@ -49,10 +51,10 @@ export function LessonWizard(){
  if(data.events.some(e=>!e.directTopicIds.length))topics.push({topic_id:unassigned,name:'카테고리 미지정'});
 
  const selectedTopics=topics.filter(t=>choice.categories.includes(t.topic_id));
+ const savedCategories=savedCategoryData?.packageId===choice.packageId?savedCategoryData.categories:undefined;
  const categoryGroups=categoryTypes.map(([type,label])=>{
   const group=topics.filter(t=>{
-   const savedType=savedCategoryTypes?.packageId===choice.packageId?savedCategoryTypes.types.get(t.topic_id):undefined;
-   const kind=categoryMetadata.get(t.topic_id)?.type??savedType??'';
+   const kind=categoryMetadata.get(t.topic_id)?.type??savedCategories?.get(t.topic_id)?.kind??'';
    return type?kind===type:!['period','arc','theme'].includes(kind);
   });
   return {type,label,topics:group,selected:group.filter(t=>choice.categories.includes(t.topic_id))};
@@ -92,7 +94,7 @@ export function LessonWizard(){
   const {config,SheetData}=window.HistorySource;
   const snapshot=swimlaneSnapshot(packageId).catch(()=>null);
   void snapshot.then(saved=>{
-   if(active&&saved)setSavedCategoryTypes({packageId,types:new Map(saved.categories.map(c=>[c.id,c.kind]))});
+   if(active&&saved)setSavedCategoryData({packageId,categories:new Map(saved.categories.map(c=>[c.id,c]))});
   });
   readEventImportance(config,SheetData).catch(async()=>(await snapshot)?.events??[])
    .catch(()=>[]).then(rows=>{if(active)setImportance({packageId,rows});});
@@ -119,6 +121,10 @@ export function LessonWizard(){
  }
  function filterEvents(filter:EventFilter){
   setEventFilter(filter);setQuery('');
+ }
+ function topicLabel(topic:Topic,kind:CategoryType){
+  const meta=categoryMetadata.get(topic.topic_id),saved=savedCategories?.get(topic.topic_id);
+  return categoryFilterLabel(topic.name,kind,meta?.startDate||saved?.start,meta?.endDate||saved?.end);
  }
  function selectEvents(events:EventRecord[],selected:boolean){
   setChoice(c=>{
@@ -184,11 +190,15 @@ export function LessonWizard(){
       <button type="button" aria-label={t.name+' 지도 보기'} onClick={()=>{setActiveTopic(t.topic_id);showMap();}}>지도 보기</button></div>;
     })}</fieldset>;
    }):<>
-    <div className="lesson-spaces lesson-category-filters" role="group" aria-label="선택한 카테고리">
-     <button type="button" aria-pressed={!filteredTopics} onClick={()=>filterEvents(null)}>전체 보기</button>
-     {categoryGroups.filter(group=>group.selected.length).map(group=><div className="lesson-category-filter" role="group" aria-label={group.label} key={group.type}>
-      <button type="button" className="lesson-category-type" aria-pressed={eventGroup===group} onClick={()=>filterEvents({categoryType:group.type})}>{group.label} 전체</button>
-      <div className="lesson-category-buttons">{group.selected.map(t=><button type="button" key={t.topic_id} aria-pressed={eventTopic===t} onClick={()=>filterEvents({categoryId:t.topic_id})}>{t.name}</button>)}</div>
+    <div className="category-filters lesson-category-filters" role="group" aria-label="카테고리 필터">
+     <header><h3>카테고리 필터</h3>
+      <button type="button" disabled={!filteredTopics} onClick={()=>filterEvents(null)}>선택 해제</button>
+     </header>
+     {categoryGroups.filter(group=>group.selected.length).map(group=><div className="category-filter-group" role="group" aria-label={group.label} data-category-kind={group.type} key={group.type}>
+      <button type="button" className="category-filter-type" aria-label={group.label+' 전체'} aria-pressed={eventGroup===group}
+       onClick={()=>filterEvents({categoryType:group.type})}>{group.label}</button>
+      <div className="category-filter-options">{group.selected.map(t=><button type="button" key={t.topic_id} aria-pressed={eventTopic===t}
+       onClick={()=>filterEvents({categoryId:t.topic_id})}>{topicLabel(t,group.type)}</button>)}</div>
      </div>)}
     </div>
     <input type="search" className="setup-input" aria-label="사건명 또는 연도 검색" placeholder="사건명 또는 연도 검색" value={query} onChange={e=>setQuery(e.target.value)}/>
@@ -226,7 +236,6 @@ export function LessonWizard(){
    <aside className="lesson-map-panel" aria-label="지도 미리보기" ref={mapPanel}>
     <div className="lesson-map-heading"><p>지도 미리보기</p><h3>{(step===1?topic?.name:event?.title)??'선택한 항목 없음'}</h3>{step===2&&event&&<time>{event.date}</time>}</div>
     {step===2&&event?.description?.trim()&&<p className="lesson-event-description">{event.description}</p>}
-    {step===1&&topic&&<a href={'/history-map.html?topic='+encodeURIComponent(topic.topic_id)} target="_blank" rel="noreferrer">지도 제작실에서 열기 ↗</a>}
     {step===1&&topic&&<CategoryEventMap key={topic.topic_id} events={categoryEvents} meta={topicMeta} maps={maps}/>}
     {step===2&&event&&<EventMap key={event.id} event={event} maps={maps}/>}
    </aside>
@@ -234,7 +243,13 @@ export function LessonWizard(){
   {step===3&&<section className="lesson-settings" aria-label="수업 설정">
    <div className="lesson-review">
     <header><h3>{pkg?.name}</h3><span>사건 <strong>{pickedEvents.length}</strong>개</span></header>
-    <ul aria-label="선택한 카테고리">{selectedTopics.map(t=><li key={t.topic_id}>{t.name}</li>)}</ul>
+    <div className="lesson-review-categories" role="group" aria-label="선택한 카테고리">
+     {categoryGroups.filter(group=>group.selected.length).map(({type,label,selected})=><div
+      key={type} className="category-filter-group" role="group" aria-label={label} data-category-kind={type}>
+      <strong>{label}</strong>
+      <ul className="category-filter-options">{selected.map(t=><li key={t.topic_id}>{topicLabel(t,type)}</li>)}</ul>
+     </div>)}
+    </div>
    </div>
    <div className="lesson-settings-fields">
     <div className="lesson-school-field"><label className="setup-label" htmlFor="lesson-school">학교명</label>

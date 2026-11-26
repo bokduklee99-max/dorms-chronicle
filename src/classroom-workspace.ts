@@ -25,7 +25,7 @@ async function japanSnapshot(item:WorkspaceDraft,dateRange:SheetParser['dateRang
   const labels:Record<string,string[]>={period:event.periodNames??[event.period||''],arc:event.arcs,theme:event.themes};
   return {...event,directTopicIds:sheet.categories.filter(c=>labels[c.kind]?.includes(c.name)).map(c=>c.id)};
  });
- return filterLessonEvents(events,item.hiddenTopics,item.hiddenEvents,item.includedEvents).map(event=>{
+ return filterLessonEvents(events,item.hiddenTopics,item.hiddenEvents,item.includedEvents,item.eventCategoryChanges).map(event=>{
   const categories=sheet.categories.filter(c=>event.directTopicIds.includes(c.id));
   let startBounds:QuizRecord['startBounds'];
   try{startBounds=dateRange(event.date);}catch{/* An undated event can still be used in a blank quiz. */}
@@ -84,7 +84,7 @@ export function classroomWorkspace(id:string,sharedPackage?:string,includedEvent
    const personPool=[...leaders.map(({person})=>person),...data.actors.filter(actor=>actor.actor_type==='person')
     .map(actor=>({label:'관련 인물',name:actor.name}))];
    const matchEvent=matchSwimlaneEvents(data.events,await importanceRows);
-   return filterLessonEvents(data.events,item.hiddenTopics,item.hiddenEvents,item.includedEvents).map(event=>{
+   return filterLessonEvents(data.events,item.hiddenTopics,item.hiddenEvents,item.includedEvents,item.eventCategoryChanges).map(event=>{
     const categoryIds=event.directTopicIds.filter(id=>topics.has(id));
     const linked=event.actorIds.flatMap(id=>actors.get(id)??[]);
     const people:QuizPerson[]=linked.filter(actor=>actor.actor_type==='person').map(actor=>({label:'관련 인물',name:actor.name}));

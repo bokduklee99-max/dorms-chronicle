@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {koreanHistory} from '../src/korean-history.ts';
 import {makeMetro} from '../src/metro-model.ts';
 import {readWorkspaceGeography} from '../src/package-content.ts';
-import {createLesson,deleteWorkspace,exploreHref,filterPackage,learningHref,loadWorkspaces,matchesWorkspaceScope,packageName,saveWorkspace,selectWorkspaceEvents,setupHref,views,workspaceDraft,workspaceSelectionChanges} from '../src/workspace-model.ts';
+import {createLesson,deleteWorkspace,exploreHref,filterPackage,learningHref,loadWorkspaces,matchesWorkspaceScope,moveWorkspaceEventCategory,packageName,saveWorkspace,selectWorkspaceEvents,setWorkspaceCategoryColor,setupHref,undoWorkspaceEventCategory,views,workspaceDraft,workspaceSelectionChanges} from '../src/workspace-model.ts';
 
 test('workspace geography links events to places and ancestors without matching sibling regions',()=>{
  const geography=readWorkspaceGeography(
@@ -27,6 +27,18 @@ test('workspace search uses intersecting event years and combines categories wit
  assert.equal(matchesWorkspaceScope(cuba,1945,1950,[['cold-war-start']]),false);
  assert.equal(matchesWorkspaceScope(cuba,1962,1962,[...arcs,['militarization']]),false);
  assert.equal(matchesWorkspaceScope(koreanWar,1953,1952,arcs),false);
+});
+
+test('swimlane ink round-trips by room and ignores malformed strokes',()=>{
+ const storage={getItem(key){return this[key]??null;},setItem(key,value){this[key]=value;}};
+ const stroke=[{lane:'economy',points:[{time:Date.UTC(1910,0,1),y:0.3}]},
+  {lane:'',points:[{time:Date.UTC(1910,0,2),y:0.9}]}];
+ const room=createLesson({...workspaceDraft('필기 수업','japan'),swimlaneInk:[stroke,
+  [{lane:'economy',points:[{time:0,y:2}]}],[null]]},storage);
+ const other=createLesson(workspaceDraft('다른 수업','japan'),storage);
+ const rooms=loadWorkspaces(storage);
+ assert.deepEqual(rooms.find(item=>item.id===room.id).swimlaneInk,[stroke]);
+ assert.equal(rooms.find(item=>item.id===other.id).swimlaneInk,undefined);
 });
 
 test('school and package configurations round-trip independently and edits retain the same ID',()=>{
@@ -128,6 +140,62 @@ test('a saved selection still hides an event after its ID is shortened',()=>{
  const [record]=old.events;
  const updated={...old,events:[{...record,id:'E168',legacyId:record.id}]};
  assert.equal(filterPackage(updated,[],[record.id]).events.length,0);
+});
+
+test('undoing a room category move restores the exact earlier memberships for that event',()=>{
+ const draft=workspaceDraft('연표 테스트');
+ const event={id:'short',legacyId:'old',directTopicIds:['group','theme-a','theme-b']};
+ const before=moveWorkspaceEventCategory(draft,event,[],'theme-c');
+ const moved=moveWorkspaceEventCategory(before,event,['theme-a'],'theme-d');
+ const other={added:['other-theme'],removed:[]};
+ const latest={...moved,eventCategoryChanges:{...moved.eventCategoryChanges,other}};
+ const previousEntry=before.eventCategoryChanges.old;
+ const movedEntry=moved.eventCategoryChanges.old;
+ assert.deepEqual(previousEntry,{added:['theme-c'],removed:[]});
+ assert.deepEqual(undoWorkspaceEventCategory(latest,event,previousEntry,movedEntry).eventCategoryChanges,{old:previousEntry,other});
+ assert.deepEqual(undoWorkspaceEventCategory(before,event,undefined,previousEntry).eventCategoryChanges,{});
+ assert.throws(()=>undoWorkspaceEventCategory(before,event,previousEntry,movedEntry),/다시 변경/);
+});
+
+test('room category moves survive reloads and follow a shortened event ID',()=>{
+ const storage={getItem(key){return this[key]??null;},setItem(key,value){this[key]=value;}};
+ const full=koreanHistory([]);
+ const event=full.events.find(item=>item.id==='kr-liberation');
+ const original=createLesson(workspaceDraft('분류 편집 테스트','korean-history'),storage);
+ const move=moveWorkspaceEventCategory(original,event,['independence'],'opening');
+ saveWorkspace({...original,...move},storage);
+ const saved=loadWorkspaces(storage)[0];
+ const renamed={...event,id:'E001',legacyId:event.id};
+ const current={...full,events:[renamed]};
+ const visible=draft=>filterPackage(current,draft.hiddenTopics,draft.hiddenEvents,draft.includedEvents,draft.eventCategoryChanges).events;
+ assert.deepEqual(visible(saved)[0].directTopicIds,['division','opening']);
+ assert.deepEqual(event.directTopicIds,['independence','division']);
+ const twice=moveWorkspaceEventCategory(saved,renamed,['division'],'independence');
+ assert.deepEqual(visible(twice)[0].directTopicIds,['independence','opening']);
+ const hidden=selectWorkspaceEvents({...saved,hiddenTopics:['division','opening']},[renamed],false);
+ assert.deepEqual(visible(hidden),[]);
+ assert.deepEqual(visible(selectWorkspaceEvents(hidden,[renamed],true))[0].directTopicIds,['division','opening']);
+ const restored=moveWorkspaceEventCategory(saved,renamed,['opening'],'independence');
+ assert.deepEqual(restored.eventCategoryChanges,{});
+});
+
+test('custom category colors are saved per room, reset independently and checked on load',()=>{
+ const storage={getItem(key){return this[key]??null;},setItem(key,value){this[key]=value;}};
+ const draft=workspaceDraft('색상 편집 테스트','japan');
+ const room=createLesson(draft,storage);
+ const other=createLesson(draft,storage);
+ const first=setWorkspaceCategoryColor(room,'japan_economy','#A23D35');
+ const second=setWorkspaceCategoryColor(first,'japan_domestic','#715286');
+ const saved=saveWorkspace({...room,...second},storage);
+ assert.deepEqual(loadWorkspaces(storage).find(item=>item.id===room.id).categoryColors,{
+  japan_economy:'#a23d35',japan_domestic:'#715286'
+ });
+ assert.deepEqual(loadWorkspaces(storage).find(item=>item.id===other.id),other);
+ const reset=setWorkspaceCategoryColor(saved,'japan_economy',null);
+ assert.deepEqual(reset.categoryColors,{japan_domestic:'#715286'});
+ assert.throws(()=>setWorkspaceCategoryColor(saved,'japan_economy','red;display:none'),/색상/);
+ saveWorkspace({...room,...reset,categoryColors:{...reset.categoryColors,bad:'invalid'}},storage);
+ assert.deepEqual(loadWorkspaces(storage).find(item=>item.id===room.id).categoryColors,reset.categoryColors);
 });
 
 

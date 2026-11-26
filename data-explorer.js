@@ -9,7 +9,7 @@ import {createRelation,eventActorLinks,eventPackageLinks,filterRelationDirection
    1. 시트 스키마 및 상수 정의
    ========================================================================= */
 const SHEET_GROUPS = [
-  { label: '기본 사전', tabs: ['패키지', '카테고리', '주체', '유형설명'] },
+  { label: '기본 사전', tabs: ['패키지', '카테고리', '주체'] },
   { label: '핵심 기록', tabs: ['사건', '직위', '재임'] },
   { label: '연결 · 관계', tabs: ['사건_패키지', '사건_카테고리', '사건_주체', '관계'] },
   { label: '지리', tabs: ['공간', '사건_공간', '주체_공간', '카테고리_공간', '영토변화', '지도도형','지도뷰'] }
@@ -19,9 +19,9 @@ const STRUCTURE_SECTION_TABLES = {
   'structure-actors': ['주체', '직위', '재임'],
   'structure-catalog': ['패키지', '카테고리', '사건', '사건_카테고리', '사건_패키지'],
   'structure-geography': ['공간', '사건_공간', '주체_공간', '카테고리_공간', '영토변화', '지도도형','지도뷰'],
-  'structure-relations': ['사건_주체', '관계', '유형설명']
+  'structure-relations': ['사건_주체', '관계']
 };
-const NEW_SCHEMA_TABS = ['유형설명','공간','영토변화','사건_공간','지도도형','지도뷰','직위','사건_패키지','주체_공간','카테고리_공간'];
+const NEW_SCHEMA_TABS = ['공간','영토변화','사건_공간','지도도형','지도뷰','직위','사건_패키지','주체_공간','카테고리_공간'];
 const GEO_TYPE_LABELS = new Map([['all','전체'], ['point','점'], ['line','선'], ['area','면']]);
 const SPACE_LINKS = {사건_공간:'사건ID', 주체_공간:'주체ID', 카테고리_공간:'카테고리ID'};
 const GEO_TABLES = ['공간','지도도형',...Object.keys(SPACE_LINKS)];
@@ -42,8 +42,7 @@ const DEFAULT_HEADERS = {
   '카테고리_공간': ['카테고리ID','공간ID'],
   '영토변화': ['영토ID', '주체ID', '영토유형', '시작일', '종료일', '지도참조키', '계기사건ID', '설명'],
   '지도도형': ['지도참조키','도형유형','파일경로','외부도형ID','원본SVG','출처','기준시점','지도데이터URL','도형 추출·사용 설명','데이터형식','좌표상태','경도','위도'],
-  '지도뷰': ['뷰ID','뷰명','투영법','중심경도','중심위도','최소경도','최소위도','최대경도','최대위도','설명'],
-  '유형설명': ['시트명', '컬럼명', '유형값', '한글명', '설명', '예시', '비고']
+  '지도뷰': ['뷰ID','뷰명','투영법','중심경도','중심위도','최소경도','최소위도','최대경도','최대위도','설명']
 };
 
 // 뷰어 및 편집기에서 숨길 내부 ID 열 목록
@@ -632,13 +631,11 @@ const RELATION_TYPE_META = {
 
 function getRelMeta(code) {
   const key = String(code || '').trim().toLowerCase();
-  const meta = Object.hasOwn(RELATION_TYPE_META, key) ? RELATION_TYPE_META[key] : {
+  return Object.hasOwn(RELATION_TYPE_META, key) ? RELATION_TYPE_META[key] : {
     label: code || '기타 관계',
     cls: 'bg-slate-100 text-slate-700 border-slate-200',
     arrow: '#475569'
   };
-  const definition = getTypeDefinition('관계', '관계유형', key);
-  return definition?.['한글명'] ? {...meta, label: definition['한글명']} : meta;
 }
 
 function renderRelationEdge(row) {
@@ -718,17 +715,11 @@ function renderRelationFlow(groups, visibleDirections, typeCounts, activeType, t
   </div>`;
 }
 
-function getTypeDefinition(tab, field, value) {
-  return state.data['유형설명'].find(row =>
-    row['시트명'] === tab && row['컬럼명'] === field && groupKey(row['유형값']) === groupKey(value));
-}
-
 function getGroupLabel(tab, rawKey) {
   const k = String(rawKey || '').trim();
   if (!k) return '기타';
   const map = GROUP_LABEL_MAPS[tab] || {};
-  return getTypeDefinition(tab, recordKindFields[tab], k)?.['한글명'] ||
-    (Object.hasOwn(map, k.toLowerCase()) ? map[k.toLowerCase()] : k);
+  return Object.hasOwn(map, k.toLowerCase()) ? map[k.toLowerCase()] : k;
 }
 
 function formatPeriod(start, end) {
@@ -1200,10 +1191,7 @@ function renderOverview() {
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div><h2 id="structure-relations" class="section-title" tabindex="-1">관계 유형별 연결</h2>
             <p class="structure-intro">사건·주체·카테고리가 어떤 관계로 이어지는지 확인합니다.</p></div>
-          <div class="flex flex-wrap gap-3">
-            <button data-goto-tab="유형설명" class="text-xs font-bold text-blue-700 hover:underline cursor-pointer">유형 설명 표 →</button>
-            <button data-goto-tab="관계" class="text-xs font-bold text-orange-700 hover:underline cursor-pointer">관계 표 열기 →</button>
-          </div>
+          <button data-goto-tab="관계" class="text-xs font-bold text-orange-700 hover:underline cursor-pointer">관계 표 열기 →</button>
         </div>
 
         ${renderRelationFlow(relationsByDirection, visibleDirections, typeCounts, activeRelFilter, allRelations.length)}
@@ -1956,7 +1944,7 @@ function renderSheetTable(tab) {
 /* =========================================================================
    11. 우측 슬라이드 스마트 참조 편집 드로어
    ========================================================================= */
-const recordNameFields = {패키지:'패키지명', 카테고리:'카테고리명', 사건:'사건명', 주체:'주체명', 직위:'직위명', 관계:'라벨', 공간:'공간명', 지도도형:'지도참조키', 지도뷰:'뷰명', 유형설명:'한글명'};
+const recordNameFields = {패키지:'패키지명', 카테고리:'카테고리명', 사건:'사건명', 주체:'주체명', 직위:'직위명', 관계:'라벨', 공간:'공간명', 지도도형:'지도참조키', 지도뷰:'뷰명'};
 const recordKindFields = {카테고리:'카테고리유형', 사건:'사건유형', 주체:'구분', 직위:'직위유형', 재임:'재임유형', 공간:'공간유형', 영토변화:'영토유형'};
 const recordNarrativeFields = new Set(['내용','설명','소개','기간 설명','직위 설명','직위 비고','이미지','출처']);
 
@@ -2254,18 +2242,11 @@ function bindEditChoices(container) {
   }
 }
 
-function definedEditOptions(tab, field, fallback) {
-  const definitions = state.data.유형설명.filter(row => row.시트명 === tab && row.컬럼명 === field && row.유형값);
-  return definitions.length ? definitions.map(row => ({id:row.유형값,label:row.한글명 || row.유형값})) : fallback;
-}
-
 function renderEventActors() {
   const container = document.getElementById('event-edit-actors');
   const {draft,workspace} = state.editing;
   const maps = getLookupMaps();
-  const roleOptions = Object.entries(actorRoles).map(([id,label]) => ({
-    id,label:getTypeDefinition('사건_주체','역할',id)?.한글명 || label
-  }));
+  const roleOptions = Object.entries(actorRoles).map(([id,label]) => ({id,label}));
   const roleLabel = role => roleOptions.find(option => option.id === role)?.label || role || '역할 선택';
   container.innerHTML = `
     <h4>참여 주체</h4>
@@ -2512,7 +2493,7 @@ function renderEditDrawer() {
     const refOpts = categoryWorkspace && col === '카테고리유형' ?
       Object.entries(SheetData.eventCategoryTypes).map(([label,id]) => ({id,label})) :
       getReferenceOptions(col, tab, draft) ?? (workspace && col === '사건유형' ?
-      definedEditOptions(tab,col,['event','policy','publication','context'].map(id => ({id,label:getGroupLabel(tab,id)}))) : null);
+      ['event','policy','publication','context'].map(id => ({id,label:getGroupLabel(tab,id)})) : null);
     const isCategory = tab === '사건' && (col === '카테고리ID' || Object.hasOwn(SheetData.eventCategoryTypes,col));
     const isLongText = col === '내용' || col === '설명';
 
@@ -2827,8 +2808,7 @@ const requiredFields = {
   '직위': ['직위ID','직위명'], '재임': ['재임ID','시작일'], '관계': ['관계ID','출발ID','도착ID','관계유형'],
   '공간': ['공간ID','공간명','공간유형'], '영토변화': ['영토ID','주체ID','영토유형'],
   '사건_공간': ['사건ID','공간ID'], '지도도형': ['지도참조키','도형유형'], '지도뷰': ['뷰ID','뷰명','투영법'],
-  '주체_공간': ['주체ID','공간ID'], '카테고리_공간': ['카테고리ID','공간ID'],
-  '유형설명': ['시트명','컬럼명','유형값','한글명','설명']
+  '주체_공간': ['주체ID','공간ID'], '카테고리_공간': ['카테고리ID','공간ID']
 };
 
 function validateTable(tab, headers, records) {

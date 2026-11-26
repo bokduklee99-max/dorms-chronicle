@@ -2,6 +2,7 @@ import {type RefObject,useEffect,useId,useMemo,useState} from 'react';
 import type {HistoryData} from './metro-model';
 import {fetchWorkspaceGeography} from './package-content';
 import {buildRadar,radarCenter,radarEdges,radarPoint} from './radar-model';
+import {WorkspaceEventCard} from './WorkspaceRoomEditor';
 import './time-space-radar.css';
 
 const sectorColors=['#426456','#9c5339','#426780','#78633b','#755877','#487673','#566075'];
@@ -15,9 +16,9 @@ type RadarLesson = {
  events:{id:string;sourceId:string}[];
  relations:{id:string;fromType:string;fromId:string;toType:string;toId:string;kind:string;label:string}[];
 };
-type Props = {panelRef:RefObject<HTMLDivElement|null>;activeId:string;onDismiss:()=>void;data:HistoryData;lesson?:RadarLesson;packageId:string;onVisit:(id:string,button:HTMLButtonElement|SVGGElement,kind?:'event'|'relation')=>void};
+type Props = {panelRef:RefObject<HTMLDivElement|null>;activeId:string;onDismiss:()=>void;data:HistoryData;lesson?:RadarLesson;packageId:string;onVisit:(id:string,button:HTMLButtonElement|SVGGElement,kind?:'event'|'relation')=>void;onHideEvent?:(id:string)=>void};
 
-export function TimeSpaceRadar({data,lesson,packageId,panelRef,activeId,onDismiss,onVisit}:Props){
+export function TimeSpaceRadar({data,lesson,packageId,panelRef,activeId,onDismiss,onVisit,onHideEvent}:Props){
  const [geography,setGeography]=useState<Geography|null>();
  const [lastEvent,setLastEvent]=useState('');
  const [scan,setScan]=useState<number>();
@@ -148,8 +149,10 @@ export function TimeSpaceRadar({data,lesson,packageId,panelRef,activeId,onDismis
      <div className="time-radar-event-list">{windowCount===0&&<p>이 시기에 등록된 사건이 없습니다.</p>}
       {sectors.map(sector=>{
        const points=sector.points.filter(point=>nearby(point.event.year));
-       return points.length>0&&<section key={sector.id}><h4>{sector.name}</h4>{points.map(({event,key,places})=><button type="button" key={key} aria-controls="radar-detail"
-        onClick={e=>openEvent(event.id,event.year,e.currentTarget)}><strong>{event.title}</strong><time>{event.date}{places.length?' · '+places.join(' · '):''}</time></button>)}</section>;
+       return points.length>0&&<section key={sector.id}><h4>{sector.name}</h4>{points.map(({event,key,places})=><WorkspaceEventCard key={key} event={event} onHide={onHideEvent}>
+        <button type="button" aria-controls="radar-detail" onClick={e=>openEvent(event.id,event.year,e.currentTarget)}>
+         <strong>{event.title}</strong><time>{event.date}{places.length?' · '+places.join(' · '):''}</time>
+        </button></WorkspaceEventCard>)}</section>;
       })}
      </div>
     </div>

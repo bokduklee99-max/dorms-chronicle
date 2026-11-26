@@ -106,13 +106,16 @@ test('visits use current sheet rows, including edits and deletions, and never se
 test('a failed tab retries by name and an optional tab failure preserves fresh places', async () => {
   const config = { id: 'test', sheetIds: { 공간: 1 } };
   let retried = false;
+  const requestedTabs = new Set();
   const library = await loadSheetLibrary(config, presets, (source, name) => {
+    requestedTabs.add(name);
     if (name === '공간' && source.sheetIds) throw Error('export failed');
     if (name === '공간') retried = true;
     if (name === '지도뷰') throw Error('unavailable');
     return tables[name] || [];
   });
   assert.ok(retried);
+  assert.equal(requestedTabs.has('유형설명'), false);
   assert.deepEqual(library.failedTabs, ['지도뷰']);
   assert.equal(library.places.length, 2);
 });
@@ -173,7 +176,7 @@ test('a missing sheet-referenced point file reports the failure and keeps the cu
   assert.equal(library.themes[0].id, 'c1');
 });
 
-test('catalog uses sheet geometry and subtype labels even when a line has a reference coordinate', () => {
+test('catalog uses sheet geometry and built-in subtype labels even when a line has a reference coordinate', () => {
   const data = {
     ...tables,
     공간: [...tables.공간,
@@ -186,12 +189,11 @@ test('catalog uses sheet geometry and subtype labels even when a line has a refe
     영토변화: [
       { 지도참조키: 'area-key', 영토유형: 'sovereignty' },
       { 지도참조키: 'front-key', 영토유형: 'occupation' }],
-    유형설명: [{ 시트명: '영토변화', 컬럼명: '영토유형', 유형값: 'occupation', 한글명: '전선 유형' }],
   };
   const { places, shapes } = sheetLibrary(data, presets);
   assert.deepEqual(places.map(p => p.id), ['a', 'b']);
   assert.deepEqual(shapes.map(s => [s.name, s.type, s.kind]), [
-    ['경계', 'line', '경계·선'], ['지역', 'area', '주권·국경'], ['전선', 'line', '전선 유형'],
+    ['경계', 'line', '경계·선'], ['지역', 'area', '주권·국경'], ['전선', 'line', '점령·전선'],
   ]);
 });
 

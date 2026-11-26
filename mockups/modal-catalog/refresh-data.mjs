@@ -11,8 +11,7 @@ const context = {};
 runInNewContext(await readFile(sheetsFile, 'utf8'), context);
 const parseCSV = context.SheetData.parseCSV;
 const tables = {};
-// The catalogue uses these public data tables, excluding the optional enum dictionary.
-const pending = Object.entries(config.sheetIds).filter(([name]) => name !== '유형설명');
+const pending = Object.entries(config.sheetIds);
 const names = pending.map(([name])=>name);
 async function readTables() {
   while (pending.length) {

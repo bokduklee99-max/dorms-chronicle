@@ -2,8 +2,9 @@ import {readLessonSheet} from '../assets/local-sheet-copy.js';
 import type {SheetParser} from './package-content';
 
 export type ImportanceRow={id:string;title:string;date:string;importance?:string};
+export type SwimlaneSnapshotCategory={id:string;kind:string;name:string;start?:string;end?:string};
 
-export async function swimlaneSnapshot<T extends ImportanceRow>(packageId:string):Promise<{events:T[];categories:{id:string;kind:string;name:string}[]}|null>{
+export async function swimlaneSnapshot<T extends ImportanceRow>(packageId:string):Promise<{events:T[];categories:SwimlaneSnapshotCategory[]}|null>{
  if(!['japan','cold-war'].includes(packageId))return null;
  const response=await fetch('/assets/swimlane-'+packageId+'.json');
  return response.ok?response.json():null;

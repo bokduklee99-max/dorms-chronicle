@@ -72,20 +72,16 @@
 .lesson-map-panel .lesson-spaces { padding: 10px 12px; margin: 0 }
 .lesson-spaces button { border: 1px solid var(--chronicle-line); border-radius: var(--chronicle-button-radius); padding: 5px 9px; font-size: 14px }
 .lesson-spaces [aria-pressed=true] { color: white; background: var(--chronicle-green) }
-.lesson-category-filters { display: grid; gap: 8px }
-.lesson-category-filters>button { justify-self: start }
-.lesson-category-filter { display: grid; grid-template-columns: 5.5rem minmax(0,1fr); align-items: start; gap: 8px }
-.lesson-category-type { font-weight: 600 }
-.lesson-category-type:not([aria-pressed=true]) { background: #edf1e7; color: var(--chronicle-green) }
-.lesson-category-buttons { display: flex; flex-wrap: wrap; gap: 6px }
+.category-map-more { color: var(--chronicle-green); font-weight: 600; font-variant-numeric: tabular-nums }
+.category-map-more:hover { background: var(--chronicle-tint) }
+.category-map-extra:not([hidden]) { display: flex; flex: 0 0 100%; flex-wrap: wrap; gap: inherit }
+.lesson-category-filters { margin-bottom: 10px }
 .lesson-settings { overflow: hidden }
 .lesson-review,.lesson-settings-fields { padding: clamp(16px,2.6vw,28px) }
 .lesson-review { background: #edf1e9; border-bottom: 1px solid var(--chronicle-line) }
-.lesson-review header,.lesson-review ul { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 14px }
-.lesson-review header { justify-content: space-between; color: var(--chronicle-green) }
+.lesson-review header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 14px; justify-content: space-between; color: var(--chronicle-green) }
 .lesson-review h3 { font-size: clamp(19px,2.6vw,25px); font-weight: 600 }
-.lesson-review ul { gap: 5px 8px; margin-top: 12px; list-style: none; padding: 0 }
-.lesson-review li { font-size: 14px; border: 1px solid #c9d3c5; border-radius: 5px; padding: 3px 8px; background: var(--chronicle-surface) }
+.lesson-review-categories { margin-top: 8px }
 .lesson-settings-fields { display: grid; gap: 22px }
 .lesson-school-field { max-width: 28rem }
 .lesson-view-cards { grid-template-columns: repeat(3,minmax(0,1fr)) }

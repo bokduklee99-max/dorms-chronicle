@@ -1,7 +1,10 @@
 import {useLayoutEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import type {EventRecord} from './metro-model';
 import {strataTimeline} from './strata-model';
+import {WorkspaceEventCard} from './WorkspaceRoomEditor';
+import {categoryFilterLabel,dateLabel,periodLabel} from './timeline-labels';
 import './basic-timeline.css';
+import './category-filters.css';
 
 const modes={arc:'사건군',theme:'주제',period:'시기'} as const;
 const uncategorized='__timeline_uncategorized__';
@@ -14,34 +17,15 @@ type Props={
  records:{id:string;sourceId:string;place?:string;title:string}[];
  relations:{fromType:string;fromId:string;toType:string;toId:string;status?:string;visible?:boolean;body?:string}[];
  onVisit:(id:string,button:HTMLButtonElement)=>void;
+ onHideEvent?:(id:string)=>void;
  showroomFrame:HTMLElement|null;
 };
-
-function dateLabel(date:string,groupYear?:number){
- const [year,month,day]=date.split('-');
- const prefix=Number(year)===groupYear?'':year+'년';
- if(!month)return year+'년';
- return [prefix,Number(month)+'월',day&&Number(day)+'일'].filter(Boolean).join(' ');
-}
-
-function periodLabel(start:string,end:string){
- if(start===end)return dateLabel(start);
- if(/^\d{4}$/.test(start)&&/^\d{4}$/.test(end))return start+'–'+end+'년';
- return dateLabel(start)+' – '+dateLabel(end);
-}
-
-function filterLabel(category:Category){
- if(category.kind!=='period')return category.name;
- const {start,end}=category;
- const range=start&&end?periodLabel(start,end):start?dateLabel(start)+'부터':end?dateLabel(end)+'까지':'';
- return range?`${category.name} (${range})`:category.name;
-}
 
 function frameTop(frame:HTMLElement){
  return frame.getBoundingClientRect().top+frame.clientTop;
 }
 
-export function BasicTimeline({events,categories,records,relations,onVisit,showroomFrame}:Props){
+export function BasicTimeline({events,categories,records,relations,onVisit,showroomFrame,onHideEvent}:Props){
  const [choice,setChoice]=useState<Mode>('arc');
  const viewport=useRef<HTMLDivElement>(null);
  const [selected,setSelected]=useState<string[]>([]);
@@ -55,8 +39,6 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
   if(!activeGroups.length)setChoice(kind);
   setSelected(ids=>ids.includes(category.id)?ids.filter(id=>id!==category.id):[...ids,category.id]);
  }
- const mapTopics=selected.length?selected:categories.map(c=>c.id);
- const mapQuery=new URLSearchParams(mapTopics.map(id=>['topic',id]));
  const relatedContext=useMemo(()=>{
   const byId=new Map(records.map(record=>[record.id,record]));
   const context=new Map<string,{peer:string;body:string}>();
@@ -131,15 +113,14 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
   {decades.length>1&&<nav className="bt-jumps" aria-label="연대 바로가기">{decades.map(({year})=>
    <button key={year} onClick={()=>jumpYear(year)}>{Math.floor(year/10)*10}년대 ↓</button>
   )}</nav>}
-  {filterGroups.length>0&&<section className="bt-filters" aria-label="카테고리 필터">
+  {filterGroups.length>0&&<section className="bt-filters category-filters" aria-label="카테고리 필터">
    <header><h3>카테고리 필터</h3>
-    <a className="bt-atlas" href={'/history-map.html?'+mapQuery} target="_blank" rel="noreferrer">지도 제작실에서 열기 ↗</a>
     <button type="button" disabled={!activeGroups.length} onClick={()=>setSelected([])}>선택 해제</button>
    </header>
-   {filterGroups.map(({kind,options})=><div key={kind} role="group" aria-label={modes[kind]} className="bt-filter-group">
+   {filterGroups.map(({kind,options})=><div key={kind} role="group" aria-label={modes[kind]} className="category-filter-group" data-category-kind={kind}>
     <strong>{modes[kind]}</strong>
-    <div>{options.map(category=><button type="button" key={category.id} aria-pressed={selected.includes(category.id)}
-     onClick={()=>toggleFilter(category,kind)}>{filterLabel(category)}</button>)}</div>
+    <div className="category-filter-options">{options.map(category=><button type="button" key={category.id} aria-pressed={selected.includes(category.id)}
+     onClick={()=>toggleFilter(category,kind)}>{categoryFilterLabel(category.name,kind,category.start,category.end)}</button>)}</div>
    </div>)}
   </section>}
   {!visibleCount?<p role="status">선택한 조건에 맞는 사건이 없습니다.</p>:
@@ -161,7 +142,7 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
        {!index&&<th scope="rowgroup" rowSpan={group.events.length}><span>{group.year}</span></th>}
        <th scope="row"><time dateTime={event.date}>{dateLabel(event.date,group.year)}</time></th>
        {columns.map((col,i)=><td key={col.id} data-tone={i%3} className={i===last?'bt-branch bt-end':i<last?'bt-branch':undefined}>
-        {membership[i]&&<button type="button" className="basic-timeline-event" data-open-event={event.id} aria-haspopup="dialog"
+        {membership[i]&&<WorkspaceEventCard event={event} onHide={onHideEvent}><button type="button" className="basic-timeline-event" data-open-event={event.id} aria-haspopup="dialog"
          aria-label={event.date+' '+event.title} onClick={e=>onVisit(event.id,e.currentTarget)}>
          <span className="bt-card-heading"><strong>{event.title}</strong><span className="bt-card-chevron" aria-hidden="true">›</span></span>
          {(period||place)&&<span className="bt-card-facts">
@@ -171,7 +152,7 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
           {context&&<span className="bt-card-peer">관련 사건 · {context.peer}</span>}
           <span className="bt-card-summary">{summary.split(/\r?\n/,1)[0]}</span>
          </span>}
-        </button>}
+        </button></WorkspaceEventCard>}
        </td>)}
       </tr>;
      })}</tbody>)}

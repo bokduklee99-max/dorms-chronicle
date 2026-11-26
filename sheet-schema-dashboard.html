@@ -797,7 +797,6 @@
           <button id="btn-mode-focus" type="button" class="btn" aria-pressed="true">선택한 시트·열</button>
           <button id="btn-mode-all" type="button" class="btn" aria-pressed="false">모든 관계</button>
         </div>
-        <button id="btn-meta-types" type="button" class="btn">유형설명 보기</button>
       </div>
       <div class="legend-row">
         <span class="legend-item"><i class="swatch-line" style="color:#1a73e8" aria-hidden="true"></i> 직접 참조</span>
@@ -842,14 +841,7 @@
   <script src="./sheet-config.js?v=timeline-images"></script>
   <script src="./sheets.js?v=normalized-schema"></script>
   <script>
-    const SPREADSHEET_ID = '1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0';
-    const SHEET_GIDS = {
-      유형설명: 1805815581, 패키지: 1965822688, 카테고리: 201117005, 사건: 201117001,
-      주체: 201117003, 직위: 1685936172, 재임: 201117004, 사건_주체: 201117006, 관계: 201117008,
-      사건_카테고리: 1859891208, 사건_패키지: 1675177887,
-      공간: 201117010, 영토변화: 201117011, 사건_공간: 201117012, 지도도형: 201117013, 지도뷰: 201117014,
-      주체_공간: 1813628837, 카테고리_공간: 1456709406,
-    };
+    const { id: SPREADSHEET_ID, sheetIds: SHEET_GIDS } = SHEET_CONFIG;
 
     // 10 core entity sheets arranged in 3 clean rows (like real spreadsheet tables)
     const SHEET_ROWS = [
@@ -907,7 +899,7 @@
       selectedTab: '영토변화',
       selectedCol: '',
       selectedArrowId: '',
-      inspectTab: '영토변화', // can also be a junction tab like '사건_주체' or '유형설명'
+      inspectTab: '영토변화', // can also be a junction tab like '사건_주체'
       pin: null, // { tab, col, val }
       tracedRow: null, // { tab, origIdx }
       globalQuery: '',
@@ -1791,7 +1783,6 @@
       });
       document.getElementById('btn-mode-focus').onclick = () => { state.mode = 'focus'; state.selectedArrowId = ''; render(); };
       document.getElementById('btn-mode-all').onclick = () => { state.mode = 'all'; state.selectedArrowId = ''; render(); };
-      document.getElementById('btn-meta-types').onclick = () => { state.inspectTab = '유형설명'; state.selectedArrowId = ''; state.pin = null; render(); };
 
       document.querySelectorAll('[data-click-row-tab]').forEach(tr => {
         tr.onclick = e => {

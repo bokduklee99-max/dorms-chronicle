@@ -144,6 +144,26 @@ export function packTimelineItems(items) {
   });
 }
 
+export function placeRelationLabel(point, width, height, bounds, obstacles) {
+  if (bounds.right - bounds.left < width || bounds.bottom - bounds.top < height) return null;
+  const x = point.x - width / 2, y = point.y - height / 2;
+  const gap = 4;
+  const candidates = [[x, y], ...obstacles.flatMap(box => [
+    [box.left - width - gap, y], [box.right + gap, y],
+    [x, box.top - height - gap], [x, box.bottom + gap],
+  ])].map(([left, top]) => {
+    left = Math.max(bounds.left, Math.min(left, bounds.right - width));
+    top = Math.max(bounds.top, Math.min(top, bounds.bottom - height));
+    return {left, top, right:left + width, bottom:top + height};
+  });
+  const distance = box => (box.left - x) ** 2 + (box.top - y) ** 2;
+  candidates.sort((a, b) => distance(a) - distance(b));
+  return candidates.find(a => obstacles.every(b =>
+    a.right + gap <= b.left || b.right + gap <= a.left ||
+    a.bottom + gap <= b.top || b.bottom + gap <= a.top
+  )) ?? null;
+}
+
 export function pointRelationPath(from, to) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -181,6 +201,16 @@ export function cardRelationPaths(links, width) {
     return point;
   }
   const routes = links.map(({from: a, to: b, sameGroup, id}) => {
+    if (!a || !b) {
+      const card = a || b;
+      const right = width - card.right;
+      const room = 24;
+      const useRight = a ? right >= room || right >= card.left : card.left < room && right > card.left;
+      const side = useRight ? 'right' : 'left';
+      const start = card[side];
+      const end = useRight ? Math.min(width - 1, start + room) : Math.max(1, start - room);
+      return {stub: port(card, side, card, id), start: a ? start : end, end: a ? end : start};
+    }
     const gapX = Math.max(b.left - a.right, a.left - b.right);
     const gapY = Math.max(b.top - a.bottom, a.top - b.bottom);
     let fromSide, toSide, via;
@@ -210,7 +240,8 @@ export function cardRelationPaths(links, width) {
     const spacing = Math.min(22, group[0].span * .8 / (group.length - 1));
     group.forEach((p, i) => { p.at += (i - (group.length - 1) / 2) * spacing; });
   }
-  return routes.map(({horizontal, start, end, via, source, target}) => {
+  return routes.map(({stub, horizontal, start, end, via, source, target}) => {
+    if (stub) return `M ${start} ${stub.at} H ${end}`;
     const xy = (normal, tangent) => horizontal ? normal + ' ' + tangent : tangent + ' ' + normal;
     return `M ${xy(start, source.at)} C ${xy(via, source.at)} ${xy(via, target.at)} ${xy(end, target.at)}`;
   });
@@ -259,17 +290,19 @@ export function matchSwimlaneEvents(events, rows = []) {
     (targets.get(key(event))?.id === event.id ? source.get(key(event)) : undefined);
 }
 
-export function lessonSwimlane(data, metadata, sheet, actorRelationIds = new Set()) {
+export function lessonSwimlane(data, metadata, sheet, actorRelationIds = new Set(), sourceEvents = data.events) {
   const used = new Set(data.events.flatMap(event => event.directTopicIds));
   const sheetCategories = new Map(sheet?.categories.map(category => [category.id, category]));
-  const categories = data.topics.filter(topic => used.has(topic.topic_id)).map(topic => {
+  /** @type {{id:string,name:string,kind:string,start?:string,end?:string}[]} */
+  const availableCategories = data.topics.map(topic => {
     const info = metadata.get(topic.topic_id);
     const row = sheetCategories.get(topic.topic_id);
     return {...row, id:topic.topic_id, name:topic.name, kind:info?.type || row?.kind || 'theme',
       start:info?.startDate || row?.start, end:info?.endDate || row?.end};
   });
+  const categories = availableCategories.filter(topic => used.has(topic.id));
   const byId = new Map(categories.map(category => [category.id, category]));
-  const matchEvent = matchSwimlaneEvents(data.events, sheet?.events);
+  const matchEvent = matchSwimlaneEvents(sourceEvents, sheet?.events);
   const names = new Map(data.actors.map(actor => [actor.actor_id, actor.name]));
   const events = data.events.map(event => {
     // Older saved lessons used UUIDs before the sheet adopted short event IDs.
@@ -291,13 +324,18 @@ export function lessonSwimlane(data, metadata, sheet, actorRelationIds = new Set
     (rel.toType === 'actor' || selected.has(rel.toId)));
   const related = new Set(relations.flatMap(rel => [rel.fromId, rel.toId]));
   const actors = (sheet?.actors || []).filter(actor => related.has(actor.id)).map(actor => ({...actor}));
+  const visibleIds = new Set([...selected, ...actors.map(actor => actor.id)]);
+  const hiddenEvents = new Set(sourceEvents.map(event => matchEvent(event)?.id || event.id).filter(id => !visibleIds.has(id)));
+  const partialRelations = (sheet?.relations || []).filter(rel =>
+    (visibleIds.has(rel.fromId) && rel.toType === 'event' && hiddenEvents.has(rel.toId)) ||
+    (visibleIds.has(rel.toId) && rel.fromType === 'event' && hiddenEvents.has(rel.fromId)));
   const participantNames=new Set(events.flatMap(event=>event.actors.map(actor=>actor.name)));
   const detailActors=new Map(data.actors.filter(actor=>participantNames.has(actor.name))
     .map(actor=>[actor.actor_id,{id:actor.actor_id,title:actor.name,kind:actor.actor_type}]));
   for(const actor of sheet?.detailActors || sheet?.actors || []){
     if(related.has(actor.id)||participantNames.has(actor.title))detailActors.set(actor.id,actor);
   }
-  return {events, categories, actors, leadership:{countries:data.actors.filter(a=>a.actor_type==='state'),tenures:data.tenures||[]}, detailActors:[...detailActors.values()], relations:relations.map(rel => ({...rel})), periods:categories.filter(c => c.kind === 'period')};
+  return {events, categories, availableCategories, actors, leadership:{countries:data.actors.filter(a=>a.actor_type==='state'),tenures:data.tenures||[]}, detailActors:[...detailActors.values()], relations:relations.map(rel => ({...rel})), partialRelations, periods:categories.filter(c => c.kind === 'period')};
 }
 
 export function eventPeriods(event){

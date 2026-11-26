@@ -1,6 +1,9 @@
 import type {HistoryData} from './metro-model';
 import type {HistoryPackage} from './package-catalog';
 
+type EventCategoryChanges=Record<string,{added:string[];removed:string[]}>;
+export type SwimlaneStroke={lane:string;points:{time:number;y:number}[]}[];
+
 export const views = [
  {id:'swimlane',name:'스윔레인'},
  {id:'timeline',name:'기본 연표'},
@@ -14,6 +17,9 @@ export type WorkspaceDraft = {
  hiddenTopics:string[];
  hiddenEvents:string[];
  includedEvents?:string[];
+ eventCategoryChanges?:EventCategoryChanges;
+ categoryColors?:Record<string,string>;
+ swimlaneInk?:SwimlaneStroke[];
 };
 export type Workspace = WorkspaceDraft & {id:string};
 
@@ -35,10 +41,60 @@ export function matchesWorkspaceScope(event:Pick<HistoryData['events'][number],'
   categoryIds.every(group=>group.some(id=>event.directTopicIds.includes(id)));
 }
 
+type CategorizedEvent=Pick<HistoryData['events'][number],'id'|'legacyId'|'directTopicIds'|'topicIds'>;
+
+export function workspaceEventCategories<T extends CategorizedEvent>(events:T[],changes?:EventCategoryChanges):T[]{
+ if(!changes)return events;
+ return events.map(event=>{
+  const key=event.legacyId??event.id;
+  if(!Object.hasOwn(changes,key))return event;
+  const {added,removed}=changes[key];
+  const directTopicIds=[...new Set([...event.directTopicIds.filter(id=>!removed.includes(id)),...added])];
+  return {...event,directTopicIds,...(event.topicIds?{topicIds:directTopicIds}:{})};
+ });
+}
+
+export function moveWorkspaceEventCategory(draft:WorkspaceDraft,event:CategorizedEvent,removeIds:string[],destination:string):WorkspaceDraft {
+ const [current]=workspaceEventCategories([event],draft.eventCategoryChanges);
+ const next=[...new Set([...current.directTopicIds.filter(id=>!removeIds.includes(id)),destination])];
+ const added=next.filter(id=>!event.directTopicIds.includes(id));
+ const removed=event.directTopicIds.filter(id=>!next.includes(id));
+ const eventCategoryChanges={...draft.eventCategoryChanges};
+ const key=event.legacyId??event.id;
+ if(added.length||removed.length){
+  return {...draft,eventCategoryChanges:{...eventCategoryChanges,[key]:{added,removed}}};
+ }
+ delete eventCategoryChanges[key];
+ return {...draft,eventCategoryChanges};
+}
+
+export function undoWorkspaceEventCategory(draft:WorkspaceDraft,event:CategorizedEvent,
+ previous:EventCategoryChanges[string]|undefined,moved:EventCategoryChanges[string]|undefined):WorkspaceDraft {
+ const key=event.legacyId??event.id;
+ const eventCategoryChanges={...draft.eventCategoryChanges};
+ const current=Object.hasOwn(eventCategoryChanges,key)?eventCategoryChanges[key]:undefined;
+ if(JSON.stringify(current)!==JSON.stringify(moved))throw Error('사건의 분류가 다시 변경됐어요.');
+ if(previous)return {...draft,eventCategoryChanges:{...eventCategoryChanges,[key]:previous}};
+ delete eventCategoryChanges[key];
+ return {...draft,eventCategoryChanges};
+}
+
+const isCategoryColor=(value:unknown):value is string=>typeof value==='string'&&/^#[\da-f]{6}$/i.test(value);
+
+export function setWorkspaceCategoryColor(draft:WorkspaceDraft,id:string,color:string|null):WorkspaceDraft {
+ const categoryColors={...draft.categoryColors};
+ if(color===null)delete categoryColors[id];
+ else {
+  if(!isCategoryColor(color))throw Error('색상 값을 확인해 주세요.');
+  return {...draft,categoryColors:{...categoryColors,[id]:color.toLowerCase()}};
+ }
+ return {...draft,categoryColors};
+}
+
 export function selectWorkspaceEvents(draft:WorkspaceDraft, events:HistoryData['events'], include:boolean):WorkspaceDraft {
  const hidden = new Set(draft.hiddenEvents);
  const included = new Set(draft.includedEvents);
- for(const event of events){
+ for(const event of workspaceEventCategories(events,draft.eventCategoryChanges)){
   hidden.delete(event.id);
   included.delete(event.id);
   if(event.legacyId){
@@ -52,11 +108,11 @@ export function selectWorkspaceEvents(draft:WorkspaceDraft, events:HistoryData['
  return {...draft,hiddenEvents:[...hidden],includedEvents:[...included]};
 }
 
-export function filterLessonEvents<T extends Pick<HistoryData['events'][number],'id'|'legacyId'|'directTopicIds'|'topicIds'>>(records:T[],hiddenTopics:string[],hiddenEvents:string[],includedEvents:string[]=[]) {
+export function filterLessonEvents<T extends CategorizedEvent>(records:T[],hiddenTopics:string[],hiddenEvents:string[],includedEvents:string[]=[],eventCategoryChanges?:EventCategoryChanges) {
  const excludedTopics = new Set(hiddenTopics);
  const excludedEvents = new Set(hiddenEvents);
  const included = new Set(includedEvents);
- return records.flatMap(event=>{
+ return workspaceEventCategories(records,eventCategoryChanges).flatMap(event=>{
    if(excludedEvents.has(event.id)||(event.legacyId&&excludedEvents.has(event.legacyId)))return [];
    const directTopicIds = event.directTopicIds.filter(id=>!excludedTopics.has(id));
    if(!directTopicIds.length){
@@ -67,8 +123,8 @@ export function filterLessonEvents<T extends Pick<HistoryData['events'][number],
  });
 }
 
-export function filterPackage(data:HistoryData,hiddenTopics:string[],hiddenEvents:string[],includedEvents:string[]=[]):HistoryData {
- const events=filterLessonEvents(data.events,hiddenTopics,hiddenEvents,includedEvents);
+export function filterPackage(data:HistoryData,hiddenTopics:string[],hiddenEvents:string[],includedEvents:string[]=[],eventCategoryChanges?:EventCategoryChanges):HistoryData {
+ const events=filterLessonEvents(data.events,hiddenTopics,hiddenEvents,includedEvents,eventCategoryChanges);
  const excludedTopics=new Set(hiddenTopics);
  const restoredTopics=new Set(events.flatMap(event=>event.directTopicIds));
  return {...data,events,topics:data.topics.filter(topic=>!excludedTopics.has(topic.topic_id)||restoredTopics.has(topic.topic_id))};
@@ -77,7 +133,7 @@ export function filterPackage(data:HistoryData,hiddenTopics:string[],hiddenEvent
 export function workspaceSelectionChanges(previousData:HistoryData,previous:WorkspaceDraft,nextData:HistoryData,next:WorkspaceDraft) {
  const categories=(data:HistoryData,draft:WorkspaceDraft)=>new Map(packageTopics(data)
   .filter(topic=>!draft.hiddenTopics.includes(topic.topic_id)).map(topic=>[topic.topic_id,topic.name]));
- const events=(data:HistoryData,draft:WorkspaceDraft)=>new Map(filterPackage(data,draft.hiddenTopics,draft.hiddenEvents,draft.includedEvents)
+ const events=(data:HistoryData,draft:WorkspaceDraft)=>new Map(filterPackage(data,draft.hiddenTopics,draft.hiddenEvents,draft.includedEvents,draft.eventCategoryChanges)
   .events.map(event=>[event.id,`${event.date} · ${event.title}`]));
  const compare=(before:Map<string,string>,after:Map<string,string>)=>({
   added:[...after].filter(([id])=>!before.has(id)).map(([,label])=>label),
@@ -97,6 +153,25 @@ function readWorkspace(raw:string|null):Workspace|null {
   if(typeof saved?.id!=='string'||!saved.id||typeof saved.school!=='string'||!saved.school.trim()||
    typeof saved.packageId!=='string'||!saved.packageId.trim()||
    !strings(saved.hiddenTopics)||!strings(saved.hiddenEvents)||(saved.includedEvents!==undefined&&!strings(saved.includedEvents)))return null;
+  const changes=saved.eventCategoryChanges;
+  if(changes!==undefined&&(!changes||typeof changes!=='object'||Array.isArray(changes)||
+   !Object.values(changes).every(entry=>entry&&typeof entry==='object'&&'added' in entry&&strings(entry.added)&&'removed' in entry&&strings(entry.removed)))){
+   delete saved.eventCategoryChanges;
+  }
+  const colors=saved.categoryColors;
+  if(colors!==undefined){
+   if(colors&&typeof colors==='object'&&!Array.isArray(colors)){
+    saved.categoryColors=Object.fromEntries(Object.entries(colors).filter(([,color])=>isCategoryColor(color)));
+   }else delete saved.categoryColors;
+  }
+  const ink:unknown=saved.swimlaneInk;
+  if(ink!==undefined){
+   if(Array.isArray(ink)){
+    saved.swimlaneInk=ink.filter(stroke=>Array.isArray(stroke)&&stroke.length&&stroke.every(segment=>
+     typeof segment?.lane==='string'&&Array.isArray(segment.points)&&segment.points.length&&
+     segment.points.every((point:{time:number;y:number}|null)=>point&&Number.isFinite(point.time)&&Number.isFinite(point.y)&&point.y>=0&&point.y<=1)));
+   }else delete saved.swimlaneInk;
+  }
   const view=views.find(item=>item.id===saved.view)?.id;
   if(view)return saved;
   if(['world','metro','strata','constellation','kanban','map-sync'].includes(saved.view))return {...saved,view:'timeline'};

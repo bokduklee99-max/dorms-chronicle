@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {koreanHistory} from '../src/korean-history.ts';
 import {makeMetro} from '../src/metro-model.ts';
 import {readWorkspaceGeography} from '../src/package-content.ts';
-import {createLesson,deleteWorkspace,exploreHref,filterPackage,learningHref,loadWorkspaces,matchesWorkspaceScope,moveWorkspaceEventCategory,packageName,saveWorkspace,selectWorkspaceEvents,setWorkspaceCategoryColor,setupHref,undoWorkspaceEventCategory,views,workspaceDraft,workspaceSelectionChanges} from '../src/workspace-model.ts';
+import {createLesson,deleteWorkspace,exploreHref,filterPackage,learningHref,loadSampleWorkspace,loadWorkspaces,matchesWorkspaceScope,moveWorkspaceEventCategory,packageName,saveSampleWorkspace,saveWorkspace,selectWorkspaceEvents,setWorkspaceCategoryColor,setupHref,undoWorkspaceEventCategory,views,workspaceDraft,workspaceSelectionChanges} from '../src/workspace-model.ts';
 
 test('workspace geography links events to places and ancestors without matching sibling regions',()=>{
  const geography=readWorkspaceGeography(
@@ -39,6 +39,17 @@ test('swimlane ink round-trips by room and ignores malformed strokes',()=>{
  const rooms=loadWorkspaces(storage);
  assert.deepEqual(rooms.find(item=>item.id===room.id).swimlaneInk,[stroke]);
  assert.equal(rooms.find(item=>item.id===other.id).swimlaneInk,undefined);
+});
+
+test('sample edits survive reload separately from saved Japan lessons',()=>{
+ const storage={getItem(key){return this[key]??null;},setItem(key,value){this[key]=value;}};
+ const draft=workspaceDraft('예시 수업','japan');
+ const saved=createLesson(draft,storage);
+ const sample={...draft,id:'sample-japan',hiddenEvents:['E238'],categoryColors:{japan_economy:'#327771'}};
+ assert.equal(loadSampleWorkspace(storage),undefined);
+ saveSampleWorkspace(sample,storage);
+ assert.deepEqual(loadSampleWorkspace(storage),sample);
+ assert.deepEqual(loadWorkspaces(storage),[saved]);
 });
 
 test('school and package configurations round-trip independently and edits retain the same ID',()=>{

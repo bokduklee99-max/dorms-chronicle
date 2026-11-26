@@ -30,7 +30,12 @@ for(const [page,attribute,source,entry] of [
 }
 for(const page of [...pages,'metro/index.html']){
  const base=new URL(page,'https://chronicle.local/');
- const html=readFileSync(join('dist',page),'utf8').replace(/(<script\b[^>]*>)[\s\S]*?<\/script\s*>/gi,'$1');
+ const path=join('dist',page);
+ const branded=readFileSync(path,'utf8')
+  .replace(/<link\s+rel="icon"[^>]*>\s*/gi,'')
+  .replace('</head>','<link rel="icon" type="image/svg+xml" href="/assets/chronicle-icon.svg">\n</head>');
+ writeFileSync(path,branded);
+ const html=branded.replace(/(<script\b[^>]*>)[\s\S]*?<\/script\s*>/gi,'$1');
  for(const [,ref] of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)){
   const url=new URL(ref,base);
   if(url.origin!==base.origin)continue;

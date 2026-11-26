@@ -5,17 +5,16 @@ import {setupSwimlaneModal} from '../assets/swimlane-modal.js';
 import '../assets/swimlane-modal.css';
 import '../assets/space-preview.css';
 import {type EventRecord,type HistoryData} from './metro-model';
-import {lessonSwimlane} from '../swimlane-data.js';
-import {SwimlaneTimeline,useLessonRecords,type MoveEventCategory,type SetCategoryColor} from './SwimlaneTimeline';
+import {SwimlaneTimeline,useLessonRecords,type MoveEventCategory,type SetCategoryColor,type SwimlaneSheet} from './SwimlaneTimeline';
 import {BasicTimeline} from './BasicTimeline';
 import {TimeSpaceRadar} from './TimeSpaceRadar';
 import {CreatorCredit} from './CreatorCredit';
 import {ChronicleHeader} from './ChronicleHeader';
 import {WorkspaceRoomEditor,type WorkspaceEventChange} from './WorkspaceRoomEditor';
 import {useSheetHistory} from './use-sheet-history';
-import type {PackageSheet} from './package-catalog';
+import type {CategoryMetadata,PackageSheet} from './package-catalog';
 import type {GeographySheet,SheetParser,SheetTables} from './package-content';
-import {filterPackage,loadWorkspaces,moveWorkspaceEventCategory,packageName,saveWorkspace,selectWorkspaceEvents,setWorkspaceCategoryColor,setupHref,undoWorkspaceEventCategory,views,type SwimlaneStroke,type Workspace} from './workspace-model';
+import {filterPackage,loadSampleWorkspace,loadWorkspaces,moveWorkspaceEventCategory,packageName,saveSampleWorkspace,saveWorkspace,selectWorkspaceEvents,setWorkspaceCategoryColor,setupHref,undoWorkspaceEventCategory,views,workspaceDraft,type SwimlaneStroke,type Workspace} from './workspace-model';
 import './style.css';
 import '../assets/chronicle-theme.css';
 import '../assets/workspace-event-edit.css';
@@ -31,17 +30,27 @@ type TimelineView=typeof timelineViews[number]['id'];
 type RoomActions={hiddenEvents:EventRecord[];change:WorkspaceEventChange|null;error:string;clearError:()=>void;setVisible:(id:string,visible:boolean)=>void;moveCategory:MoveEventCategory;setCategoryColor:SetCategoryColor;editInk:(stroke:SwimlaneStroke|null)=>void};
 
 function App({initialWorkspace}:{initialWorkspace?:Workspace}){
- const [workspace,setWorkspace]=useState(initialWorkspace);
- const [change,setChange]=useState<WorkspaceEventChange|null>(null);
- const [error,setError]=useState('');
- const packageId=workspace?.packageId??(params.get('package')==='japan'?'japan':'cold-war');
+ const packageId=initialWorkspace?.packageId??(params.get('package')==='japan'?'japan':'cold-war');
  const {packages,packageData,categoryMetadata,pending}=useSheetHistory();
  const selectedPackageName=packageName(packages,packageId);
  const full=useMemo(()=>packageData(packageId),[packageData,packageId]);
+ return <WorkspaceTimeline {...{initialWorkspace,packageId,selectedPackageName,full,categoryMetadata,pending}}/>;
+}
+
+function WorkspaceTimeline({initialWorkspace,packageId,selectedPackageName,full,categoryMetadata,pending,sampleSheet}:{
+ initialWorkspace?:Workspace;packageId:string;selectedPackageName:string;full:HistoryData;
+ categoryMetadata:Map<string,CategoryMetadata>;pending:boolean;sampleSheet?:SwimlaneSheet;
+}){
+ const [workspace,setWorkspace]=useState(initialWorkspace);
+ const [change,setChange]=useState<WorkspaceEventChange|null>(null);
+ const [error,setError]=useState('');
+ const sample=!!sampleSheet;
+ const latestWorkspace=()=>sample?loadSampleWorkspace()??initialWorkspace:loadWorkspaces().find(item=>item.id===workspace?.id);
+ const saveRoom=sample?saveSampleWorkspace:saveWorkspace;
  const {hiddenTopics,hiddenEvents:hiddenEventIds,includedEvents,eventCategoryChanges}=workspace??{};
  const data=useMemo(()=>hiddenTopics&&hiddenEventIds?filterPackage(full,hiddenTopics,hiddenEventIds,includedEvents,eventCategoryChanges):full,
   [full,hiddenTopics,hiddenEventIds,includedEvents,eventCategoryChanges]);
- const records=useLessonRecords(data,categoryMetadata,packageId,full.events);
+ const records=useLessonRecords(data,categoryMetadata,packageId,full.events,sampleSheet);
  const lesson=useMemo(()=>records&&hiddenTopics?{
   ...records,availableCategories:records.availableCategories.filter(category=>!hiddenTopics.includes(category.id)),
  }:records,[records,hiddenTopics]);
@@ -53,10 +62,10 @@ function App({initialWorkspace}:{initialWorkspace?:Workspace}){
   const event=full.events.find(item=>item.id===id);
   if(!workspace||!event)return;
   try {
-   const latest=loadWorkspaces().find(item=>item.id===workspace.id);
+   const latest=latestWorkspace();
    if(!latest||latest.packageId!==packageId)throw Error('수업 구성이 변경됐어요.');
    const draft=selectWorkspaceEvents(latest,[event],visible);
-   setWorkspace(saveWorkspace({...latest,...draft}));
+   setWorkspace(saveRoom({...latest,...draft}));
    setChange({event,visible});setError('');
   }catch{setError('변경을 저장하지 못했어요. 방을 다시 열고 시도해 주세요.');}
  }
@@ -66,7 +75,7 @@ function App({initialWorkspace}:{initialWorkspace?:Workspace}){
   const destination=categories?.find(item=>item.id===toId);
   if(!workspace||!event||!categories||!destination||!['theme','arc'].includes(destination.kind)||fromId===toId)return false;
   try {
-   const latest=loadWorkspaces().find(item=>item.id===workspace.id);
+   const latest=latestWorkspace();
    if(!latest||latest.packageId!==packageId||latest.hiddenTopics.includes(toId)||
     latest.hiddenEvents.some(key=>key===event.id||key===event.legacyId))throw Error('수업 구성이 변경됐어요.');
    const origin=categories.find(item=>item.id===fromId);
@@ -76,13 +85,13 @@ function App({initialWorkspace}:{initialWorkspace?:Workspace}){
    const previous=latest.eventCategoryChanges?.[key];
    const moved=draft.eventCategoryChanges?.[key];
    if(JSON.stringify(previous)===JSON.stringify(moved))return false;
-   setWorkspace(saveWorkspace({...latest,...draft}));
+   setWorkspace(saveRoom({...latest,...draft}));
    setChange({event,category:destination.name,focusLane:toId,undo:()=>{
     try{
-     const current=loadWorkspaces().find(item=>item.id===workspace.id);
+     const current=latestWorkspace();
      if(!current||current.packageId!==packageId)throw Error('수업 구성이 변경됐어요.');
      const restored=undoWorkspaceEventCategory(current,event,previous,moved);
-     setWorkspace(saveWorkspace({...current,...restored}));
+     setWorkspace(saveRoom({...current,...restored}));
      setChange({event,categoryRestored:true,focusLane:fromId});setError('');
     }catch{setError('분류 이동을 되돌리지 못했어요. 방을 다시 열어 변경 사항을 확인해 주세요.');}
    }});setError('');
@@ -92,10 +101,10 @@ function App({initialWorkspace}:{initialWorkspace?:Workspace}){
  const setCategoryColor:SetCategoryColor=(id,color)=>{
   if(!workspace||!full.topics.some(topic=>topic.topic_id===id))return false;
   try{
-   const latest=loadWorkspaces().find(item=>item.id===workspace.id);
+   const latest=latestWorkspace();
    if(!latest||latest.packageId!==packageId)throw Error('수업 구성이 변경됐어요.');
    const draft=setWorkspaceCategoryColor(latest,id,color);
-   const saved=saveWorkspace({...latest,...draft});
+   const saved=saveRoom({...latest,...draft});
    setWorkspace({...workspace,categoryColors:saved.categoryColors});
    return true;
   }catch{return false;}
@@ -103,20 +112,21 @@ function App({initialWorkspace}:{initialWorkspace?:Workspace}){
  function editInk(stroke:SwimlaneStroke|null){
   if(!workspace)return;
   try{
-   const latest=loadWorkspaces().find(item=>item.id===workspace.id);
+   const latest=latestWorkspace();
    if(!latest||latest.packageId!==packageId)throw Error('수업 구성이 변경됐어요.');
    const ink=latest.swimlaneInk??[];
-   const saved=saveWorkspace({...latest,swimlaneInk:stroke?[...ink,stroke]:ink.slice(0,-1)});
+   const saved=saveRoom({...latest,swimlaneInk:stroke?[...ink,stroke]:ink.slice(0,-1)});
    setWorkspace(current=>current&&({...current,swimlaneInk:saved.swimlaneInk}));
    setError('');
   }catch{setError('필기를 저장하지 못했어요. 다시 시도해 주세요.');}
  }
  const roomActions=workspace&&!showroom?{hiddenEvents,change,error,clearError:()=>setError(''),setVisible,moveCategory,setCategoryColor,editInk}:undefined;
- return <Timeline {...{workspace,packageId,selectedPackageName,data,pending,lesson,roomActions}}/>;
+ return <Timeline {...{workspace,packageId,selectedPackageName,data,pending,lesson,roomActions,sample}}/>;
 }
 
+const sampleCategoryMetadata=new Map<string,CategoryMetadata>();
 function SampleTimeline(){
- const [sample,setSample]=useState<{data:HistoryData;lesson:ReturnType<typeof lessonSwimlane>}>();
+ const [sample,setSample]=useState<{data:HistoryData;sheet:SwimlaneSheet;workspace?:Workspace}>();
  const [failed,setFailed]=useState(false);
  useEffect(()=>{
   let active=true;
@@ -127,13 +137,17 @@ function SampleTimeline(){
     return response.json();
    }));
    const data=source.SheetData.build(tables);
-   if(active)setSample({data,lesson:lessonSwimlane(data,new Map(),sheet)});
+   if(active)setSample({data,sheet,workspace:showroom?undefined:loadSampleWorkspace()??{
+    ...workspaceDraft('예시 수업','japan'),id:'sample-japan',
+    includedEvents:data.events.filter(event=>!event.directTopicIds.length).map(event=>event.legacyId??event.id),
+   }});
   }
   load().catch(()=>{if(active)setFailed(true);});
   return ()=>{active=false;};
  },[]);
  if(!sample)return <><TimelineHeader sample/><p role="status">{failed?<>연표 예시를 불러오지 못했습니다. <button onClick={()=>location.reload()}>다시 열기</button></>:'연표를 불러오는 중입니다.'}</p></>;
- return <Timeline {...sample} packageId="japan" selectedPackageName="일제강점기와 독립운동" pending={false} sample/>;
+ return <WorkspaceTimeline full={sample.data} sampleSheet={sample.sheet} initialWorkspace={sample.workspace}
+  categoryMetadata={sampleCategoryMetadata} packageId="japan" selectedPackageName="일제강점기와 독립운동" pending={false}/>;
 }
 
 function TimelineHeader({sample,workspace}: {sample?: boolean;workspace?: Workspace}){
@@ -156,7 +170,7 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
   try{await refreshLocalLessonSheets();location.reload();}
   catch{setRefreshState('failed');}
  }
- const timelineTitle=workspace?`${workspace.school}의 ${selectedPackageName} 연표`:`${selectedPackageName} 연표`;
+ const timelineTitle=workspace&&!sample?`${workspace.school}의 ${selectedPackageName} 연표`:`${selectedPackageName} 연표`;
  useEffect(()=>{document.title=`${timelineTitle} · Dorms' Chronicle`;},[timelineTitle]);
  const [view,setView]=useState<TimelineView>(()=>timelineViews.find(v=>v.id===params.get('view'))?.id??workspace?.view??'timeline');
  const penActive=view==='swimlane'&&editingRoom&&penMode;
@@ -164,11 +178,12 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  const manageHidden=view==='territory';
  const roomEditorOpen=manageHidden?managingHidden:editingRoom;
  const toolbarOpen=view==='swimlane'&&roomEditorOpen;
+ const roomEditDock=useRef<HTMLDivElement>(null);
  const roomEditToggle=useRef<HTMLButtonElement>(null);
  const timelineFrame=showroom&&view==='timeline'?window.frameElement as HTMLElement|null:null;
  const main=useRef<HTMLElement>(null);
  useLayoutEffect(()=>{
-  if(toolbarOpen)main.current?.querySelector<HTMLButtonElement>('.room-edit-tools button[aria-pressed="true"]')?.focus({preventScroll:true});
+  if(toolbarOpen)roomEditDock.current?.querySelector<HTMLButtonElement>('.room-edit-tools button[aria-pressed="true"]')?.focus({preventScroll:true});
  },[toolbarOpen]);
  const roomChange=roomActions?.change;
  useLayoutEffect(()=>{
@@ -188,7 +203,7 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
   const preferred=lane&&cards.find(card=>card.closest<HTMLElement>('[data-move-category]')?.dataset.moveCategory===lane);
   if(preferred)cards.unshift(preferred);
   const buttons=cards.map(card=>card.querySelector<HTMLButtonElement>(lane?'.room-event-move':'button'));
-  const controls=document.querySelectorAll<HTMLElement>('#room-editor li button, #room-editor summary');
+  const controls=roomEditDock.current?.querySelectorAll<HTMLElement>('#room-editor li button, #room-editor summary')??[];
   const target=[...buttons,...controls].find(button=>button&&visible(button))??roomEditToggle.current;
   target?.focus({preventScroll:true});
  },[roomChange]);
@@ -267,10 +282,7 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  const territoryQuery=new URLSearchParams();
  if(Number.isFinite(firstYear))territoryQuery.set('year',String(firstYear));
  if(packageId==='japan')territoryQuery.set('scope','korea');
- return <><TimelineHeader {...{sample,workspace}}/>
- <main ref={main} data-showroom={showroom||undefined} data-saved-room={!!roomActions||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
- <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{timelineViews.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=timelineViews[ev.key==='Home'?0:ev.key==='End'?timelineViews.length-1:(index+(ev.key==='ArrowRight'?1:-1)+timelineViews.length)%timelineViews.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
- {workspace&&roomActions&&<div className="room-edit-dock" data-toolbar={toolbarOpen||undefined}>
+ const roomTools=workspace&&roomActions&&<div ref={roomEditDock} className="room-edit-dock" data-toolbar={toolbarOpen||undefined}>
   {roomEditorOpen&&<WorkspaceRoomEditor hiddenEvents={roomActions.hiddenEvents} manageHidden={manageHidden}
    change={manageHidden&&roomChange&&(!('visible' in roomChange)||!roomChange.visible)?null:roomActions.change}
    error={roomActions.error} onRestore={id=>roomActions.setVisible(id,true)}
@@ -281,12 +293,16 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
     fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
      <path d={editingRoom?'m6 6 12 12M18 6 6 18':'m15 6 3 3M5 19l4-1 11-11a2.1 2.1 0 0 0-3-3L6 15z'}/>
     </svg>}</button>
- </div>}
+ </div>;
+ return <><TimelineHeader {...{sample,workspace}}/>
+ <main ref={main} data-showroom={showroom||undefined} data-saved-room={!!roomActions||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
+ <div className="explore-tabs" hidden={showroom} role="tablist" aria-label="역사를 읽는 방식">{timelineViews.map((item,index)=><button key={item.id} role="tab" id={`tab-${item.id}`} aria-controls={`panel-${item.id}`} aria-selected={view===item.id} tabIndex={view===item.id?0:-1} onClick={()=>changeView(item.id)} onKeyDown={ev=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();const next=timelineViews[ev.key==='Home'?0:ev.key==='End'?timelineViews.length-1:(index+(ev.key==='ArrowRight'?1:-1)+timelineViews.length)%timelineViews.length].id;changeView(next);document.getElementById(`tab-${next}`)?.focus();}}}>{item.name}</button>)}</div>
+ {view!=='swimlane'&&roomTools}
  {view!=='territory'&&view!=='swimlane'&&!data.events.length&&<p role="status">{pending?'시트에서 사건을 읽는 중이에요.':<>표시할 사건이 없어요. <a href={setupHref({workspace:workspace?.id})}>탐색 설정에서 구성을 확인해 주세요.</a></>}</p>}
  {view==='swimlane'&&<SwimlaneTimeline key={packageId} lesson={pending?undefined:lesson} packageId={packageId} name={selectedPackageName}
   onHideEvent={onHideEvent} onMoveCategory={onHideEvent?roomActions?.moveCategory:undefined}
   onSetCategoryColor={pending?undefined:roomActions?.setCategoryColor} categoryColors={workspace?.categoryColors}
-  ink={workspace?.swimlaneInk} onDraw={penActive&&!pending?roomActions?.editInk:undefined}/>}
+  ink={workspace?.swimlaneInk} onDraw={penActive&&!pending?roomActions?.editInk:undefined} roomTools={roomTools}/>}
  {view==='radar'&&data.events.length>0&&<TimeSpaceRadar data={data} lesson={lesson} packageId={packageId} panelRef={radarPanel} activeId={radarRecord} onDismiss={()=>{setRequested(null);if(radarPanel.current?.firstChild)reader.current?.close();}} onVisit={visit} onHideEvent={onHideEvent}/>}
  {view==='territory'&&<section id="panel-territory" role="tabpanel" aria-labelledby="tab-territory">
   {pending?<p role="status">수업의 시작 연도를 확인하는 중입니다.</p>:

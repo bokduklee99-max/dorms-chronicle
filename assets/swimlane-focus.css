@@ -19,8 +19,15 @@
 #zoom button{min-height:32px;background:transparent;border:0;border-radius:var(--chronicle-button-radius);padding:5px 11px;color:#455348}
 #zoom button:hover{background:#dbe1d4}
 #zoom button[aria-pressed=true]{background:var(--chronicle-green);color:#fff}
-#swimlane-fullscreen:not([hidden]){position:absolute;z-index:7;inset-inline-end:10px;inset-block-end:clamp(10px,calc(var(--fullscreen-overhang,0px) + 10px),calc(100% - 68px));display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid #c8cec0;background:var(--chronicle-surface);box-shadow:0 2px 6px #263c3026}
+#swimlane-actions{position:absolute;z-index:7;inset-inline:10px;inset-block-end:clamp(10px,calc(var(--fullscreen-overhang,0px) + 10px),calc(100% - 68px));display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;gap:6px;pointer-events:none}
+#swimlane-room-tools{min-width:0;max-width:100%}
+#swimlane-room-tools:empty{display:none}
+#swimlane-fullscreen:not([hidden]){display:grid;flex:none;place-items:center;width:38px;height:38px;padding:0;border:1px solid #c8cec0;background:var(--chronicle-surface);box-shadow:0 2px 6px #263c3026;pointer-events:auto}
 #swimlane-fullscreen:hover{background:#e9ede3}
+@media(max-width:380px){
+ #swimlane-actions{inset-inline:6px}
+ #swimlane-room-tools:has([data-toolbar]){display:flex;flex-basis:100%;justify-content:flex-end}
+}
 html.swimlane-expanded{background:var(--chronicle-paper);overflow-y:auto}
 .swimlane-expanded main{max-width:none;padding:12px}
 .swimlane-expanded :is([data-standalone-header],.atlas,.controls,.key){display:none}

@@ -146,6 +146,7 @@ export function workspaceSelectionChanges(previousData:HistoryData,previous:Work
 }
 
 const prefix = 'chronicle.workspace.v1.';
+const sampleKey = 'chronicle.sample.japan.v1';
 const strings = (value:unknown):value is string[] => Array.isArray(value)&&value.every(item=>typeof item==='string');
 function readWorkspace(raw:string|null):Workspace|null {
  try {
@@ -187,6 +188,18 @@ export function loadWorkspaces(storage?:Storage):Workspace[] {
    return workspace?[workspace]:[];
   }).sort((a,b)=>a.school.localeCompare(b.school,'ko')||a.packageId.localeCompare(b.packageId));
  } catch { return []; }
+}
+
+export function loadSampleWorkspace(storage?:Storage):Workspace|undefined {
+ try {
+  const saved=readWorkspace((storage??localStorage).getItem(sampleKey));
+  return saved?.packageId==='japan'?saved:undefined;
+ }catch{return undefined;}
+}
+
+export function saveSampleWorkspace(workspace:Workspace,storage=localStorage):Workspace {
+ storage.setItem(sampleKey,JSON.stringify(workspace));
+ return workspace;
 }
 
 export function saveWorkspace(draft:WorkspaceDraft,storage=localStorage):Workspace {

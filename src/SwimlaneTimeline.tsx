@@ -1,10 +1,12 @@
 import {useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
+import type {ReactNode} from 'react';
+import {createPortal} from 'react-dom';
 import {lessonSwimlane,loadSwimlane} from '../swimlane-data.js';
 import type {HistoryData} from './metro-model';
 import type {CategoryMetadata} from './package-catalog';
 import type {SwimlaneStroke,WorkspaceDraft} from './workspace-model';
 
-type Sheet = Awaited<ReturnType<typeof loadSwimlane>>;
+export type SwimlaneSheet = Awaited<ReturnType<typeof loadSwimlane>>;
 type Lesson = ReturnType<typeof lessonSwimlane>;
 type NamedLesson=Lesson&{name:string};
 export type MoveEventCategory=(eventId:string,fromId:string|undefined,toId:string)=>boolean;
@@ -23,9 +25,10 @@ type SwimlaneFrame = HTMLIFrameElement & {
  redrawSwimlaneInk?:()=>void;
 };
 
-export function useLessonRecords(data:HistoryData,metadata:Map<string,CategoryMetadata>,packageId:string,sourceEvents:HistoryData['events']){
- const [sheet,setSheet]=useState<Sheet|null>();
+export function useLessonRecords(data:HistoryData,metadata:Map<string,CategoryMetadata>,packageId:string,sourceEvents:HistoryData['events'],sampleSheet?:SwimlaneSheet){
+ const [sheet,setSheet]=useState<SwimlaneSheet|null>();
  useEffect(()=>{
+  if(sampleSheet)return;
   let active=true;
   const {config,SheetData}=window.HistorySource;
   loadSwimlane(config,SheetData,packageId).catch(async()=>{
@@ -34,19 +37,22 @@ export function useLessonRecords(data:HistoryData,metadata:Map<string,CategoryMe
    return response.ok?response.json():null;
   }).catch(()=>null).then(result=>{if(active)setSheet(result);});
   return ()=>{active=false;};
- },[packageId]);
+ },[packageId,sampleSheet]);
+ const content=sampleSheet??sheet;
  return useMemo(()=>{
-  return sheet===undefined?undefined:lessonSwimlane(data,metadata,sheet,undefined,sourceEvents);
- },[data,metadata,sheet,sourceEvents]);
+  return content===undefined?undefined:lessonSwimlane(data,metadata,content,undefined,sourceEvents);
+ },[data,metadata,content,sourceEvents]);
 }
 
-export function SwimlaneTimeline({lesson,packageId,name,onHideEvent,onMoveCategory,onSetCategoryColor,categoryColors,ink,onDraw}:{
+export function SwimlaneTimeline({lesson,packageId,name,onHideEvent,onMoveCategory,onSetCategoryColor,categoryColors,ink,onDraw,roomTools}:{
  lesson?:Lesson;packageId:string;name:string;onHideEvent?:(id:string)=>void;onMoveCategory?:MoveEventCategory;
  onSetCategoryColor?:SetCategoryColor;categoryColors?:WorkspaceDraft['categoryColors'];
  ink?:SwimlaneStroke[];onDraw?:(stroke:SwimlaneStroke)=>void;
+ roomTools?:ReactNode;
 }){
  const host=useRef<HTMLDivElement>(null);
  const currentFrame=useRef<SwimlaneFrame>(null);
+ const [toolsHost,setToolsHost]=useState<HTMLElement|null>(null);
  const edits=useRef({hideWorkspaceEvent:onHideEvent,moveWorkspaceCategory:onMoveCategory,setWorkspaceCategoryColor:onSetCategoryColor});
  const colors=useRef(categoryColors);
  const pen=useRef({workspaceInk:ink,drawWorkspaceStroke:onDraw});
@@ -91,10 +97,12 @@ export function SwimlaneTimeline({lesson,packageId,name,onHideEvent,onMoveCatego
    title:name+' 스윔레인',src:'/swimlane-focus.html?'+params,allowFullscreen:true,
    lessonSwimlane:content,workspaceCategoryColors:colors.current,...edits.current,...pen.current
   });
+  frame.addEventListener('load',()=>setToolsHost(frame.contentDocument?.getElementById('swimlane-room-tools')??null));
   currentFrame.current=frame;
   host.current.append(frame);
  },[lesson,name,packageId]);
  return <section role="tabpanel" id="panel-swimlane" aria-labelledby="tab-swimlane">
   {!currentFrame.current&&(!lesson||!lesson.events.length)&&<p role="status">{lesson?'표시할 사건이 없어요.':'스윔레인을 불러오는 중입니다.'}</p>}<div ref={host}/>
+  {toolsHost?createPortal(roomTools,toolsHost):lesson&&!lesson.events.length&&!currentFrame.current?roomTools:null}
  </section>;
 }

@@ -305,7 +305,7 @@ async function init(){
   if(next!==begin)setWindow(monthStart(next),size,true);
  }
  const expand=$('swimlane-fullscreen');
- const roomDock=frame?.closest('[data-saved-room]')?.querySelector('.room-edit-dock');
+ const swimlaneActions=$('swimlane-actions');
  const main=document.querySelector('main');
  main.addEventListener('wheel',event=>{
   if(event.ctrlKey||event.defaultPrevented)return;
@@ -894,17 +894,8 @@ async function init(){
   const rect=viewport.getBoundingClientRect();
   heading.style.setProperty('--timeline-top',Math.max(0,-top)+'px');
   pinnedLanes.style.maxHeight=Math.min(320,Math.round(scrollHost().innerHeight*.4))+'px';
-  if(!expand.hidden){
-   let visibleBottom=scrollHost().innerHeight;
-   if(roomDock&&!ownsScroll()){
-    const dock=(roomDock.hasAttribute('data-toolbar')?roomDock:roomDock.querySelector('#room-editor')??roomDock).getBoundingClientRect();
-    const control=expand.getBoundingClientRect();
-    const left=frame.getBoundingClientRect().left;
-    if(control.right+left>dock.left&&control.left+left<dock.right)visibleBottom=Math.min(visibleBottom,dock.top);
-   }
-   const overhang=Math.max(0,Math.ceil(rect.bottom+top-visibleBottom));
-   expand.style.setProperty('--fullscreen-overhang',overhang+'px');
-  }
+  const overhang=Math.max(0,Math.ceil(rect.bottom+top-scrollHost().innerHeight));
+  swimlaneActions.style.setProperty('--fullscreen-overhang',overhang+'px');
   const shift=heading.getBoundingClientRect().top-rect.top;
   if(shift===headingShift)return;
   headingShift=shift;
@@ -933,7 +924,6 @@ async function init(){
  }
  const listening=new AbortController();
  pinnedLanes.addEventListener('scroll',scheduleEdges,{passive:true,signal:listening.signal});
- roomDock?.addEventListener('click',()=>requestAnimationFrame(pinControls),{signal:listening.signal});
  for(const host of new Set([window,embed?.scrollWindow].filter(Boolean))){
   host.addEventListener('scroll',onViewportChange,{passive:true,signal:listening.signal});
   host.addEventListener('resize',onViewportChange,{signal:listening.signal});

@@ -11,7 +11,7 @@
 .guide-nav #open-sheet {
   justify-self: end; display: inline-flex; align-items: center; gap: 6px;
   min-height: 42px; padding: 7px 12px; border: 1px solid var(--chronicle-green);
-  border-radius: var(--chronicle-radius); background: var(--chronicle-green);
+  border-radius: var(--chronicle-button-radius); background: var(--chronicle-green);
   color: var(--chronicle-surface); font-size: 14px; font-weight: 600; white-space: nowrap;
 }
 @media (max-width: 1000px) {
@@ -21,4 +21,8 @@
   .guide-nav-inner { grid-template-columns: 1fr 1fr; padding-top: 12px; gap: 2px 10px }
   .guide-nav nav { grid-column: 1 / -1; grid-row: 2; min-width: 0; overflow-x: auto; min-height: 48px; gap: clamp(8px, 2.5vw, 24px); font-size: 14px }
   .guide-nav #open-sheet { grid-column: 2; grid-row: 1 }
+}
+@media (max-width: 560px) {
+  .guide-nav nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; gap: 0 8px }
+  .guide-nav nav a { min-height: 40px; padding: 4px 1px; text-align: center }
 }

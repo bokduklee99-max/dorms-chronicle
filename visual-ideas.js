@@ -22,7 +22,7 @@ const tx=(x,y,t,size=16,fill='#40516b',anchor='start')=>`<text x="${x}" y="${y}"
 const ln=(x1,y1,x2,y2,color='#d5dce6',width=2,extra='')=>`<path d="M${x1},${y1}L${x2},${y2}" fill="none" stroke="${color}" stroke-width="${width}" ${extra}/>`;
 const rect=(x,y,w,h,fill,extra='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${extra}/>`;
 const dot=(x,y,r,fill,event)=>`<g${event?` data-eid="${esc(event.id)}" tabindex="0" role="button" aria-label="${esc(event.title)}"`:''}><circle cx="${x}" cy="${y}" r="${r}" fill="${fill}"${fill==='#fff'?' stroke="#28394f" stroke-width="2"':''} ${event?.id===focusId?'class="chosen"':''}/>${event?`<title>${esc(event.date+' '+event.title)}</title>`:''}</g>`;
-const svg=(body,dark=false)=>`<svg viewBox="0 0 520 280" role="group" xmlns="http://www.w3.org/2000/svg">${rect(0,0,520,280,dark?'#34473c':'#fffefa')}${body}</svg>`;
+const svg=(body,dark=false)=>`<svg viewBox="0 0 520 280" role="group" xmlns="http://www.w3.org/2000/svg">${rect(0,0,520,280,dark?'var(--chronicle-green)':'#fffefa')}${body}</svg>`;
 const focusEvent=()=>ideaEvents.find(e=>e.id===focusId)||ideaEvents[0];
 const related=event=>[event,...ideaEvents.filter(e=>e.id!==event.id&&e.directTopicIds.some(id=>event.directTopicIds.includes(id))).sort((a,b)=>Math.abs(a.bounds.start-event.bounds.start)-Math.abs(b.bounds.start-event.bounds.start)).slice(0,5)];
 

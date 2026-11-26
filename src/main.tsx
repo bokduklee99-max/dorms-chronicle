@@ -136,6 +136,10 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
 
  const canRefreshSheet=!sample&&localLesson&&globalThis.caches;
  const showClassroomLinks=!sample&&!workspace;
+ const firstYear=data.events.reduce((earliest,event)=>Math.min(earliest,event.year),Infinity);
+ const territoryQuery=new URLSearchParams();
+ if(Number.isFinite(firstYear))territoryQuery.set('year',String(firstYear));
+ if(packageId==='japan')territoryQuery.set('scope','korea');
  return <><nav className="topbar" hidden={showroom}>
   <div className="lesson-nav-links"><a href={setupHref()}>← 수업 목록으로</a>{sample&&<a href="/classroom.html?sample=japan">학습 콘텐츠 열기 ↗</a>}</div>
   <a href="/">Dorms' Chronicle</a>{!workspace&&!sample&&<a href={source.config.url} target="_blank" rel="noreferrer">시트 편집 ↗</a>}</nav><main ref={main} data-showroom={showroom||undefined} className={view==='radar'?'metro-app radar-mode':'metro-app'}><header className="hero" hidden={showroom}><h1>{timelineTitle}</h1></header>
@@ -144,7 +148,8 @@ function Timeline({workspace,packageId,selectedPackageName,data,pending,lesson,s
  {view==='swimlane'&&data.events.length>0&&<SwimlaneTimeline lesson={pending?undefined:lesson} packageId={packageId} name={selectedPackageName}/>}
  {view==='radar'&&data.events.length>0&&<TimeSpaceRadar data={data} lesson={lesson} packageId={packageId} panelRef={radarPanel} activeId={radarRecord} onDismiss={()=>{setRequested(null);if(radarPanel.current?.firstChild)reader.current?.close();}} onVisit={visit}/>}
  {view==='territory'&&<section id="panel-territory" role="tabpanel" aria-labelledby="tab-territory">
-  <iframe src="/territory-map.html" title="영토 변화 지도" allowFullScreen/>
+  {pending?<p role="status">수업의 시작 연도를 확인하는 중입니다.</p>:
+   <iframe src={'/territory-map.html'+(territoryQuery.size?'?'+territoryQuery:'')} title="영토 변화 지도" allowFullScreen/>}
  </section>}
  {view==='timeline'&&data.events.length>0&&(lesson&&!pending
   ? <BasicTimeline events={data.events} categories={lesson.categories} records={lesson.events} relations={lesson.relations} onVisit={visit} showroomFrame={timelineFrame}/>

@@ -16,7 +16,8 @@ const publishedIds=new Set();
 const directory={group:'shared',lastId:''};
 function fresh(){return {id:uid(),name:'',school:'',subject:'',description:'',events:[],categories:[],relations:[],actors:[]};}
 let draft=fresh();
-const requestedBook=new URL(location.href).searchParams.get('draft');
+const studioParams=new URL(location.href).searchParams;
+const requestedBook=studioParams.get('draft');
 const localRoute=requestedBook?.startsWith('local:');
 let personalDrafts=new Map(),personalBaseline=null,personalIssue='',personalConflict=false,libraryIssue='';
 function loadPersonalLibrary(){
@@ -25,6 +26,7 @@ function loadPersonalLibrary(){
 }
 loadPersonalLibrary();
 if(localRoute||personalDrafts.size)directory.group='local';
+if(studioParams.get('view')==='core')directory.group='core';
 if(localRoute){
  const saved=personalDrafts.get(requestedBook.slice(6));
  if(saved){draft=structuredClone(saved);personalBaseline=JSON.stringify(saved);directory.lastId=saved.id;}
@@ -68,7 +70,7 @@ function leavePublished(id,message='게시가 끝난 패키지입니다.'){
  }
  begin(draft.id===id?fresh():draft);say(message);
 }
-async function switchGrid(id,create){
+async function switchGrid(id,create,group){
  if(busy)return;
  const current=draft;
  if(syncing){await syncing;if(current!==draft||draft.closed||busy)return;}
@@ -76,16 +78,29 @@ async function switchGrid(id,create){
  if(current!==draft||draft.closed)return;
  if(personalIssue&&!savePersonal())return;
  if(create){begin({...fresh(),name:create.name,subject:create.course,school:create.school,description:create.description});savePersonal();return;}
- if(!id){begin(fresh());void refreshLibrary();return;}
+ if(!id){if(group)directory.group=group;begin(fresh());void refreshLibrary();return;}
  if(publishedIds.has(id)){leavePublished(id);return;}
  if(personalDrafts.has(id)){begin(structuredClone(personalDrafts.get(id)));return;}
- directory.group='shared';pendingBook=id;
+ if(directory.group!=='core')directory.group='shared';pendingBook=id;
  await connectCloud({restore:true});
 }
-function connectUrl(book){
+function connectUrl(book,view=''){
  const url=new URL('./data-explorer.html',location.href);
- url.hash='package-studio'+(book?'?'+new URLSearchParams({draft:book}):'');
+ const params=new URLSearchParams();
+ if(book)params.set('draft',book);
+ if(view)params.set('view',view);
+ url.hash='package-studio'+(params.size?'?'+params:'');
  return url;
+}
+function updateStudioRoute(){
+ if(!window.frameElement)return;
+ const book=draft.cloud?.book||(draft.name?'local:'+draft.id:'');
+ const view=directory.group==='core'?'core':'';
+ const link=connectUrl(book,view);
+ window.frameElement.dataset.draft=book;
+ window.frameElement.dataset.view=view;
+ parent.document.getElementById('studio-link').href=link.hash;
+ if(parent.location.hash.startsWith('#package-studio'))parent.history.replaceState(null,'',link);
 }
 function savePersonal(){
  const previousIssue=personalIssue;
@@ -214,18 +229,15 @@ function begin(item){
  clearTimeout(saveTimer);conflict=false;sharedMessage='';draft=item;
  personalIssue='';personalConflict=false;
  personalBaseline=!item.cloud&&personalDrafts.has(item.id)?JSON.stringify(personalDrafts.get(item.id)):null;
- if(item.name){directory.group=item.cloud?'shared':'local';directory.lastId=item.id;}
- if(window.frameElement){
-  const route=item.cloud?.book||(item.name?'local:'+item.id:'');
-  const link=connectUrl(route);
-  window.frameElement.dataset.draft=route;
-  parent.document.getElementById('studio-link').href=link.hash;
-  if(parent.location.hash.startsWith('#package-studio'))parent.history.replaceState(null,'',link);
+ if(item.name){
+  if(directory.group!=='core')directory.group=item.cloud?'shared':'local';
+  directory.lastId=item.id;
  }
+ updateStudioRoute();
  for(const event of draft.events){event.date=eventDate(event.date);event.end=eventDate(event.end);}
  say('');draw();
  if(switching){
-  const destination=item.name?studio.querySelector('#gs-name'):studio.querySelector('#gs-start [role=region]:not([hidden]) [data-recent]')||studio.querySelector('#gs-start h1');
+  const destination=item.name?studio.querySelector(directory.group==='core'?'#gs-core-name':'#gs-name'):studio.querySelector('#gs-start [role=region]:not([hidden]) [data-recent]')||studio.querySelector('#gs-start h1');
   destination?.focus({preventScroll:true});
   if(window.frameElement&&!window.frameElement.hidden&&parent.location.hash.startsWith('#package-studio')){
    parent.scrollTo({top:0,behavior:'instant'});
@@ -285,7 +297,8 @@ function draw(sheetView){
   draft,catalog,sheetView,directory,library:packageList,personalLibraryIssue:()=>libraryIssue,libraryState:()=>libraryState,refresh:refreshLibrary,empty:()=>!draft.name&&!draft.cloud,
   packageNames:()=>[...packageList(),...(publicCatalog?.editions||[])],
   change:changes=>{Object.assign(draft,changes);if(draft.cloud)scheduleSync();else savePersonal();},
-  open:id=>void switchGrid(id),create:values=>void switchGrid(null,values),normalizeDate:eventDate,publish:finish
+  open:(id,group)=>void switchGrid(id,null,group),create:values=>void switchGrid(null,values),normalizeDate:eventDate,publish:finish,
+  setGroup:group=>{directory.group=group;updateStudioRoute();}
  });
  if(draft.name)studio.querySelector('#gs-sharing').innerHTML=cloudBar();
  notes.bind(draft.cloud?.book||null);

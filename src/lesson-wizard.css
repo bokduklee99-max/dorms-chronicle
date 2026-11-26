@@ -70,7 +70,7 @@
 .lesson-empty-map { min-height: 100px; display: grid; align-items: center }
 .lesson-spaces { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px }
 .lesson-map-panel .lesson-spaces { padding: 10px 12px; margin: 0 }
-.lesson-spaces button { border: 1px solid var(--chronicle-line); border-radius: 5px; padding: 5px 9px; font-size: 14px }
+.lesson-spaces button { border: 1px solid var(--chronicle-line); border-radius: var(--chronicle-button-radius); padding: 5px 9px; font-size: 14px }
 .lesson-spaces [aria-pressed=true] { color: white; background: var(--chronicle-green) }
 .lesson-category-filters { display: grid; gap: 8px }
 .lesson-category-filters>button { justify-self: start }

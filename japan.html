@@ -30,7 +30,7 @@ body{font-family:"Pretendard","Spoqa Han Sans Neo","Apple SD Gothic Neo","Noto S
 .lg-band{width:34px;height:12px;border-radius:3px;background:rgba(46,43,38,.28)}
 .lg-box{width:18px;height:14px;border:1.5px solid var(--text);border-radius:3px;background:#fff}
 .lg-hot{width:18px;height:14px;border-radius:3px;background:var(--hot)}
-.mode{font-size:13px;font-weight:700;padding:4px 10px;border-radius:12px;border:1.5px solid var(--text);cursor:pointer;background:#fff;user-select:none}
+.mode{font-size:13px;font-weight:700;padding:4px 10px;border:1.5px solid var(--text);cursor:pointer;background:#fff;user-select:none}
 
 /* 시간축 */
 .axis{position:absolute;left:0;top:54px;width:var(--W);height:64px}
@@ -45,9 +45,9 @@ body{font-family:"Pretendard","Spoqa Han Sans Neo","Apple SD Gothic Neo","Noto S
 
 /* 행 */
 .row{position:absolute;left:0;width:var(--W)}
-.row .lab{position:absolute;left:8px;top:4px;bottom:4px;width:88px;border-radius:8px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:19px;line-height:1.25;text-align:center}
+.row .lab{position:absolute;left:8px;top:4px;bottom:4px;width:88px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:19px;line-height:1.25;text-align:center}
 .row .lab small{font-size:12px;font-weight:600;opacity:.85;margin-top:4px}
-.row .bg{position:absolute;left:100px;right:6px;top:2px;bottom:2px;border-radius:8px}
+.row .bg{position:absolute;left:100px;right:6px;top:2px;bottom:2px}
 .sep{position:absolute;left:100px;right:6px;height:0;border-top:2.5px solid var(--text)}
 .sep span{position:absolute;left:0;top:-11px;background:var(--bg);padding:0 8px 0 0;font-size:13px;font-weight:800}
 
@@ -58,7 +58,7 @@ body{font-family:"Pretendard","Spoqa Han Sans Neo","Apple SD Gothic Neo","Noto S
 .r-chn .lab{background:var(--chn)} .r-chn .bg{background:var(--chn-t)}
 
 /* 긴 하이라이트 */
-.band{position:absolute;height:19px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden}
+.band{position:absolute;height:19px;display:flex;align-items:center;padding:0 8px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden}
 .band .fill{flex:1;overflow:hidden;text-overflow:clip}
 .band .yr{margin-left:6px;font-size:11px;font-weight:700;opacity:.85}
 .band.period{height:26px;font-size:15.5px;font-weight:800;color:#fff;justify-content:center}
@@ -73,7 +73,7 @@ body{font-family:"Pretendard","Spoqa Han Sans Neo","Apple SD Gothic Neo","Noto S
 .r-chn .band.k1 .yr,.r-chn .band.k2 .yr,.r-chn .band.k3 .yr{color:#fff}
 
 /* 박스 */
-.box{position:absolute;background:#fff;border:1.5px solid var(--c);border-radius:6px;padding:4px 7px 5px;font-size:12.5px;line-height:16.5px}
+.box{position:absolute;background:#fff;border:1.5px solid var(--c);padding:4px 7px 5px;font-size:12.5px;line-height:16.5px}
 .r-gov .box{--c:var(--gov);--t:var(--gov-t)} .r-eco .box{--c:var(--eco);--t:var(--eco-t)}
 .r-dom .box{--c:var(--dom);--t:var(--dom-t)} .r-man .box{--c:var(--man);--t:var(--man-t)}
 .r-chn .box{--c:var(--chn);--t:var(--chn-t)}

@@ -1,0 +1,27 @@
+@font-face {
+  font-family: "Gowun Dodum";
+  src: url("./GowunDodum-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --chronicle-green: #344760;
+  --chronicle-button-radius: 999px;
+  --font-heading: "Gowun Dodum", var(--font-sans, system-ui, sans-serif);
+}
+
+:where(.chronicle-visualization, .board-bar, .explore-tabs, .basic-timeline, .time-radar, .sync-map) {
+  --chronicle-button-radius: 0px;
+}
+
+:is(h1, h2, h3) {
+  font-family: var(--font-heading);
+  font-synthesis: none;
+}
+
+:where(button, input[type="button"], input[type="submit"]) {
+  border-radius: var(--chronicle-button-radius);
+  font-family: inherit;
+}

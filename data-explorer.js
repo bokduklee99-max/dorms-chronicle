@@ -1257,7 +1257,7 @@ function renderOverview() {
     </div>
   `;
 
-  renderGeographyTrace(view.querySelector('#geo-trace'),state.data,!loadedSource && !state.dirtyCount,escapeHtml,
+  renderGeographyTrace(view.querySelector('#geo-trace'),state.data,!loadedSourceTabs.size && !state.dirtyCount,escapeHtml,
     tab => openTable(tab,'structure-geography'));
   // 이벤트 바인딩: 전체 표 열기
   view.querySelectorAll('[data-goto-tab]').forEach((btn) => {
@@ -2851,7 +2851,7 @@ function deriveCategoryLinks(events, categories) {
   return {headers:['사건ID','카테고리ID'],records:links.map(({event_id,topic_id}) => ({사건ID:event_id,카테고리ID:topic_id}))};
 }
 
-let loadedSource = false;
+const loadedSourceTabs = new Set();
 let missingDraftTabs = [];
 async function refreshSource() {
   const button = document.getElementById('btn-load-sheet');
@@ -2861,28 +2861,44 @@ async function refreshSource() {
   const banner = document.getElementById('fallback-banner');
   status.textContent = '시트를 불러오는 중이에요.';
   try {
-    const entries = await Promise.all(ALL_TABS.map(async tab => {
+    const results = await Promise.allSettled(ALL_TABS.map(async tab => {
       const table = parseCSV(await SheetData.sheetCSV(SHEET_CONFIG,tab), tab);
       validateTable(tab, table.headers, table.records);
       return [tab,table];
     }));
+    const entries = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+    const unavailable = ALL_TABS.filter((_,index) => results[index].status === 'rejected');
+    if (!entries.length) throw new Error('공개 시트를 읽지 못했습니다.');
     const tables = Object.fromEntries(entries);
-    state.originalHeaders = Object.fromEntries(ALL_TABS.map(tab => [tab,tables[tab].headers]));
-    state.originalData = Object.fromEntries(ALL_TABS.map(tab => [tab,tables[tab].records]));
+    const firstLoad = !loadedSourceTabs.size;
+    const hasStaleTabs = unavailable.some(tab => loadedSourceTabs.has(tab));
+    for (const tab of unavailable) {
+      if (loadedSourceTabs.has(tab)) continue;
+      state.originalHeaders[tab] = [...DEFAULT_HEADERS[tab]];
+      state.originalData[tab] = [];
+    }
+    for (const [tab,table] of entries) {
+      state.originalHeaders[tab] = table.headers;
+      state.originalData[tab] = table.records;
+      loadedSourceTabs.add(tab);
+    }
     if (!state.dirtyCount && !state.editing) {
       state.headers = structuredClone(state.originalHeaders);
       state.data = structuredClone(state.originalData);
     } else if (!state.editing && missingDraftTabs.length) {
       for (const tab of missingDraftTabs) {
+        if (!tables[tab]) continue;
         state.headers[tab] = [...new Set([...state.headers[tab], ...state.originalHeaders[tab]])];
         if (!state.data[tab].length) state.data[tab] = structuredClone(state.originalData[tab]);
       }
-      missingDraftTabs = [];
+      missingDraftTabs = missingDraftTabs.filter(tab => !tables[tab]);
     }
-    const firstLoad = !loadedSource;
-    loadedSource = true;
-    banner.hidden = true;
-    status.textContent = '공개 시트 연결됨';
+    banner.hidden = !unavailable.length;
+    status.textContent = unavailable.length ? `공개 시트 ${entries.length}/${ALL_TABS.length}개 연결됨` : '공개 시트 연결됨';
+    if (unavailable.length) {
+      document.getElementById('source-message').textContent =
+        `불러오지 못한 시트는 ${unavailable.join(', ')}입니다.${hasStaleTabs ? ' 이전에 읽은 자료가 있는 표는 그 자료를 표시합니다.' : ''}`;
+    }
     if (!state.editing) {
       renderAll();
       const section = firstLoad && structureSectionId(location.hash);
@@ -2890,9 +2906,9 @@ async function refreshSource() {
     }
   } catch (error) {
     banner.hidden = false;
-    status.textContent = loadedSource ? '마지막으로 읽은 데이터' : '시트 연결 확인 필요';
+    status.textContent = loadedSourceTabs.size ? '마지막으로 읽은 데이터' : '시트 연결 확인 필요';
     console.warn('공개 시트를 불러오지 못했습니다.', error);
-    document.getElementById('source-message').textContent = loadedSource ? '시트를 읽지 못해 마지막으로 읽은 데이터를 표시합니다.' :
+    document.getElementById('source-message').textContent = loadedSourceTabs.size ? '시트를 읽지 못해 마지막으로 읽은 데이터를 표시합니다.' :
       state.dirtyCount ? '시트를 읽지 못해 이 브라우저에 저장된 사본을 표시합니다.' : '시트를 읽지 못해 예시 데이터를 표시합니다.';
   } finally {
     button.disabled = false;
@@ -2914,7 +2930,7 @@ function restoreDraft(data, headers) {
   }
   state.headers = Object.fromEntries(ALL_TABS.map(tab => [tab, missing.includes(tab) ? [...state.originalHeaders[tab]] : headers[tab]]));
   state.data = Object.fromEntries(ALL_TABS.map(tab => [tab, missing.includes(tab) ? structuredClone(state.originalData[tab]) : data[tab]]));
-  missingDraftTabs = loadedSource ? [] : missing;
+  missingDraftTabs = missing.filter(tab => !loadedSourceTabs.has(tab));
 }
 
 function openTable(tab, section) {
@@ -3147,11 +3163,15 @@ function renderAll() {
   frame.hidden = !studioActive;
   if (studioActive) {
     studioLink.hash = location.hash;
-    const draft = new URLSearchParams(location.hash.split('?')[1]).get('draft') || '';
-    if (!frame.hasAttribute('src') || frame.dataset.draft !== draft) {
+    const params = new URLSearchParams(location.hash.split('?')[1]);
+    const draft = params.get('draft') || '';
+    const view = params.get('view') === 'core' ? 'core' : '';
+    if (!frame.hasAttribute('src') || frame.dataset.draft !== draft || frame.dataset.view !== view) {
       const url = new URL('./package-studio.html', location.href);
       if (draft) url.searchParams.set('draft', draft);
+      if (view) url.searchParams.set('view', view);
       frame.dataset.draft = draft;
+      frame.dataset.view = view;
       frame.src = url.href;
     }
     document.title = "패키지 제작실 · Dorms' Chronicle";

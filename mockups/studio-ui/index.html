@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>패키지 제작실 UI 시안 · DoRms’ Chronicle</title>
+  <link rel="stylesheet" href="./gallery.css">
+  <script type="module" src="./gallery.js"></script>
+</head>
+<body>
+  <main class="gallery">
+    <header class="gallery-head">
+      <div><a class="brand" href="../../data-explorer.html#package-studio?view=core">DoRms’ Chronicle <span aria-hidden="true">✳</span></a>
+        <h1>패키지 제작실 UI 시안</h1>
+      </div>
+      <p>같은 역사 자료로 다섯 가지 작업 방식을 비교합니다.</p>
+    </header>
+    <nav id="variants" aria-label="시안 선택"></nav>
+    <div id="variant-info" class="variant-info"></div>
+    <section id="preview" class="preview" aria-label="패키지 제작실 시안">
+      <p class="message" role="status">예시 패키지를 불러오는 중입니다.</p>
+    </section>
+    <footer class="gallery-foot">
+      <span>‘일제강점기와 독립운동’ 패키지의 일부 데이터를 사용한 시안입니다. 시안의 편집은 열린 페이지에서 체험할 수 있습니다.</span>
+      <a href="../../data-explorer.html#package-studio?view=core">현재 제작실 보기 ↗</a>
+    </footer>
+  </main>
+  <dialog id="editor" aria-labelledby="editor-title"></dialog>
+  <dialog id="command" aria-labelledby="command-title"></dialog>
+</body>
+</html>

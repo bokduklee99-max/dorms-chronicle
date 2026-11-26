@@ -20,11 +20,11 @@ h1{font-size:clamp(27px,4.5vw,47px);font-weight:800;line-height:1.12;letter-spac
 .range{margin-top:8px;color:var(--muted);font-size:17px;font-variant-numeric:tabular-nums}
 a{color:inherit;text-underline-offset:4px}
 .header-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}
-.source{border:1px solid #cec6b7;border-radius:8px;padding:9px 13px;background:transparent;color:inherit;font:inherit;font-size:14px;text-decoration:none;white-space:nowrap;cursor:pointer}
+.source{border:1px solid #cec6b7;border-radius:var(--chronicle-button-radius);padding:9px 13px;background:transparent;color:inherit;font:inherit;font-size:14px;text-decoration:none;white-space:nowrap;cursor:pointer}
 .source:hover{background:#ede7da}
 select.source{background:var(--panel);font-variant-numeric:tabular-nums}
 :focus-visible{outline:2px solid #106271;outline-offset:3px}
-.scroll{overflow-x:auto;overflow-y:hidden;border:1px solid #d8d0c1;border-radius:13px;background:var(--panel)}
+.scroll{overflow-x:auto;overflow-y:hidden;border:1px solid #d8d0c1;background:var(--panel)}
 .chart{position:relative;min-width:calc(var(--plot-width, 0px) + var(--rail) + var(--inset));--rail:168px;--inset:27px}
 .row{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);padding-right:var(--inset);min-height:54px;border-top:1px solid var(--line)}
 .rail{position:sticky;left:0;z-index:3;display:flex;align-items:center;padding-left:19px;border-right:1px solid var(--line);background:var(--panel);font-size:15px;font-weight:700;white-space:nowrap}
@@ -119,7 +119,7 @@ select.source{background:var(--panel);font-variant-numeric:tabular-nums}
 <link rel="stylesheet" href="./assets/space-preview.css"><link rel="stylesheet" href="./assets/swimlane-modal.css">
 </head>
 <body>
-<main>
+<main class="chronicle-visualization">
  <header><div><h1>일제강점기와 독립운동</h1><p class="range" id="range">1910–1945</p></div><div class="header-actions"><select id="year-jump" class="source" aria-label="연도 이동" disabled><option value="">연도 이동</option></select><button type="button" class="source" id="all-relations" disabled>전체 관계</button><a class="source" href="https://docs.google.com/spreadsheets/d/1n3NFzBPos-c4QKu8r1UE3QwOngd0vK5Vf4pEXhnxGE0/edit#gid=201117001" target="_blank" rel="noopener">원본 시트 ↗</a></div></header>
  <p class="chart-note" id="load-status" role="status">연표를 불러오는 중입니다.</p>
  <div class="scroll" role="region" aria-label="시기와 사건군·주제별 연표" tabindex="0"><div class="chart" id="chart"></div></div>

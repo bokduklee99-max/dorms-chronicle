@@ -345,7 +345,8 @@ async function startClassroom(){
   }
   let workspace, mountRecordQuiz, sharedPlan, sharedRoute;
   try{
-    const entry=await import('/metro/assets/classroom-workspace.js?v=quiz-feedback-1');
+    const moduleUrl=document.querySelector('meta[name="classroom-workspace-module"]').content;
+    const entry=await import(moduleUrl);
     if(example){
       showContext('', '일제강점기와 독립운동');
       const timeline=$('#lesson-timeline-link');
@@ -371,7 +372,8 @@ async function startClassroom(){
       catch{lessonError('학생용 퀴즈 링크가 불완전합니다. 선생님이 보낸 링크 전체를 열어 주세요.');return;}
     }
     workspace=classroomWorkspace(query.get('workspace'),sharedPackage,sharedRoute?.ids??(sharedPlan?entry.quizEventIds(sharedPlan):undefined));
-  }catch{
+  }catch(error){
+    console.error('학습 콘텐츠 초기화에 실패했습니다.',error);
     lessonError('학습 콘텐츠를 열지 못했습니다.',true);return;
   }
   if(!workspace){lessonError('이 브라우저에 저장된 수업을 찾을 수 없습니다. 수업 목록에서 열어 주세요.');return;}
@@ -388,7 +390,8 @@ async function startClassroom(){
     const records=await workspace.records(SHEET_CONFIG,SheetData,SHEET_SNAPSHOT.tables);
     mountRecordQuiz($('#lesson-activity'),records,query.get('workspace'),workspace.packageId,sharedPlan,sharedRoute);
     $('#sheet-status').hidden=true;
-  }catch{
+  }catch(error){
+    console.error('수업 자료를 불러오지 못했습니다.',error);
     lessonError('수업 자료를 불러오지 못했습니다.',true);
   }
 }

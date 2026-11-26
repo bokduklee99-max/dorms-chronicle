@@ -1,4 +1,4 @@
-@import url("./assets/data-guide-nav.css");
+@import url("./assets/data-guide-nav.css?v=wrap-small");
 
 .chronicle-data {
   --data-edge: clamp(16px, 4vw, 54px);
@@ -36,7 +36,7 @@
   #showroom-views p { margin: 0 12px 10px }
 }
 .dashboard-heading { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 14px 24px; margin-bottom: 24px }
-.dashboard-heading h1 { font-size: clamp(32px, 5vw, 54px); font-weight: 600; line-height: 1.08; letter-spacing: -.055em }
+.dashboard-heading h1 { font-size: clamp(32px, 5vw, 54px); font-weight: 400; line-height: 1.08; letter-spacing: -.035em }
 #table-breadcrumb { margin-bottom: 10px; font-size: 14px; color: var(--chronicle-muted) }
 #table-breadcrumb ol, #table-breadcrumb li { display: flex; align-items: baseline; gap: 4px 9px }
 #table-breadcrumb ol { flex-wrap: wrap; margin: 0; padding: 0; list-style: none }
@@ -79,7 +79,7 @@
   border: 1px solid var(--chronicle-line); border-radius: var(--chronicle-radius);
   background: var(--chronicle-surface); color: var(--chronicle-ink); font-weight: 600; font-size: 14px;
 }
-.dashboard-button { cursor: pointer }
+.dashboard-button { border-radius: var(--chronicle-button-radius); cursor: pointer }
 .dashboard-button:hover { border-color: var(--chronicle-green) }
 .dashboard-button:disabled { opacity: .6; cursor: wait }
 .dashboard-primary, .dashboard-button[aria-pressed=true] { background: var(--chronicle-green); color: var(--chronicle-surface); border-color: var(--chronicle-green) }
@@ -240,7 +240,7 @@
 @media (max-width: 859px) {
   .relation-node-item:has(.event-relation-count) .event-relation-node { grid-template-columns: minmax(0,1fr) }
 }
-.section-title { color: var(--chronicle-ink); font-size: clamp(21px, 2.8vw, 29px); font-weight: 600; line-height: 1.2 }
+.section-title { color: var(--chronicle-ink); font-size: clamp(21px, 2.8vw, 29px); font-weight: 400; line-height: 1.2 }
 .section-title[id] { scroll-margin-top: 24px }
 .dashboard-structure > section + section { padding-top: 22px; border-top: 1px solid var(--chronicle-line) }
 #main-view .text-\[10px\], #main-view .text-\[10\.5px\], #main-view .text-\[11px\], #main-view .text-\[11\.5px\] { font-size: 13px }
@@ -351,7 +351,7 @@
 .event-workspace-drawer #btn-drawer-close { color: inherit }
 .event-workspace-drawer .dashboard-drawer-header > div { flex: 1; min-width: 0 }
 .event-section-links { display: flex; flex-wrap: wrap; gap: 5px; flex-basis: 100% }
-.event-section-links button { padding: 5px 8px; border: 1px solid #fffefa55; border-radius: 5px; font-size: 13px; cursor: pointer }
+.event-section-links button { padding: 5px 8px; border: 1px solid #fffefa55; border-radius: var(--chronicle-button-radius); font-size: 13px; cursor: pointer }
 .event-section-links button:hover { background: #fffefa25 }
 .event-workspace-drawer .dashboard-drawer-header :focus-visible { outline-color: var(--chronicle-surface) }
 .event-workspace-drawer .dashboard-drawer-body :is(input:not([type=checkbox], [type=radio]), textarea, select):focus {
@@ -434,7 +434,7 @@
   padding: 9px 11px; border-bottom: 1px solid var(--chronicle-line);
 }
 .dashboard-type-chips button {
-  min-height: 34px; padding: 4px 9px; border: 1px solid var(--chronicle-line); border-radius: 20px;
+  min-height: 34px; padding: 4px 9px; border: 1px solid var(--chronicle-line); border-radius: var(--chronicle-button-radius);
   color: var(--chronicle-green); background: var(--chronicle-surface); font-size: 14px; font-weight: 600; cursor: pointer;
 }
 .dashboard-type-chips button:hover { border-color: var(--chronicle-green) }
@@ -553,7 +553,7 @@
 .record-preview-close:hover { background: #fffefa1c }
 .record-preview-close:focus-visible { outline-color: var(--chronicle-surface) }
 .record-preview-footer { justify-content: flex-end; padding: 12px var(--record-inset); border-top: 1px solid var(--chronicle-line) }
-#btn-preview-edit { background: var(--chronicle-paper); border-radius: 20px; padding-inline: 15px }
+#btn-preview-edit { background: var(--chronicle-paper); border-radius: var(--chronicle-button-radius); padding-inline: 15px }
 #record-preview-body { min-height: 0; overflow: auto; padding: clamp(16px,3vw,24px) var(--record-inset); scrollbar-gutter: stable }
 .endpoint-relations-list { display: grid; gap: 8px }
 .endpoint-relations-list .dashboard-button {

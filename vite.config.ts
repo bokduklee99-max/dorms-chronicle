@@ -5,7 +5,7 @@ export default defineConfig({base:'./',plugins:[tailwindcss(),localStudioSession
  preserveEntrySignatures:'exports-only',
  input:{'studio-client':'src/studio-client.js',metro:'metro.html',landing:'landing.html','data-explorer':'data-explorer.js','classroom-workspace':'src/classroom-workspace.ts'},
  output:{
-  entryFileNames:chunk=>['studio-client','data-explorer','classroom-workspace'].includes(chunk.name)?'assets/[name].js':'assets/[name]-[hash].js',
+  entryFileNames:chunk=>chunk.name==='studio-client'?'assets/[name].js':'assets/[name]-[hash].js',
   assetFileNames:asset=>asset.names.includes('data-explorer.css')?'assets/[name][extname]':'assets/[name]-[hash][extname]',
  },
 }}});

@@ -173,7 +173,7 @@ test('the grid builds a new shared package with catalog records and leaves exist
  for(const [kind,id] of [['place','test-place'],['actor','test-group']])grid.queue.push({id,kind,pkg:pkg.id,origin:event,originKind:'event',done:true});
  const actor=Object.keys(library.catalog.actor).find(id=>!original.actors.some(a=>a.id===id));
  const removed=pkg.relations.pop().id;
- pkg.relations.push({id:'test-relation',fromType:'actor',fromId:actor,toType:'category',toId:category.id,kind:'action',label:'자료 발행',source:'교과서 36쪽'});
+ pkg.relations.push({id:'test-relation',fromType:'actor',fromId:actor,toType:'category',toId:category.id,kind:'action',label:'자료 발행',body:'관련 단체가 자료를 발행했다.',source:'교과서 36쪽'});
  const edited=gridContent(grid,library.catalog);
  assert.ok(edited.actors.some(a=>a.id===actor));
  const staged=await writeDraft('token',cfg,current,edited);

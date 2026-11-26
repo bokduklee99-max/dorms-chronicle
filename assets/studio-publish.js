@@ -28,7 +28,7 @@ function rowsFor(d,published=true,tables={}){
   사건:events.map(e=>({사건ID:e.id,날짜:e.date,종료일:e.end,사건명:e.title,사건유형:e.type,내용:e.body,이미지:e.media,...optional('사건',{중요도:e.importance},tables),...(tables.사건?.[0]?.includes('출처')?{출처:e.source||''}:{})})),
   카테고리:categories.map(c=>({카테고리ID:c.id,패키지ID:id,카테고리명:c.name,카테고리유형:c.kind,시작일:c.start,종료일:c.end,설명:c.body})),
   주체:actors.map(a=>({주체ID:a.id,주체명:a.title,구분:a.kind,소개:a.body,...optional('주체',{원어명:a.originalName,'존속 시작일':a.start,'존속 종료일':a.end,출처:a.source},tables)})),
-  관계:relations.map(r=>({관계ID:r.id,패키지ID:id,출발유형:r.fromType,출발ID:r.fromId,도착유형:r.toType,도착ID:r.toId,관계유형:r.kind,라벨:r.label,...optional('관계',{출처:r.source},tables)})),
+  관계:relations.map(r=>({관계ID:r.id,패키지ID:id,출발유형:r.fromType,출발ID:r.fromId,도착유형:r.toType,도착ID:r.toId,관계유형:r.kind,라벨:r.label,...optional('관계',{설명:r.body,출처:r.source},tables)})),
   사건_패키지:events.map(e=>({사건ID:e.id,패키지ID:id})),
   사건_카테고리:categories.flatMap(c=>c.members.map(사건ID=>({사건ID,카테고리ID:c.id}))),
   사건_주체:events.flatMap(e=>(e.participants||[]).map(a=>({사건ID:e.id,주체ID:a.id,역할:a.role||(published&&!unassigned.has(JSON.stringify([e.id,a.id]))?'related':'')}))),
@@ -194,7 +194,7 @@ function readContent(state){
  const eventRows=new Map(rows.사건.map(r=>[r.사건ID,r]));
  const events=[...eventIds].map(key=>{const row=eventRows.get(key);if(!row)throw Error('패키지에 연결된 사건을 찾을 수 없습니다.');return row;}).map(r=>({id:short(r.사건ID),date:r.날짜,end:r.종료일,title:r.사건명,type:r.사건유형,body:r.내용,media:r.이미지,importance:r.중요도,source:r.출처||extra.eventSources.get(short(r.사건ID)),
   spaceIds:linked('사건_공간','사건ID',r.사건ID,'공간ID'),participants:rows.사건_주체.filter(a=>a.사건ID===r.사건ID).map(a=>({id:short(a.주체ID),role:a.역할}))}));
- const relations=rows.관계.filter(r=>r.패키지ID===pkgId).map(r=>({id:short(r.관계ID),fromType:r.출발유형,toType:r.도착유형,fromId:short(r.출발ID),toId:short(r.도착ID),kind:r.관계유형,label:r.라벨,source:r.출처}));
+ const relations=rows.관계.filter(r=>r.패키지ID===pkgId).map(r=>({id:short(r.관계ID),fromType:r.출발유형,toType:r.도착유형,fromId:short(r.출발ID),toId:short(r.도착ID),kind:r.관계유형,label:r.라벨,body:r.설명,source:r.출처}));
  const needed=new Set(events.flatMap(e=>e.participants.map(a=>a.id)));
  for(const r of relations){if(['actor','person','organization','army','state','institution','territory','alliance'].includes(r.fromType))needed.add(r.fromId);if(['actor','person','organization','army','state','institution','territory','alliance'].includes(r.toType))needed.add(r.toId);}
  for(const r of extra.queue)if(r.kind==='actor')needed.add(r.id);

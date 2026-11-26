@@ -20,12 +20,23 @@ export function mountStudioGrid(container,host){
   container.innerHTML=`<div id="chronicle-grid-studio" lang="ko">
   <section id="gs-start" class="gs-main" hidden>
     <header class="gs-library-head"><h1 tabindex="-1">패키지 초안 목록</h1><button class="gs-primary" data-act="new-package">＋ 새 패키지</button></header>
-    <div class="gs-library-nav"><div role="group" aria-label="초안 목록 선택">
+    <div class="gs-library-nav"><div role="group" aria-label="제작실 화면 선택">
       <button data-act="library-group" data-id="shared" aria-controls="gs-library">공동 초안 <span></span></button>
       <button data-act="library-group" data-id="local" aria-controls="gs-local-library">개인 초안 <span></span></button>
+      <button data-act="library-group" data-id="core" aria-controls="gs-core-library">핵심 시트</button>
     </div><button data-act="reload-drafts">새로고침</button></div>
     <div id="gs-library" role="region" aria-label="공동 초안 목록"></div>
     <div id="gs-local-library" role="region" aria-label="개인 초안 목록" hidden></div>
+    <section id="gs-core-library" aria-label="핵심 시트" hidden>
+      <div id="gs-core-drafts"></div>
+      <div class="gs-core-toolbar" id="gs-core-toolbar" hidden>
+        <h2 id="gs-core-name" tabindex="-1"></h2>
+        <div class="gs-buttons"><button type="button" data-act="full-editor">전체 편집</button><button type="button" data-act="preview">최종 미리보기</button></div>
+      </div>
+      <div id="gs-core-sharing"></div>
+      <div id="gs-core-sheets"></div>
+      <p id="gs-core-status" role="status" class="gs-status"></p>
+    </section>
   </section>
   <div class="gs-main" id="gs-main" data-note-key="package" data-note-label="패키지">
     <div id="gs-location-slot"><nav id="gs-location" aria-label="현재 패키지 위치">
@@ -34,9 +45,9 @@ export function mountStudioGrid(container,host){
     </nav></div>
     <header class="gs-current-package" data-note-key="package-info" data-note-label="패키지 정보">
       <div class="gs-package-info"><h1 id="gs-name" tabindex="-1"></h1><p id="gs-course"></p></div>
-      <div class="gs-buttons"><button type="button" data-act="edit-package">정보 수정</button><button type="button" data-act="preview">최종 미리보기</button></div>
+      <div class="gs-buttons"><button type="button" data-act="library-group" data-id="core">핵심 시트</button><button type="button" data-act="edit-package">정보 수정</button><button type="button" data-act="preview">최종 미리보기</button></div>
     </header>
-    <div id="gs-sharing"></div>
+    <div id="gs-sharing-slot"><div id="gs-sharing"></div></div>
     <section id="gs-review" data-note-key="review" data-note-label="입력 중 추가된 데이터" aria-label="입력 중 추가된 데이터"><header class="gs-head"><h2>입력 중 추가된 데이터</h2><div class="gs-filters" id="gs-filters"></div></header><div id="gs-queue"></div></section>
     <section id="gs-records" data-note-key="records" data-note-label="카테고리와 사건 입력" aria-labelledby="gs-records-title">
     <h2 class="gs-work-title" id="gs-records-title">카테고리와 사건 입력</h2>
@@ -132,7 +143,8 @@ export function mountStudioGrid(container,host){
   const icons=()=>{for(const el of root.querySelectorAll('i[data-lucide]'))el.replaceWith(makeIcon(el.dataset.lucide));};
   const btn=(label,act,id='',extra='')=>'<button type="button" data-act="'+act+'" data-id="'+esc(id)+'" '+extra+'>'+label+'</button>';
   const opts=(list,v)=>(v&&!Object.hasOwn(list,v)?'<option selected value="'+esc(v)+'">'+esc(v)+'</option>':'')+'<option value="">선택</option>'+Object.entries(list).map(([k,n])=>'<option value="'+esc(k)+'" '+(k===v?'selected':'')+'>'+esc(n)+'</option>').join('');
-  const status=t=>get('status').textContent=t;
+  const coreView=()=>host.directory.group==='core';
+  const status=t=>get(coreView()?'core-status':'status').textContent=t;
   function persist(){host.change(gridContent(s,base));}
   const later=persist;
   // This editor lives in an auto-height iframe. Keep its modal in the visible part of the parent page.
@@ -203,7 +215,40 @@ export function mountStudioGrid(container,host){
     get('queue').hidden=!all.length;
     get('queue').innerHTML=rows.length?rows.map(r=>'<div class="gs-qrow"'+noteAt(['review',r.kind,r.id],names[r.kind]+' · '+title(r.kind,r.id))+'><span class="gs-kind">'+icon(({actor:'users',place:'map-pin',category:'folder',event:'calendar-days'})[r.kind])+names[r.kind]+'</span><strong>'+esc(title(r.kind,r.id))+'</strong><small>'+esc((r.originKind==='package'?P().name:title(r.originKind,r.origin))+'에서 추가')+'</small>'+btn(done?'다시 열기':'정보 보완','review',r.id,'data-kind="'+esc(r.kind)+'"')+'</div>').join(''):'<p class="gs-empty">'+(done?'검토를 마친 항목이 없습니다.':'보완할 새 항목이 없습니다.')+'</p>';
   }
-  let renderedShared='',renderedLocal='';
+  function coreSheets(){
+    const p=P(),editing=!host.empty();
+    get('core-toolbar').hidden=!editing;
+    get('core-name').textContent=p.name;
+    const cell=value=>'<td>'+esc(value||'—')+'</td>';
+    const edit=(act,id,label)=>'<td>'+btn('편집',act,id,'aria-label="'+esc(label+' 편집')+'"')+'</td>';
+    const sheet=(name,headers,rows,action)=>{
+      const columns=editing?[...headers,'편집']:headers;
+      return '<section class="gs-core-sheet" aria-label="'+name+' 시트"><header class="gs-head"><h3>'+name+'</h3>'+
+        (editing?action:'')+'</header><div class="gs-scroll" tabindex="0" role="region" aria-label="'+name+' 입력 표"><table aria-label="'+name+' 입력 표">'+
+        '<thead><tr>'+columns.map(label=>'<th scope="col">'+label+'</th>').join('')+'</tr></thead><tbody>'+
+        (editing?(rows.join('')||'<tr><td colspan="'+columns.length+'" class="gs-core-empty">아직 입력한 항목이 없습니다.</td></tr>'):'')+
+        '</tbody></table></div></section>';
+    };
+    const categoryRows=p.categories.map(c=>'<tr>'+[c.name,cats[c.kind]||c.kind,c.start,c.end,c.body].map(cell).join('')+
+      edit('edit-cat',c.id,c.name)+'</tr>');
+    const eventRows=p.ids.map(id=>{
+      const event=by('event',id),groups=linkList('category',id).map(key=>title('category',key)).join(', ');
+      return '<tr>'+[event.title,event.date,event.end,importance[event.importance]||event.importance,groups,event.source].map(cell).join('')+
+        edit('core-event',id,event.title||'새 사건')+'</tr>';
+    });
+    const relationRows=p.relations.map(r=>'<tr>'+
+      [endpointName(r,'from'),rels[r.kind]||r.kind,endpointName(r,'to'),r.label,r.body,r.source].map(cell).join('')+
+      edit('edit-relation',r.id,r.label||endpointName(r,'from')+' → '+endpointName(r,'to'))+'</tr>');
+    get('core-sheets').innerHTML=[
+      sheet('패키지',['패키지명','학교급','과목','설명'],
+        ['<tr>'+[p.name,p.school,p.course,p.description].map(cell).join('')+edit('edit-package','','패키지')+'</tr>'],''),
+      sheet('카테고리',['카테고리명','카테고리 유형','시작일','종료일','설명'],categoryRows,btn('＋ 카테고리 추가','new-cat','period')),
+      sheet('사건',['사건명','날짜','종료일','중요도','카테고리','출처'],eventRows,
+        '<div class="gs-buttons">'+btn('기존 사건 찾기','reuse-event')+btn('＋ 사건 추가','core-event','',primary)+'</div>'),
+      sheet('관계',['출발 대상','관계 유형','도착 대상','관계 이름','근거 설명','출처'],relationRows,btn('＋ 관계 추가','add-relation'))
+    ].join('');
+  }
+  let renderedShared='',renderedLocal='',renderedCoreDrafts='';
   function refreshLibrary(){
     const items=host.library(),state=host.libraryState(),directory=host.directory;
     const focused=document.activeElement?.closest('.gs-library-item')?.dataset.id;
@@ -220,17 +265,29 @@ export function mountStudioGrid(container,host){
       (rows(local)||'<p class="gs-library-note">저장된 개인 초안이 없습니다.</p>');
     if(sharedHtml!==renderedShared){get('library').innerHTML=sharedHtml;renderedShared=sharedHtml;}
     if(localHtml!==renderedLocal){get('local-library').innerHTML=localHtml;renderedLocal=localHtml;}
-    get('library').hidden=isLocal;get('local-library').hidden=!isLocal;
+    get('library').hidden=directory.group!=='shared';get('local-library').hidden=!isLocal;get('core-library').hidden=!coreView();
+    const coreDrafts=host.empty()?'<p class="gs-core-intro">새 패키지를 만들거나 개인 초안을 선택해 핵심 시트를 작성하세요.</p>'+rows(local):'';
+    if(coreDrafts!==renderedCoreDrafts){get('core-drafts').innerHTML=coreDrafts;renderedCoreDrafts=coreDrafts;}
     for(const b of get('start').querySelectorAll('[data-act=library-group]')){
       b.setAttribute('aria-pressed',String(b.dataset.id===directory.group));
-      b.querySelector('span').textContent=b.dataset.id==='local'?local.length:state==='ready'||shared.length?shared.length:'';
+      const count=b.querySelector('span');
+      if(count)count.textContent=b.dataset.id==='local'?local.length:state==='ready'||shared.length?shared.length:'';
     }
-    const reload=get('start').querySelector('[data-act=reload-drafts]');reload.disabled=state==='loading';reload.hidden=isLocal;
+    const reload=get('start').querySelector('[data-act=reload-drafts]');reload.disabled=state==='loading';reload.hidden=directory.group!=='shared';
     icons();
-    if(focused)get('start').querySelector('.gs-library-item[data-id="'+CSS.escape(focused)+'"]')?.focus({preventScroll:true});
+    if(focused)get(coreView()?'core-drafts':isLocal?'local-library':'library')
+      .querySelector('.gs-library-item[data-id="'+CSS.escape(focused)+'"]')?.focus({preventScroll:true});
   }
   function draw(){
-    const initial=host.empty();get('start').hidden=!initial;get('main').hidden=initial;if(initial)refreshLibrary();
+    const initial=host.empty(),core=coreView();
+    get('start').hidden=!initial&&!core;get('main').hidden=initial||core;
+    get('start').classList.toggle('gs-core-mode',core);
+    get('start').querySelector('h1').textContent=core?'패키지 제작실':'패키지 초안 목록';
+    const sharingSlot=get(core?'core-sharing':'sharing-slot');
+    if(get('sharing').parentElement!==sharingSlot)sharingSlot.append(get('sharing'));
+    get('sharing').hidden=initial;
+    if(initial||core)refreshLibrary();
+    if(core)coreSheets();
     const p=P();get('course').textContent=[p.school,p.course].filter(Boolean).join(' · ');get('name').textContent=p.name||'새 패키지';
     get('origin').textContent=host.draft.cloud?'공동 초안 목록':'개인 초안 목록';get('location-name').textContent=get('name').textContent;
     const category=by('category',categoryId);
@@ -281,6 +338,10 @@ export function mountStudioGrid(container,host){
     s=gridState(content);
     for(const side of ['from','to'])if(pinned[side]?.type===kind&&pinned[side].id===id)pinned[side]=null;
     trigger=null;close();afterChange('‘'+name+'’ '+names[kind]+' 삭제를 완료했습니다.');
+    if(coreView()){
+      get('core-sheets').querySelector(category?'[data-act=new-cat]':'[data-act="core-event"][data-id=""]')?.focus({preventScroll:true});
+      return;
+    }
     if(category)get('cats').querySelector('[data-act=new-cat][data-id="'+CSS.escape(categoryKind)+'"]')?.focus({preventScroll:true});
     else{
       const next=ids[index+1]||ids[index-1];
@@ -374,6 +435,10 @@ export function mountStudioGrid(container,host){
       if(pinned[side]?.id===id&&pinned[side].type===type)pinned[side]=null;
     }
     afterChange(message);
+    if(coreView()){
+      get('core-sheets').querySelector('[data-act=edit-relation][data-id="'+CSS.escape(edge.id)+'"]')?.focus({preventScroll:true});
+      return;
+    }
     const list=get('rel-list'),selector='[data-act="edit-relation"][data-id="'+CSS.escape(edge.id)+'"]';
     if(!list.querySelector(selector)&&get('rel-filter').value){get('rel-filter').value='';relationRows();}
     const row=list.querySelector(selector);
@@ -396,7 +461,8 @@ export function mountStudioGrid(container,host){
     const buttons=(v.existing?btn('관계 해제','delete-relation','','class="gs-rel-delete"'):'')+
       btn(v.existing?'수정 저장':'관계 추가','save-relation','',primary+(!r.fromId||!r.toId||!r.kind?' disabled':''));
     show(v,v.existing?'관계 편집':'관계 추가',pair+picker+'<div class="gs-rel-kinds"><h3>관계 유형</h3><div class="gs-choice" role="group" aria-label="관계 유형">'+kinds+'</div></div>'+
-      fields([field('관계 이름','label',r.label),field('출처','source',r.source)])+actions(buttons));
+      fields([field('관계 이름','label',r.label),field('출처','source',r.source),
+        field('근거 설명','body',r.body,'area',true)])+actions(buttons));
     if(v.side){relationOptions();get('rel-query').focus();}
   }
   function relationOptions(resetScroll=false){
@@ -423,8 +489,9 @@ export function mountStudioGrid(container,host){
     show({mode:'package',edit},edit?'패키지 편집':'새 패키지',fields([field('패키지명','name',p.name,null,true),field('학교급','school',p.school),field('과목','course',p.course),field('설명','description',p.description,'area',true)])+actions(btn(edit?'저장':'이 패키지로 시작','save-package','',primary)));get('dia-body').querySelector('[name=name]').focus();}
   function catForm(kind,id){const c=id?by('category',id):{kind};
     const group=Object.entries(cats).map(([k,n])=>btn(n,'cat-kind',k,'aria-pressed="'+(k===kind)+'"')).join('');
-    const spaceNames=id?linkList('place',id,'category').map(x=>title('place',x)).join(', '):'';
-    show({mode:'cat',kind,id},id?'카테고리 편집':cats[kind]+' 추가','<div class="gs-choice" aria-label="카테고리 종류">'+group+'</div>'+fields([field('카테고리명','name',c.name,null,true),field('시작일','start',c.start),field('종료일','end',c.end),field('설명','body',c.body,'area',true)])+(spaceNames?'<p class="gs-muted">관련 공간 · '+esc(spaceNames)+'</p>':'')+actions(btn('저장 후 공간 연결','save-cat-place')+btn('저장','save-cat','',primary)));get('dia-body').querySelector('[name=name]').focus();
+    const spaceNames=id&&!coreView()?linkList('place',id,'category').map(x=>title('place',x)).join(', '):'';
+    const secondary=coreView()?(id?btn('카테고리 삭제','delete-item',id,'data-kind="category"'):''):btn('저장 후 공간 연결','save-cat-place');
+    show({mode:'cat',kind,id},id?'카테고리 편집':coreView()?'카테고리 추가':cats[kind]+' 추가','<div class="gs-choice" aria-label="카테고리 종류">'+group+'</div>'+fields([field('카테고리명','name',c.name,null,true),field('시작일','start',c.start),field('종료일','end',c.end),field('설명','body',c.body,'area',true)])+(spaceNames?'<p class="gs-muted">관련 공간 · '+esc(spaceNames)+'</p>':'')+actions(secondary+btn('저장','save-cat','',primary)));get('dia-body').querySelector('[name=name]').focus();
   }
   function values(){return Object.fromEntries([...get('dia-body').querySelectorAll('[name]')].map(el=>[el.name,el.value.trim()]));}
   function dateString(value){try{return !value||Boolean(SheetData.dateRange(value));}catch{return false;}}
@@ -443,6 +510,35 @@ export function mountStudioGrid(container,host){
       return ['image','이미지는 http 또는 https 주소를 한 줄에 하나씩 입력해 주세요.'];
     }
   }
+  function coreEventForm(id){
+    const event=id?by('event',id):{};
+    const selected=new Set(id?linkList('category',id):[]);
+    const groups=P().categories.map(c=>'<label><input type="checkbox" data-core-category="'+esc(c.id)+'"'+
+      (selected.has(c.id)?' checked':'')+'> '+esc(c.name)+' <small>'+esc(cats[c.kind]||c.kind)+'</small></label>').join('');
+    const categories=groups?'<fieldset class="gs-core-categories"><legend>카테고리</legend>'+groups+'</fieldset>':'';
+    const remove=id?btn('사건 삭제','delete-item',id,'data-kind="event"'):'';
+    show({mode:'core-event',id},id?'사건 편집':'사건 추가',
+      fields([field('사건명','title',event.title,null,true),field('날짜','date',event.date),field('종료일','end',event.end),
+        field('중요도','importance',event.importance,importance),field('출처','source',event.source,null,true)])+
+      categories+actions(remove+btn('저장','save-core-event','',primary)));
+    get('dia-body').querySelector('[name=title]').focus();
+  }
+  function saveCoreEvent(){
+    const data=values();
+    data.date=host.normalizeDate(data.date);data.end=host.normalizeDate(data.end);
+    const issue=eventIssue(data);
+    if(issue){
+      error(issue[1]);
+      get('dia-body').querySelector('[name="'+issue[0]+'"]').focus();
+      return;
+    }
+    const id=view.id||newEvent();
+    const selected=[...get('dia-body').querySelectorAll('[data-core-category]:checked')].map(input=>input.dataset.coreCategory);
+    Object.assign(record('event',id),data);
+    (P().links[id]??={}).category=selected;
+    trigger=null;close();afterChange('사건을 저장했습니다.');
+    get('core-sheets').querySelector('[data-act=core-event][data-id="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
+  }
   function focusCell(id,key){
     showRow(id);
     const input=get('sheet').querySelector('[data-row="'+CSS.escape(id)+'"] [data-field="'+CSS.escape(key)+'"]');
@@ -458,15 +554,26 @@ export function mountStudioGrid(container,host){
     }
     const pending=s.queue.find(r=>r.pkg===p.id&&!r.done);
     if(pending){review(pending.kind,pending.id);error('이 항목을 검토한 뒤 업로드해 주세요.');return false;}
-    if(!p.ids.length){const add=get('main').querySelector('[data-act=add-event]');add.focus();status('업로드할 사건을 한 행 이상 입력해 주세요.');return false;}
+    if(!p.ids.length){
+      const add=coreView()?get('core-sheets').querySelector('[data-act=core-event]'):get('main').querySelector('[data-act=add-event]');
+      add.focus();status('업로드할 사건을 한 행 이상 입력해 주세요.');return false;
+    }
     for(const id of p.ids){
       const issue=eventIssue(by('event',id));
       if(!issue)continue;
+      if(coreView()&&issue[0]!=='image'){
+        coreEventForm(id);error(issue[1]);
+        get('dia-body').querySelector('[name="'+issue[0]+'"]').focus();return false;
+      }
+      if(coreView()){
+        host.setGroup(host.draft.cloud?'shared':'local');
+        draw();
+      }
       const cell=focusCell(id,issue[0]);cell.setCustomValidity(issue[1]);cell.reportValidity();return false;
     }
     const relation=p.relations.find(r=>!r.kind);
     if(relation){
-      if(relation.fromType==='event'&&relation.toType==='event'){
+      if(!coreView()&&relation.fromType==='event'&&relation.toType==='event'){
         finder(relation.fromId,'event','event');
         dlg.querySelector('[data-role="'+CSS.escape(relation.id)+'"]')?.focus();
       }else{
@@ -605,7 +712,13 @@ export function mountStudioGrid(container,host){
     if(p.categories.some(c=>c.id!==v.id&&c.kind===v.kind&&norm(c.name)===norm(data.name))){error('이 종류에 같은 이름이 있습니다.');return;}
     if(dateError(data)){error(dateError(data));return;}
     const id=v.id||uid(),obj=v.id?by('category',id):{id};Object.assign(obj,data,{kind:v.kind});
-    if(!v.id)p.categories.push(obj);afterChange('카테고리를 저장했습니다.');if(connect)finder(id,'category','place');else close();
+    if(!v.id)p.categories.push(obj);
+    afterChange('카테고리를 저장했습니다.');
+    if(connect)finder(id,'category','place');
+    else{
+      close();
+      if(coreView())get('core-sheets').querySelector('[data-act=edit-cat][data-id="'+CSS.escape(id)+'"]')?.focus({preventScroll:true});
+    }
   }
   const writable=(id,k,val)=>{record('event',id)[k]=val;};
   root.addEventListener('click',ev=>{
@@ -613,7 +726,12 @@ export function mountStudioGrid(container,host){
     const {act,id,kind,jump}=b.dataset;if(jump){scrollColumn(jump);return;}
     switch(act){
       case 'packages':host.open(null);break;
-      case 'library-group':host.directory.group=id;refreshLibrary();break;
+      case 'library-group':
+        if(coreView()&&id!=='core'&&!host.empty()){host.open(null,id);break;}
+        host.setGroup(id);draw();break;
+      case 'full-editor':
+        host.setGroup(host.draft.cloud?'shared':'local');
+        draw();get('name').focus({preventScroll:true});break;
       case 'reload-drafts':case 'authenticate-list':void host.refresh(act==='authenticate-list');break;
       case 'filter-category':case 'clear-category':{
         const previous=categoryId;setCategory(act==='clear-category'||id===categoryId?'':id);
@@ -653,7 +771,7 @@ export function mountStudioGrid(container,host){
       case 'delete-relation':{
         const r=view.edge;
         if(!confirm(endpointName(r,'from')+' → '+endpointName(r,'to')+' 관계를 해제할까요?'))break;
-        close();removeRelation(r.id);get('relations').querySelector('[data-act=add-relation]').focus({preventScroll:true});break;
+        close();removeRelation(r.id);get(coreView()?'core-sheets':'relations').querySelector('[data-act=add-relation]').focus({preventScroll:true});break;
       }
       case 'save-package':{
         const d=values();if(!d.name){error('패키지명을 입력해 주세요.');return;}
@@ -661,6 +779,8 @@ export function mountStudioGrid(container,host){
         if(view.edit){Object.assign(P(),d);close();afterChange('패키지 정보를 수정했습니다.');}else{close();host.create(d);}break;
       }
       case 'new-cat':catForm(id);break;
+      case 'core-event':coreEventForm(id);break;
+      case 'save-core-event':saveCoreEvent();break;
       case 'edit-cat':catForm(by('category',id).kind,id);break;
       case 'cat-kind':view.kind=id;get('dia-body').querySelectorAll('[data-act="cat-kind"]').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));break;
       case 'save-cat':case 'save-cat-place':saveCat(act==='save-cat-place');break;
@@ -684,7 +804,7 @@ export function mountStudioGrid(container,host){
     const t=ev.target;if(t.matches('[data-search]')){view.q=t.value;results(true);return;}
     if(t===get('rel-filter')){relationRows();return;}
     if(t===get('rel-query')){relationOptions(true);return;}
-    if(view?.mode==='relation'&&['label','source'].includes(t.name)){view.edge[t.name]=t.value;return;}
+    if(view?.mode==='relation'&&['label','source','body'].includes(t.name)){view.edge[t.name]=t.value;return;}
     if(t.matches('[data-evidence]')){const edge=P().relations.find(r=>r.id===t.dataset.evidence);if(edge){edge.source=t.value;later();}return;}
     if(t.matches('[data-field]')){
       if(t.matches('textarea'))t.parentElement.dataset.text=t.value;

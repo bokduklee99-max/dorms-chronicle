@@ -391,6 +391,8 @@ button.relation-node:is(:hover,:focus-visible){border-color:var(--accent);backgr
 .live-reader :where(h2,h3,h4,p,dl,dd,ol,ul,figure){margin:0}
 .live-reader :where(h2,h3,h4){font-weight:700;letter-spacing:-.04em;line-height:1.25}
 .live-reader :where(button){font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.live-reader :is(.small-btn,.primary,.secondary,.category-member,.place-map-tools button){border-radius:var(--chronicle-button-radius)}
+.live-reader .place-map-tools button{color:var(--chronicle-green)}
 .live-reader .record-controls{position:sticky;top:8px;z-index:5;display:flex;align-items:center;justify-content:flex-end;gap:6px;height:0;transform:translateY(23px);margin-right:12px;pointer-events:none}
 .live-reader .record-controls button{pointer-events:auto;background:#fffffff7;color:#38372f;border:1px solid #bcb8ac;box-shadow:0 2px 9px #30281616}
 .live-reader .record-close{display:grid;place-content:center;width:38px;height:38px;padding:0;border-radius:100%;font:25px/1 system-ui}

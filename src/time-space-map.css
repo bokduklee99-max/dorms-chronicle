@@ -1,11 +1,11 @@
 .metro-app.map-sync-mode { padding-top: 22px }
 .map-sync-mode > .hero { margin-bottom: 10px }
 .map-sync-mode > .hero h1 { font-size: clamp(28px, 5vw, 42px) }
-.sync-map { background: #fffefa; border: 1px solid #cdd6ca; border-radius: 14px; overflow: clip }
+.sync-map { background: #fffefa; border: 1px solid #cdd6ca; overflow: clip }
 .sync-map-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 20px; padding: 14px 20px }
 .sync-map-header h2 { font-size: 23px; line-height: 1.25; font-weight: 750; letter-spacing: -.035em }
 .sync-map-views { display: flex; flex-wrap: wrap; gap: 6px }
-.sync-map-views button,.sync-map-controls button,.sync-map-inspector header button { min-height: 38px; padding: 5px 11px; border: 1px solid #c7d1c5; border-radius: 7px; background: #fffefa; font-size: 14px; font-weight: 680; color: #324c42 }
+.sync-map-views button,.sync-map-controls button,.sync-map-inspector header button { min-height: 38px; padding: 5px 11px; border: 1px solid #c7d1c5; border-radius: var(--chronicle-button-radius); background: #fffefa; font-size: 14px; font-weight: 680; color: #324c42 }
 .sync-map-views button[aria-pressed="true"] { border-color: #7e9988; background: #dce7dd; color: #203c32 }
 .sync-map-layout { display: grid; grid-template-columns: minmax(0,1fr) clamp(235px, 24vw, 320px); border-top: 1px solid #cdd6ca }
 .sync-map-stage { min-width: 0 }

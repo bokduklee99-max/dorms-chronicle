@@ -11,13 +11,13 @@
 .time-radar-scan input { grid-column:1 / -1; width:100%; min-width:0; height:32px; margin:0; accent-color:var(--chronicle-accent); cursor:pointer }
 .time-radar-scan output { min-width:4em; color:var(--chronicle-accent-hover); font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; text-align:right }
 .time-radar-layout { display:grid; grid-template-columns:minmax(285px,2fr) minmax(0,3fr); align-items:stretch; gap:15px }
-.time-radar-plot,.time-radar-inspector { border:1px solid var(--chronicle-line); border-radius:12px; background:var(--chronicle-surface); min-width:0 }
+.time-radar-plot,.time-radar-inspector { border:1px solid var(--chronicle-line); background:var(--chronicle-surface); min-width:0 }
 .time-radar-plot { display:grid; justify-items:center; align-content:start; gap:4px; padding:14px }
 .time-radar-line-controls,.time-radar-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center }
 .time-radar-line-controls { justify-self:start; font-size:13px }
 .time-radar-line-controls span { margin-right:3px; font-weight:600 }
 .time-radar :is(.time-radar-line-controls,.time-radar-actions) button {
- border:1px solid var(--chronicle-line); border-radius:6px; padding:5px 9px; min-height:35px;
+ border:1px solid var(--chronicle-line); border-radius:var(--chronicle-button-radius); padding:5px 9px; min-height:35px;
  background:var(--chronicle-surface); color:var(--chronicle-ink); cursor:pointer; font-size:13px; font-weight:600;
 }
 .time-radar :is(.time-radar-line-controls,.time-radar-actions) button:hover { border-color:var(--chronicle-green) }
@@ -52,7 +52,7 @@
 .time-radar-summary .radar-description { color:var(--chronicle-ink); white-space:pre-line }
 .time-radar-event-list section { display:grid; gap:5px }
 .time-radar-event-list h4 { margin:3px 0 1px; color:var(--chronicle-green); font-size:14px; font-weight:600 }
-.time-radar-event-list button { display:grid; gap:3px; width:100%; padding:8px 9px; border:1px solid var(--chronicle-line); border-radius:6px; background:var(--chronicle-paper); text-align:left; color:inherit; cursor:pointer; overflow-wrap:anywhere }
+.time-radar-event-list button { display:grid; gap:3px; width:100%; padding:8px 9px; border:1px solid var(--chronicle-line); background:var(--chronicle-paper); text-align:left; color:inherit; cursor:pointer; overflow-wrap:anywhere }
 .time-radar-event-list button:hover { background:#e9eee4; border-color:#879988 }
 .time-radar-event-list button strong { font-size:14px; font-weight:600 }
 .time-radar-event-list button small { color:var(--chronicle-green); font-size:12px }

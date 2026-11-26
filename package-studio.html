@@ -9,8 +9,12 @@
 <script>
 if(window.top===window.self){
  const url=new URL('./data-explorer.html',location.href);
- const draft=new URLSearchParams(location.search).get('draft');
- url.hash='package-studio'+(draft?'?'+new URLSearchParams({draft}):'');
+ const source=new URLSearchParams(location.search);
+ const params=new URLSearchParams();
+ const draft=source.get('draft');
+ if(draft)params.set('draft',draft);
+ if(source.get('view')==='core')params.set('view','core');
+ url.hash='package-studio'+(params.size?'?'+params:'');
  location.replace(url);
 }
 </script>

@@ -283,9 +283,12 @@ function initAtlas({start, end, frames}, landPath, mountains, waterways) {
     empty: row.querySelector('p'),
   }));
 
-  let scope = 'world';
-  let camera = world;
-  let year = 600;
+  const initial = new URLSearchParams(location.search);
+  const initialScope = initial.get('scope');
+  const initialYear = Number(initial.get('year'));
+  let scope = Object.hasOwn(scopes, initialScope) ? initialScope : 'world';
+  let camera = scopes[scope];
+  let year = Number.isInteger(initialYear) && initialYear !== 0 && initialYear >= start && initialYear <= end ? initialYear : 600;
   let readyYear;
   let renderedYear;
   let data;

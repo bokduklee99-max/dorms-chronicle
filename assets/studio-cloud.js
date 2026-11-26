@@ -24,7 +24,7 @@ export function sharedContent(draft,actors){
  return {id,name,school,subject,description,spaces:structuredClone(draft.spaces||[]),queue:structuredClone(draft.queue||[]),
   categories:categories.map(c=>({id:c.id,name:c.name,kind:c.kind,start:c.start||'',end:c.end||'',body:c.body||'',spaceIds:[...(c.spaceIds||[])].sort(),members:[...c.members].sort()})),
   events:events.map(e=>({id:e.id,local:true,date:e.date||'',end:e.end||'',title:e.title||'',type:e.type||'',body:e.body||'',media:e.media||'',importance:e.importance||'',source:e.source||'',spaceIds:[...(e.spaceIds||[])].sort(),participants:(e.participants||[]).map(a=>({id:a.id,role:a.role||''})).sort(byId)})),
-  relations:relations.map(r=>({id:r.id,fromId:r.fromId,toId:r.toId,fromType:r.fromType,toType:r.toType,kind:r.kind,label:r.label||'',source:r.source||''})).sort(byId),
+  relations:relations.map(r=>({id:r.id,fromId:r.fromId,toId:r.toId,fromType:r.fromType,toType:r.toType,kind:r.kind,label:r.label||'',source:r.source||'',...(r.body?{body:r.body}:{})})).sort(byId),
   actors:actors.map(a=>({id:a.id,title:a.title,kind:a.kind,body:a.body||'',originalName:a.originalName||'',start:a.start||'',end:a.end||'',source:a.source||'',spaceIds:[...(a.spaceIds||[])].sort(),local:!!a.local})).sort(byId)};
 }
 function clearDeletedLinks(draft,removed){

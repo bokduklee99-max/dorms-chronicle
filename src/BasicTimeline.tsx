@@ -4,6 +4,7 @@ import {strataTimeline} from './strata-model';
 import './basic-timeline.css';
 
 const modes={arc:'사건군',theme:'주제',period:'시기'} as const;
+const uncategorized='__timeline_uncategorized__';
 type Mode=keyof typeof modes;
 const modeOrder=Object.keys(modes) as Mode[];
 type Category={id:string;name:string;kind:string;start?:string;end?:string};
@@ -75,14 +76,17 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
   const selectedColumns=categories.filter(c=>c.kind===mode&&selected.includes(c.id));
   const allowed=new Map((selectedColumns.length?selectedColumns:categories.filter(c=>c.kind===mode)).map(c=>[c.id,c]));
   const chronological=[...events].sort((a,b)=>a.bounds.start-b.bounds.start||a.id.localeCompare(b.id));
-  const visible=chronological.filter(event=>{
-   if(!activeGroups.every(ids=>ids.some(id=>event.directTopicIds.includes(id))))return false;
+  const visible=chronological.filter(event=>activeGroups.every(ids=>ids.some(id=>event.directTopicIds.includes(id))));
+  let ungrouped=0;
+  for(const event of visible){
    const matches=[...new Set(event.directTopicIds)].filter(id=>allowed.has(id));
+   if(!matches.length)ungrouped++;
    for(const id of matches)counts.set(id,(counts.get(id)??0)+1);
-   return matches.length>0;
-  });
+  }
+  const columns=Array.from(counts,([id,count])=>({...allowed.get(id)!,count}));
+  if(ungrouped)columns.push({id:uncategorized,name:modes[mode]+' 미분류',kind:mode,count:ungrouped});
   return {
-   columns:Array.from(counts,([id,count])=>({...allowed.get(id)!,count})),
+   columns,
    years:strataTimeline(visible),visibleCount:visible.length
   };
  },[categories,events,mode,activeGroups,selected]);
@@ -118,7 +122,8 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
  }
  return <section id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline" className="basic-timeline">
   <header className="bt-heading">
-   <div>{years.length>0&&<h2>{years[0].year}{years.length>1&&<> — {years.at(-1)!.year}</>}</h2>}<p>사건 {visibleCount}개</p></div>
+   <div>{years.length>0&&<h2>{years[0].year}{years.length>1&&<> — {years.at(-1)!.year}</>}</h2>}
+    <p aria-live="polite">{activeGroups.length?`사건 ${visibleCount} / ${events.length}개 표시`:`사건 ${visibleCount}개`}</p></div>
    <div className="bt-modes" role="group" aria-label="열 기준"><span>열 기준</span>{modeOrder.map(kind=>
     <button type="button" key={kind} aria-pressed={mode===kind} disabled={!categories.some(c=>c.kind===kind)} onClick={()=>setChoice(kind)}>{modes[kind]}</button>
    )}</div>
@@ -137,14 +142,15 @@ export function BasicTimeline({events,categories,records,relations,onVisit,showr
      onClick={()=>toggleFilter(category,kind)}>{filterLabel(category)}</button>)}</div>
    </div>)}
   </section>}
-  {!visibleCount?<p role="status">{activeGroups.length?'선택한 조건에 맞는 사건이 없습니다.':'연결된 카테고리가 있는 사건이 없습니다.'}</p>:
+  {!visibleCount?<p role="status">선택한 조건에 맞는 사건이 없습니다.</p>:
    <div className="bt-board" ref={viewport} role="region" aria-label={modes[mode]+'별 연표'} tabIndex={0}>
     <table style={{'--lanes':columns.length} as CSSProperties} aria-label={modes[mode]+'별 사건'}>
      <colgroup><col className="bt-year-col"/><col className="bt-date-col"/>{columns.map(col=><col key={col.id}/>)}</colgroup>
      <thead><tr><th colSpan={2}>시간</th>{columns.map((col,i)=><th key={col.id} scope="col" data-tone={i%3}>{col.name} <small>{col.count}개</small></th>)}</tr></thead>
      {years.map(group=><tbody key={group.year} data-year={group.year}>{group.events.map((event,index)=>{
       const assigned=new Set(event.directTopicIds);
-      const membership=columns.map(col=>assigned.has(col.id));
+      const ungrouped=!columns.some(col=>col.id!==uncategorized&&assigned.has(col.id));
+      const membership=columns.map(col=>col.id===uncategorized?ungrouped:assigned.has(col.id));
       const last=membership.lastIndexOf(true);
       const place=places.get(event.id)||event.place;
       const description=event.description?.trim().replace(/^>\s*/,'');

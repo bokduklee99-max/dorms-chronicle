@@ -1,3 +1,4 @@
+@import url("./chronicle-controls.css");
 :root{color-scheme:light;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1c302f;background:#f5f2e8}
 *{box-sizing:border-box}
 body{margin:0}
@@ -7,7 +8,7 @@ a{color:inherit;text-underline-offset:4px}
 .back:hover,footer a:hover{text-decoration:underline}
 .heading{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap;margin:19px 0 24px}
 h1,h2,p,ol{margin:0}
-h1,.caption h2,nav h2{font-family:"Nanum Myeongjo","AppleMyungjo","Batang",serif}
+h1,.caption h2,nav h2{font-family:var(--font-heading)}
 h1{font-size:clamp(36px,4.9vw,70px);line-height:1.1;letter-spacing:-.07em}
 .heading p,#date,#counter,.chapter time{font-variant-numeric:tabular-nums}
 .heading p{font-family:Georgia,serif;letter-spacing:.055em;color:#715f4d;font-size:clamp(18px,2vw,28px)}
@@ -38,7 +39,7 @@ h1{font-size:clamp(36px,4.9vw,70px);line-height:1.1;letter-spacing:-.07em}
 .transport{display:flex;gap:8px;align-items:center;padding:4px clamp(16px,2.3vw,32px) 20px}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,a:focus-visible{outline:3px solid #ce7642;outline-offset:3px}
-.transport button{border:1px solid #718580;border-radius:4px;min-width:44px;min-height:42px;font-size:18px;background:transparent}
+.transport button{border:1px solid #718580;border-radius:var(--chronicle-button-radius);min-width:44px;min-height:42px;font-size:18px;background:transparent}
 .transport #play{background:#f6e8c9;color:#243531;border-color:transparent;padding:0 15px;font-size:15px;font-weight:700}
 .transport button:hover:enabled{filter:brightness(.89);background-color:#345352}
 .transport button:disabled{opacity:.4;cursor:default}

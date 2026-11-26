@@ -294,14 +294,11 @@ export function setupSwimlaneModal(data,frame=null,onEventContext=null,panel=nul
   if(r.view!=='relation')return readingSheet(r,inDialog);
   const page=make('article','record');
   page.dataset.kind=r.view;
-  const head=make('header','record-head');
-  const headText=make('div');
-  const subtype=r.view==='actor'?actorTypes[r.kind]:r.view==='event'?eventTypes[r.type]:null;
-  headText.append(make('p','kind-name',[label(r.view),subtype].filter((s,i)=>s&&(i===0||s!==label(r.view))).join(' · ')));
-  const h=make('h2','',title(r));headText.append(h);
-  head.append(headText);
+  const head=make('header','record-head relation-head');
+  head.append(make('p','kind-name',label(r.view)));
+  const h=make('h2','',title(r));
   if(inDialog){
-   h.id=titleId;h.tabIndex=-1;
+   h.id=titleId;
    const tools=make('div','reader-tools');
    if(trail.length>1)tools.append(backButton('return'));
    const close=action('×',closeReader,'open');close.setAttribute('aria-label','닫기');tools.append(close);head.append(tools);
@@ -310,20 +307,22 @@ export function setupSwimlaneModal(data,frame=null,onEventContext=null,panel=nul
   }
   page.append(head);
   const body=make('div','inside');page.append(body);
-  const story=()=>make('p','prose',r.body||'');
-   const route=make('div','route-line');
-   for(const side of ['from','to']){
-    if(side==='to')route.append(make('span','direction',(relationNames[r.kind]||'관계')+' →'));
-    const endpoint=records.get(r[side+'Id']);
-    const end=section(rolesFor(r)[side==='from'?0:1],jump(r[side+'Name'],r[side+'Id']));
-    if(endpoint){
-     const meta=make('small','endpoint-date',label(endpoint.view));
-     if(endpoint.date||endpoint.start||endpoint.end)meta.append(' · ',dateRange(endpoint));
-     end.append(meta);
-    }
-    route.append(end);
+  const route=make('div','route-line');
+  for(const side of ['from','to']){
+   if(side==='to')route.append(make('span','direction',(relationNames[r.kind]||'관계')+' →'));
+   const endpoint=records.get(r[side+'Id']);
+   const end=section(rolesFor(r)[side==='from'?0:1],jump(r[side+'Name'],r[side+'Id']));
+   if(endpoint){
+    const meta=make('small','endpoint-date',label(endpoint.view));
+    if(endpoint.date||endpoint.start||endpoint.end)meta.append(' · ',dateRange(endpoint));
+    end.append(meta);
    }
-   body.append(route);if(r.body)body.append(section('연결 근거',story()));
+   route.append(end);
+  }
+  const explanation=make('div','relation-explanation');
+  explanation.append(h);
+  if(r.body)explanation.append(section('연결 근거',make('p','prose',r.body)));
+  body.append(route,explanation);
   const links=linked(r);if(links.childElementCount)body.append(links);
   const foot=make('footer','record-foot');
   if(r.status)foot.append(make('span','',r.status==='verified'?'검토 완료':r.status==='draft'?'초안':r.status));
@@ -331,6 +330,9 @@ export function setupSwimlaneModal(data,frame=null,onEventContext=null,panel=nul
   const source=sheetLink(r);if(source)foot.append(source);
   if(foot.childElementCount)page.append(foot);
   return page;
+ }
+ function focusRecord(){
+  (surface.querySelector('.relation-head button')??surface.querySelector('h2')).focus({preventScroll:true});
  }
  function showCurrent(){
   const record=records.get(trail.at(-1));
@@ -340,14 +342,14 @@ export function setupSwimlaneModal(data,frame=null,onEventContext=null,panel=nul
    const current=list.querySelector('[aria-current=step]')?.closest('li');
    if(current)list.scrollTop+=current.getBoundingClientRect().top-list.getBoundingClientRect().top-(list.clientHeight-current.offsetHeight)/2;
   }});
-  surface.querySelector('h2').focus({preventScroll:true});
+  focusRecord();
  }
  function open(id){
   if(dialog&&!dialog.open)trail.length=0;
   if(!records.has(id))return;
   trail.push(id);positionModal();showCurrent();
   if(dialog&&!dialog.open){
-   dialog.showModal();trackViewport();dialog.querySelector('h2').focus({preventScroll:true});
+   dialog.showModal();trackViewport();focusRecord();
   }
  }
  function goBack(){

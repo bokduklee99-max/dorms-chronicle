@@ -2,6 +2,7 @@ import {personalDraftNotice} from './studio-library.js';
 import {gridState,gridContent} from './studio-grid-model.js';
 import {removeDraftItem} from './studio-cloud.js';
 import {mountRelationWires} from './studio-relation-wires.js';
+import {buildTemplate,readWorkbook,parseImport} from './studio-excel.js';
 const paths={'link-2':'M10 13a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-2 2 M14 11a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l2-2','unlink-2':'M8 16l-2 2a3 3 0 0 1-4-4l3-3 M16 8l2-2a3 3 0 0 1 4 4l-3 3 M9 3v3 M3 9h3 M16 21v-3 M22 15h-3','clipboard-paste':'M8 5H5v16h14v-6 M9 3h6v4H9z M13 11h9l-3-3 M22 11l-3 3','map-pin':'M18 9c0 5-6 11-6 11S6 14 6 9a6 6 0 1 1 12 0z','users':'M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M1 21v-2a7 7 0 0 1 14 0v2 M16 5a4 4 0 0 1 0 7 M17 15a6 6 0 0 1 5 6','folder':'M3 6h7l2 2h9v12H3z','calendar-days':'M3 5h18v16H3z M3 10h18 M8 2v5 M16 2v5'};
 paths.book='M4 4h13a2 2 0 0 1 2 2v14H6a3 3 0 0 1-3-3V6a2 2 0 0 1 1-2Z M7 4v12 M3 17c0-1 1-2 3-2h13';
 paths.trash='M3 6h18 M9 6V3h6v3 M6 6l1 15h10l1-15 M10 10v7 M14 10v7';
@@ -65,7 +66,7 @@ export function mountStudioGrid(container,host){
       <section class="gs-events" data-note-key="events" data-note-label="사건 시트" aria-label="사건 시트"><header class="gs-head"><div class="gs-event-heading"><h2><b id="gs-event-heading">사건</b> <span id="gs-e-count"></span></h2><button id="gs-clear-category" data-act="clear-category" hidden>전체 사건 보기</button></div><div class="gs-buttons"><button data-act="reuse-event">기존 사건 찾기</button><button class="gs-primary" data-act="add-event">＋ 사건 행</button></div></header>
         <div class="gs-tools"><span>열 이동</span><div class="gs-jumps"><button data-jump="title">기본 정보</button><button data-jump="end">기간·자료</button><button data-jump="actor">연결 항목</button></div></div>
         <div class="gs-scroll" id="gs-scroll" role="region" tabindex="0" aria-label="사건 입력 표"><table id="gs-sheet"><caption class="gs-sr">사건을 행별로 입력하는 표</caption></table></div>
-        <div class="gs-sheet-foot"><span><i data-lucide="clipboard-paste" aria-hidden="true"></i> 엑셀 여러 셀 붙여넣기</span><button data-act="add-event">＋ 행 추가</button></div>
+        <div class="gs-sheet-foot"><span><i data-lucide="clipboard-paste" aria-hidden="true"></i> 엑셀 여러 셀 붙여넣기</span><div class="gs-buttons"><button data-act="excel-template">엑셀 템플릿 받기</button><button data-act="excel-upload">엑셀 올리기</button><button data-act="ai-guide">AI 작성 안내서</button><button data-act="add-event">＋ 행 추가</button></div><input type="file" id="gs-excel-file" accept=".xlsx" hidden></div>
       </section>
     </div>
     </section>
@@ -721,6 +722,41 @@ export function mountStudioGrid(container,host){
     }
   }
   const writable=(id,k,val)=>{record('event',id)[k]=val;};
+  const excelLabels={importance,types,cats,roles,rels,actors,places};
+  function download(href,name){const a=document.createElement('a');a.href=href;a.download=name;document.body.append(a);a.click();a.remove();}
+  function excelTemplate(){
+    const url=URL.createObjectURL(buildTemplate(excelLabels,base));
+    download(url,'패키지-입력-템플릿.xlsx');setTimeout(()=>URL.revokeObjectURL(url),1000);
+    status('엑셀 템플릿을 내려받았습니다. 첫 시트의 안내를 먼저 읽어 보세요.');
+  }
+  async function excelFile(file){
+    if(!file)return;
+    if(file.size>5e6){status('5MB 이하의 엑셀 파일만 올릴 수 있습니다.');return;}
+    try{
+      const p=P(),match=kind=>name=>objects(kind).filter(o=>[o.name,o.original,o.alias].some(v=>v&&norm(v)===norm(name))).map(o=>o.id);
+      const plan=parseImport(await readWorkbook(await file.arrayBuffer()),{labels:excelLabels,categories:p.categories,
+        events:p.ids.map(id=>by('event',id)).filter(Boolean),relations:p.relations,uid,validDate:dateString,actors:match('actor'),places:match('place')});
+      importForm(plan,file.name);
+    }catch(e){status(e.message||'엑셀 파일을 읽지 못했습니다.');}
+  }
+  function importForm(plan,fileName){
+    const total=plan.events.length+plan.categories.length+plan.relations.length,shown=plan.warnings.slice(0,50);
+    const warnings=plan.warnings.length?'<details open><summary>확인할 내용 '+plan.warnings.length+'건</summary><ul class="gs-import-warnings">'+shown.map(w=>'<li>'+esc(w)+'</li>').join('')+(plan.warnings.length>shown.length?'<li>… 외 '+(plan.warnings.length-shown.length)+'건</li>':'')+'</ul></details>':'';
+    show({mode:'excel-import',plan},'엑셀 올리기',
+      '<div class="gs-import-summary"><p>‘'+esc(fileName)+'’에서 현재 패키지에 추가할 내용입니다. 기존 내용은 바뀌지 않습니다.</p><p><b>사건 '+plan.events.length+'개 · 카테고리 '+plan.categories.length+'개 · 관계 '+plan.relations.length+'개</b></p>'+(total?'':'<p>추가할 내용이 없습니다.</p>')+'</div>'+warnings+
+      actions(btn('취소','close')+(total?btn('추가하기','excel-apply','',primary):'')));
+  }
+  function applyImport(plan){
+    const p=P();
+    p.categories.push(...plan.categories);
+    for(const {categoryIds,...event} of plan.events){
+      s.over.event[event.id]=event;p.ids.push(event.id);
+      if(categoryIds.length)linkList('category',event.id,'event',true).push(...new Set(categoryIds));
+    }
+    p.relations.push(...plan.relations);
+    close();afterChange('사건 '+plan.events.length+'개, 카테고리 '+plan.categories.length+'개, 관계 '+plan.relations.length+'개를 추가했습니다.');
+  }
+  listen(get('excel-file'),'change',ev=>{const file=ev.target.files[0];ev.target.value='';void excelFile(file);});
   root.addEventListener('click',ev=>{
     const b=ev.target.closest('button');if(!b||b.disabled)return;
     const {act,id,kind,jump}=b.dataset;if(jump){scrollColumn(jump);return;}
@@ -788,6 +824,10 @@ export function mountStudioGrid(container,host){
       case 'delete-item':askDelete(kind,id);break;
       case 'confirm-delete':confirmDelete();break;
       case 'reuse-event':finder(P().id,'package','event');break;
+      case 'excel-template':excelTemplate();break;
+      case 'excel-upload':get('excel-file').click();break;
+      case 'excel-apply':applyImport(view.plan);break;
+      case 'ai-guide':download('./assets/package-studio-ai-guide.md','패키지-작성-AI-안내서.md');break;
       case 'links':finder(id,'event',kind);break;
       case 'link-tab':finder(view.owner,view.ownerKind,id);break;
       case 'create-kind':view.newKind=id;results();break;

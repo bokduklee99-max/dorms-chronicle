@@ -338,3 +338,8 @@ body{margin:0}
 
 #chronicle-grid-studio .personal-storage{margin:0 0 12px;padding:10px 14px;border-inline-start:3px solid var(--pine);border-radius:4px;background:var(--pale);color:var(--pine);font-size:15px;font-weight:600}
 #chronicle-grid-studio .personal-storage p{color:inherit;font-size:inherit}
+#chronicle-grid-studio .gs-import-summary{display:grid;gap:5px;padding-block:2px 8px;overflow-wrap:anywhere}
+#chronicle-grid-studio .gs-import-summary p:first-child{color:var(--sub);font-size:14px}
+#chronicle-grid-studio dialog details{margin-block:6px 10px}
+#chronicle-grid-studio dialog summary{font-size:14px;font-weight:650;color:var(--rust);cursor:pointer}
+#chronicle-grid-studio .gs-import-warnings{max-height:240px;overflow:auto;margin:6px 0 0;padding:8px 8px 8px 24px;border:1px solid var(--line);border-radius:6px;font-size:13px;line-height:1.55;overflow-wrap:anywhere}

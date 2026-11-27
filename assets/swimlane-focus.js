@@ -858,6 +858,8 @@ async function init(){
     const names=c.kind==='period'?eventPeriods(e):c.kind==='arc'?e.arcs:e.themes;
     return e.categoryIds?.includes(c.id)??names.includes(c.name);
    });
+   // 시기는 맨 위 띠로 이미 보이므로, 묶인 사건이 없으면 빈 레인을 따로 그리지 않는다.
+   if(c.kind==='period'&&!items.length)continue;
    drawLane(c.name,kindLabel[c.kind],c,items);
   }
   pinnedLanes.scrollTop=pinnedScroll;

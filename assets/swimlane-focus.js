@@ -858,8 +858,13 @@ async function init(){
     const names=c.kind==='period'?eventPeriods(e):c.kind==='arc'?e.arcs:e.themes;
     return e.categoryIds?.includes(c.id)??names.includes(c.name);
    });
-   // 시기는 맨 위 띠로 이미 보이므로, 묶인 사건이 없으면 빈 레인을 따로 그리지 않는다.
-   if(c.kind==='period'&&!items.length)continue;
+   if(c.kind==='period'){
+    // 시기는 맨 위 띠로 이미 보이므로 따로 레인을 그리지 않는다.
+    // 주제·사건군 레인에 나오지 않고 시기에만 속한 사건이 있을 때만 그 사건을 보여 준다.
+    const onlyPeriod=items.filter(e=>!e.arcs?.length&&!e.themes?.length);
+    if(onlyPeriod.length)drawLane(c.name,kindLabel[c.kind],c,onlyPeriod);
+    continue;
+   }
    drawLane(c.name,kindLabel[c.kind],c,items);
   }
   pinnedLanes.scrollTop=pinnedScroll;

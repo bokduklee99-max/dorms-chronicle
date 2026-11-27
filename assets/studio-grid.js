@@ -733,7 +733,11 @@ export function mountStudioGrid(container,host){
     if(!file)return;
     if(file.size>5e6){status('5MB 이하의 엑셀 파일만 올릴 수 있습니다.');return;}
     try{
-      const p=P(),match=kind=>name=>objects(kind).filter(o=>[o.name,o.original,o.alias].some(v=>v&&norm(v)===norm(name))).map(o=>o.id);
+      // 같은 이름이 있으면 그것만 쓰고, 없을 때만 원어명·시대별 명칭으로 찾는다.
+      const p=P(),match=kind=>name=>{
+        const all=objects(kind),exact=all.filter(o=>o.name&&norm(o.name)===norm(name));
+        return (exact.length?exact:all.filter(o=>[o.original,o.alias].some(v=>v&&norm(v)===norm(name)))).map(o=>o.id);
+      };
       const plan=parseImport(await readWorkbook(await file.arrayBuffer()),{labels:excelLabels,categories:p.categories,
         events:p.ids.map(id=>by('event',id)).filter(Boolean),relations:p.relations,uid,validDate:dateString,actors:match('actor'),places:match('place')});
       importForm(plan,file.name);

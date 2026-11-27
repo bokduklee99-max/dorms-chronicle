@@ -1,3 +1,4 @@
+import {withLocalDrafts} from './local-drafts.js';
 // Public CSV reads in the local lesson viewer share one copy per browser origin.
 const cacheName='chronicle-public-lesson-csv-v1';
 export const localLesson=['localhost','127.0.0.1','[::1]'].includes(globalThis.location?.hostname);
@@ -5,6 +6,11 @@ const pending=new Map();
 
 /** @type {typeof fetch} */
 export async function readLessonSheet(input,options){
+ // 시트를 읽은 결과에 이 브라우저의 개인 초안을 더한다. 공용 사본(캐시)에는 초안을 섞지 않는다.
+ return withLocalDrafts(input,await readPublicSheet(input,options));
+}
+
+async function readPublicSheet(input,options){
  if(!localLesson||!globalThis.caches)return fetch(input,options);
  const key=new URL(input instanceof Request?input.url:String(input));
  key.searchParams.delete('v');
